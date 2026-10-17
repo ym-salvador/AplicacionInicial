@@ -11,9 +11,18 @@ window.App = {
   currentGameId: null,
 
   init() {
+    this.applySchoolConfig();
     this.renderTopNav();
     window.StudentProfileModule?.init();
     this.showHome();
+
+    // Actualización reactiva al cambiar configuración escolar y de mascota
+    window.addEventListener('cneb:config-updated', () => {
+      this.applySchoolConfig();
+      if (this.currentView === 'home') {
+        this.showHome();
+      }
+    });
 
     // Eventos globales de la barra superior
     document.getElementById('btn-family-portal')?.addEventListener('click', () => {
@@ -42,7 +51,24 @@ window.App = {
     });
   },
 
+  applySchoolConfig() {
+    const config = window.AppState ? window.AppState.getSchoolConfig() : null;
+    if (!config) return;
+
+    const logoMascot = document.getElementById('app-logo-mascot');
+    const logoTitle = document.getElementById('app-logo-title');
+    const logoSchool = document.getElementById('app-logo-school');
+
+    if (logoMascot) logoMascot.textContent = config.mascotIcon || '🦙';
+    if (logoTitle) logoTitle.textContent = config.appTitle || `Matemática ${config.mascotName || 'Kusi'}`;
+    if (logoSchool) {
+      logoSchool.textContent = config.schoolName || 'CNEB 5 Años';
+      logoSchool.title = `${config.schoolName} • ${config.activeClass}`;
+    }
+  },
+
   renderTopNav() {
+    this.applySchoolConfig();
     window.StudentProfileModule?.updateHeaderDisplay();
   },
 
@@ -65,18 +91,19 @@ window.App = {
     document.getElementById('btn-nav-home')?.classList.add('hidden');
     const mainContainer = document.getElementById('app-main-content');
 
+    const config = window.AppState.getSchoolConfig();
     const evalCant = window.AppState.getWorldOverallAssessment('cantidad');
     const evalEsp = window.AppState.getWorldOverallAssessment('espacio');
 
     mainContainer.innerHTML = `
       <div class="max-w-5xl mx-auto flex flex-col items-center justify-center min-h-[75vh] px-4 py-6">
         <div class="text-center mb-8">
-          <div class="inline-flex items-center gap-3 bg-white/95 border-4 border-amber-300 px-6 py-2 rounded-full shadow-lg mb-3">
-            <span class="text-3xl">🇵🇪</span>
-            <span class="font-black text-amber-950 font-fun text-xl">CNEB Inicial • Ciclo II (5 Años)</span>
+          <div class="inline-flex items-center gap-2.5 bg-white/95 border-4 border-amber-300 px-6 py-2 rounded-full shadow-lg mb-3">
+            <span class="text-2xl">${config.mascotIcon}</span>
+            <span class="font-black text-amber-950 font-fun text-lg md:text-xl">${config.schoolName} • ${config.activeClass}</span>
           </div>
           <h1 class="text-4xl md:text-5xl font-black text-slate-800 font-fun drop-shadow-md">
-            ¡Matemática Mágica con Kusi!
+            ¡Matemática Mágica con ${config.mascotName}!
           </h1>
           <p class="text-lg md:text-xl text-slate-700 font-bold mt-1 font-fun">
             Elige un mundo para explorar sus 3 sesiones de aprendizaje:

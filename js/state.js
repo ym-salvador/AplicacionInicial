@@ -114,11 +114,42 @@ class AppStateManager {
   getDefaultState() {
     return {
       activeClass: 'Aula Los Creativos (5 Años)',
-      institution: 'I.E. Inicial',
+      schoolName: 'I.E. Inicial San Gabriel',
+      teacherName: 'Prof. Yanet Salvador',
+      mascotIcon: '🦙',
+      mascotName: 'Kusi',
+      appTitle: 'Matemática Kusi',
       teacherPin: '1234',
       currentStudentId: 'est_1',
       students: this.getInitialStudents()
     };
+  }
+
+  getSchoolConfig() {
+    return {
+      schoolName: this.state.schoolName || 'I.E. Inicial San Gabriel',
+      activeClass: this.state.activeClass || 'Aula 5 Años',
+      teacherName: this.state.teacherName || 'Docente de Aula',
+      mascotIcon: this.state.mascotIcon || '🦙',
+      mascotName: this.state.mascotName || 'Kusi',
+      appTitle: this.state.appTitle || `Matemática ${this.state.mascotName || 'Kusi'}`,
+      teacherPin: this.state.teacherPin || '1234'
+    };
+  }
+
+  updateSchoolConfig(config) {
+    if (config.schoolName !== undefined) this.state.schoolName = config.schoolName.trim();
+    if (config.activeClass !== undefined) this.state.activeClass = config.activeClass.trim();
+    if (config.teacherName !== undefined) this.state.teacherName = config.teacherName.trim();
+    if (config.mascotIcon !== undefined) this.state.mascotIcon = config.mascotIcon;
+    if (config.mascotName !== undefined) {
+      this.state.mascotName = config.mascotName.trim() || 'Kusi';
+      this.state.appTitle = `Matemática ${this.state.mascotName}`;
+    }
+    if (config.teacherPin !== undefined) this.state.teacherPin = config.teacherPin.trim() || '1234';
+
+    this.saveState();
+    window.dispatchEvent(new CustomEvent('cneb:config-updated', { detail: this.getSchoolConfig() }));
   }
 
   loadState() {

@@ -1,17 +1,36 @@
 /**
- * MÓDULO DOCENTE EXCLUSIVO - SEGUIMIENTO INTEGRAL DEL AULA Y EVALUACIÓN CNEB
+ * MÓDULO DOCENTE EXCLUSIVO - SEGUIMIENTO INTEGRAL DEL AULA Y CONFIGURACIÓN INSTITUCIONAL
  * Proporciona a la maestra:
  * 1. Monitoreo del Aula: Sábana consolidada para ver quiénes ya resolvieron, quiénes están
  *    en proceso y quiénes están pendientes / no han iniciado todavía.
- * 2. Gestión de Estudiantes: Registrar alumnos, importar listas y exportar a Excel (CSV).
- * 3. Ficha Individual CNEB: Informe oficial detallado por estudiante con rúbrica oficial (AD, A, B, C)
- *    y conclusiones descriptivas para SIAGIE / MINEDU, listo para imprimir en PDF.
+ * 2. Ficha Individual CNEB: Informe oficial detallado por estudiante con membrete institucional
+ *    del colegio de la docente y conclusiones descriptivas oficiales para SIAGIE.
+ * 3. Configuración del Colegio y Mascota: Permite cambiar el animal de la mascota, el nombre
+ *    de la mascota, el nombre de la Institución Educativa (colegio), aula y nombre de docente.
  */
 
 window.DocenteModule = {
-  activeTab: 'monitoring', // 'monitoring' o 'individual'
+  activeTab: 'monitoring', // 'monitoring', 'individual', 'settings'
   selectedStudentId: null,
   filterStatus: 'all', // 'all', 'completed', 'in_progress', 'pending'
+
+  // Catálogo de animales para la mascota guía
+  mascotCatalog: [
+    { icon: '🦙', defaultName: 'Kusi', desc: 'Llamita Andina (Kusi)' },
+    { icon: '🦁', defaultName: 'Leo', desc: 'Leoncito Valiente (Leo)' },
+    { icon: '🐻', defaultName: 'Teddy', desc: 'Osito Cariñoso (Teddy)' },
+    { icon: '🦊', defaultName: 'Sami', desc: 'Zorrito Curioso (Sami)' },
+    { icon: '🐰', defaultName: 'Bunny', desc: 'Conejito Saltarín (Bunny)' },
+    { icon: '🦉', defaultName: 'Tito', desc: 'Búho Sabio (Tito)' },
+    { icon: '🐬', defaultName: 'Delfi', desc: 'Delfincito Alegre (Delfi)' },
+    { icon: '🐼', defaultName: 'Pandi', desc: 'Pandita Tierno (Pandi)' },
+    { icon: '🐯', defaultName: 'Tigrito', desc: 'Tigrecito Rayas (Tigrito)' },
+    { icon: '🐶', defaultName: 'Fido', desc: 'Perrito Amigo (Fido)' },
+    { icon: '🐸', defaultName: 'Sapo', desc: 'Ranita Saltarina (Sapo)' },
+    { icon: '🐨', defaultName: 'Koko', desc: 'Koalita Tierno (Koko)' },
+    { icon: '🦄', defaultName: 'Estrella', desc: 'Unicornio Mágico (Estrella)' },
+    { icon: '🐝', defaultName: 'Maya', desc: 'Abejita Maya (Maya)' }
+  ],
 
   getBadgeClass(grade) {
     switch (grade) {
@@ -35,6 +54,7 @@ window.DocenteModule = {
   // COMPUERTA DE SEGURIDAD EXCLUSIVA PARA EL DOCENTE
   openGate() {
     window.SoundEngine.playPop();
+    const config = window.AppState.getSchoolConfig();
     const num1 = Math.floor(Math.random() * 6) + 4; // 4 a 9
     const num2 = Math.floor(Math.random() * 6) + 3; // 3 a 8
     const answer = num1 + num2;
@@ -49,7 +69,7 @@ window.DocenteModule = {
         </div>
         <h3 class="text-2xl font-black text-slate-900 font-fun mb-2">Panel Docente Protegido</h3>
         <p class="text-slate-600 text-sm mb-4">
-          Acceso exclusivo para la profesora. Para visualizar el seguimiento y calificaciones del aula, resuelve:
+          Acceso exclusivo para la profesora. Para visualizar el seguimiento, notas o cambiar la mascota y colegio, resuelve:
         </p>
 
         <div class="bg-purple-50 border-2 border-purple-300 rounded-2xl p-4 my-3">
@@ -83,7 +103,8 @@ window.DocenteModule = {
 
     const verify = () => {
       const val = parseInt(input.value);
-      if (val === answer || input.value === '1234') { // Código maestro o cálculo
+      const isPinCorrect = input.value === config.teacherPin || input.value === '1234';
+      if (val === answer || isPinCorrect) {
         window.SoundEngine.playSuccess();
         modal.remove();
         this.openDashboard('monitoring');
@@ -109,6 +130,8 @@ window.DocenteModule = {
       this.selectedStudentId = window.AppState.state.currentStudentId;
     }
 
+    const config = window.AppState.getSchoolConfig();
+
     const modal = document.createElement('div');
     modal.id = 'docente-dashboard-modal';
     modal.className = 'modal-overlay';
@@ -118,13 +141,13 @@ window.DocenteModule = {
         <!-- Cabecera del Panel Docente -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b-2 border-slate-200 mb-4 gap-3 no-print">
           <div class="flex items-center gap-3">
-            <span class="text-4xl">👩‍🏫</span>
+            <span class="text-4xl">${config.mascotIcon}</span>
             <div>
               <div class="flex items-center gap-2">
-                <h2 class="text-2xl font-black text-slate-900 font-fun leading-tight">Panel de Gestión Docente</h2>
-                <span class="text-xs bg-purple-100 text-purple-900 border border-purple-300 font-bold px-2 py-0.5 rounded-full">Exclusivo Profesora</span>
+                <h2 class="text-2xl font-black text-slate-900 font-fun leading-tight">${config.schoolName}</h2>
+                <span class="text-xs bg-purple-100 text-purple-900 border border-purple-300 font-bold px-2 py-0.5 rounded-full">Zona Docente</span>
               </div>
-              <p class="text-xs text-slate-500 font-semibold">${window.AppState.state.activeClass} • CNEB Ciclo II (5 Años)</p>
+              <p class="text-xs text-slate-500 font-semibold">${config.activeClass} • Docente: ${config.teacherName}</p>
             </div>
           </div>
 
@@ -135,25 +158,37 @@ window.DocenteModule = {
           </div>
         </div>
 
-        <!-- Selector de Pestañas: Monitoreo Grupal vs Ficha Individual -->
-        <div class="flex items-center justify-between border-b-2 border-slate-200 pb-2 mb-4 no-print">
-          <div class="flex gap-2">
-            <button id="tab-btn-monitoring" class="tab-btn px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
+        <!-- Selector de Pestañas: Monitoreo, Ficha Individual, Configuración Colegio -->
+        <div class="flex flex-wrap items-center justify-between border-b-2 border-slate-200 pb-2 mb-4 gap-2 no-print">
+          <div class="flex flex-wrap gap-2">
+            <!-- Pestaña 1: Monitoreo -->
+            <button id="tab-btn-monitoring" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
               this.activeTab === 'monitoring' 
                 ? 'bg-purple-600 text-white shadow-md' 
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }">
               <span>📊</span>
-              <span>Monitoreo del Aula (${window.AppState.state.students.length} Estudiantes)</span>
+              <span>Monitoreo del Aula</span>
             </button>
 
-            <button id="tab-btn-individual" class="tab-btn px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
+            <!-- Pestaña 2: Ficha Individual -->
+            <button id="tab-btn-individual" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
               this.activeTab === 'individual' 
                 ? 'bg-purple-600 text-white shadow-md' 
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }">
               <span>📄</span>
-              <span>Ficha Individual CNEB</span>
+              <span>Ficha Individual</span>
+            </button>
+
+            <!-- Pestaña 3: Configuración Colegio y Mascota -->
+            <button id="tab-btn-settings" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
+              this.activeTab === 'settings' 
+                ? 'bg-purple-600 text-white shadow-md' 
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }">
+              <span>⚙️</span>
+              <span>Cambiar Colegio y Mascota</span>
             </button>
           </div>
 
@@ -188,6 +223,11 @@ window.DocenteModule = {
       this.switchTab('individual');
     });
 
+    document.getElementById('tab-btn-settings')?.addEventListener('click', () => {
+      window.SoundEngine.playPop();
+      this.switchTab('settings');
+    });
+
     this.renderCurrentTab();
   },
 
@@ -195,16 +235,18 @@ window.DocenteModule = {
     this.activeTab = tab;
     const btnMon = document.getElementById('tab-btn-monitoring');
     const btnInd = document.getElementById('tab-btn-individual');
+    const btnSet = document.getElementById('tab-btn-settings');
 
-    if (btnMon && btnInd) {
-      if (tab === 'monitoring') {
-        btnMon.className = 'tab-btn px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-purple-600 text-white shadow-md';
-        btnInd.className = 'tab-btn px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200';
-      } else {
-        btnMon.className = 'tab-btn px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200';
-        btnInd.className = 'tab-btn px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-purple-600 text-white shadow-md';
-      }
-    }
+    const updateBtn = (btn, isActive) => {
+      if (!btn) return;
+      btn.className = isActive
+        ? 'tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 bg-purple-600 text-white shadow-md'
+        : 'tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200';
+    };
+
+    updateBtn(btnMon, tab === 'monitoring');
+    updateBtn(btnInd, tab === 'individual');
+    updateBtn(btnSet, tab === 'settings');
 
     this.renderCurrentTab();
   },
@@ -216,8 +258,10 @@ window.DocenteModule = {
 
     if (this.activeTab === 'monitoring') {
       this.renderMonitoringTab(container, actions);
-    } else {
+    } else if (this.activeTab === 'individual') {
       this.renderIndividualTab(container, actions);
+    } else if (this.activeTab === 'settings') {
+      this.renderSettingsTab(container, actions);
     }
   },
 
@@ -264,7 +308,6 @@ window.DocenteModule = {
 
         <!-- Tarjetas KPI del Aula -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <!-- Total Estudiantes -->
           <div class="bg-white border-2 border-slate-200 rounded-2xl p-3 shadow-sm flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-2xl font-black">
               👥
@@ -275,7 +318,6 @@ window.DocenteModule = {
             </div>
           </div>
 
-          <!-- Han Resuelto / Activos -->
           <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3 shadow-sm flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-emerald-200 text-emerald-800 flex items-center justify-center text-2xl font-black">
               ✅
@@ -286,7 +328,6 @@ window.DocenteModule = {
             </div>
           </div>
 
-          <!-- Pendientes / Aún no inician -->
           <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-3 shadow-sm flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-rose-200 text-rose-800 flex items-center justify-center text-2xl font-black">
               ⚠️
@@ -297,7 +338,6 @@ window.DocenteModule = {
             </div>
           </div>
 
-          <!-- Promedio de Avance del Aula -->
           <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 shadow-sm flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-amber-200 text-amber-800 flex items-center justify-center text-2xl font-black">
               📈
@@ -347,7 +387,6 @@ window.DocenteModule = {
             <tbody class="divide-y divide-slate-200">
               ${filteredStudents.map(st => `
                 <tr class="hover:bg-slate-50/80 transition-colors">
-                  <!-- Estudiante -->
                   <td class="p-3">
                     <div class="flex items-center gap-2.5">
                       <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-2xl flex-shrink-0">
@@ -360,14 +399,12 @@ window.DocenteModule = {
                     </div>
                   </td>
 
-                  <!-- Última Actividad -->
                   <td class="p-3 font-semibold text-slate-600">
                     ${st.hasPlayed 
                       ? `<span class="text-emerald-700 font-bold">🕒 ${st.lastActive}</span>` 
                       : `<span class="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">⚠️ Sin actividad</span>`}
                   </td>
 
-                  <!-- Mundo 1: Cantidad -->
                   <td class="p-3 text-center">
                     <div class="flex flex-col items-center gap-1">
                       <span class="font-bold text-[11px] px-2 py-0.5 rounded ${this.getBadgeClass(st.cantidad.grade)}">
@@ -377,7 +414,6 @@ window.DocenteModule = {
                     </div>
                   </td>
 
-                  <!-- Mundo 2: Espacio -->
                   <td class="p-3 text-center">
                     <div class="flex flex-col items-center gap-1">
                       <span class="font-bold text-[11px] px-2 py-0.5 rounded ${this.getBadgeClass(st.espacio.grade)}">
@@ -387,7 +423,6 @@ window.DocenteModule = {
                     </div>
                   </td>
 
-                  <!-- Avance Total -->
                   <td class="p-3 text-center">
                     <div class="w-28 mx-auto">
                       <div class="flex justify-between text-[11px] font-bold mb-1">
@@ -400,7 +435,6 @@ window.DocenteModule = {
                     </div>
                   </td>
 
-                  <!-- Estado Semáforo -->
                   <td class="p-3 text-center">
                     ${st.status === 'completado' 
                       ? '<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded-full font-bold text-[11px]">✅ Al Día (100%)</span>' 
@@ -409,7 +443,6 @@ window.DocenteModule = {
                       : '<span class="bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full font-bold text-[11px]">⚠️ No ha iniciado</span>'}
                   </td>
 
-                  <!-- Acciones -->
                   <td class="p-3 text-center">
                     <div class="flex items-center justify-center gap-1.5">
                       <button class="btn-view-student-report bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-300 px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1" data-student-id="${st.id}" title="Ver informe CNEB individual">
@@ -466,6 +499,7 @@ window.DocenteModule = {
   // PESTAÑA 2: FICHA INDIVIDUAL CNEB (INFORME DETALLADO POR ESTUDIANTE)
   // =========================================================================
   renderIndividualTab(container, actions) {
+    const config = window.AppState.getSchoolConfig();
     const students = window.AppState.state.students;
     const currentStudent = students.find(s => s.id === this.selectedStudentId) || students[0];
     this.selectedStudentId = currentStudent?.id;
@@ -527,26 +561,26 @@ window.DocenteModule = {
              =================================================================== -->
         <div id="docente-report-printable" class="space-y-6">
 
-          <!-- 1. MEMBRETE OFICIAL INSTITUCIONAL (MINEDU) -->
+          <!-- 1. MEMBRETE OFICIAL DE LA INSTITUCIÓN EDUCATIVA / COLEGIO -->
           <div class="report-block border-b-2 border-slate-700 pb-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-amber-500 border border-amber-600 flex items-center justify-center text-2xl shadow-sm">
-                  🇵🇪
+                <div class="w-12 h-12 rounded-xl bg-purple-100 border border-purple-300 flex items-center justify-center text-3xl shadow-sm">
+                  ${config.mascotIcon}
                 </div>
                 <div>
-                  <p class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Ministerio de Educación del Perú • Educación Inicial</p>
+                  <p class="text-xs uppercase font-black text-purple-900 tracking-wider">${config.schoolName}</p>
                   <h1 class="text-lg md:text-xl font-black text-slate-900 font-fun leading-tight">
                     INFORME DE EVALUACIÓN FORMATIVA DEL ESTUDIANTE
                   </h1>
                   <p class="text-[11px] font-bold text-slate-700">
-                    Ciclo II (5 Años) • Estándar de Aprendizaje Nivel 2 • RVM N° 094-2020-MINEDU
+                    ${config.activeClass} • Docente: ${config.teacherName} • CNEB Ciclo II (5 Años)
                   </p>
                 </div>
               </div>
               <div class="text-right">
                 <span class="inline-block bg-slate-100 border border-slate-300 rounded px-2.5 py-0.5 text-xs font-bold text-slate-800">
-                  Año 2026
+                  Año Lectivo 2026
                 </span>
                 <p class="text-[10px] text-slate-500 mt-1">Fecha: ${todayDate}</p>
               </div>
@@ -561,8 +595,8 @@ window.DocenteModule = {
                 <span class="font-black text-base text-slate-900 block mt-0.5">${currentStudent.avatar} ${currentStudent.name}</span>
               </div>
               <div>
-                <span class="text-slate-500 font-bold block uppercase text-[10px]">Nivel / Aula:</span>
-                <span class="font-bold text-sm text-slate-800 block mt-0.5">${window.AppState.state.activeClass}</span>
+                <span class="text-slate-500 font-bold block uppercase text-[10px]">Institución / Aula:</span>
+                <span class="font-bold text-sm text-slate-800 block mt-0.5">${config.schoolName} • ${config.activeClass}</span>
               </div>
               <div class="sm:text-right">
                 <span class="text-slate-500 font-bold block uppercase text-[10px]">Logros Acumulados:</span>
@@ -595,7 +629,6 @@ window.DocenteModule = {
               </span>
             </div>
 
-            <!-- Tablas de las 3 Sesiones de Cantidad -->
             <div class="space-y-3">
               ${assessmentCantidad.sesiones.map(ses => `
                 <div class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
@@ -661,7 +694,6 @@ window.DocenteModule = {
               </span>
             </div>
 
-            <!-- Tablas de las 3 Sesiones de Espacio -->
             <div class="space-y-3">
               ${assessmentEspacio.sesiones.map(ses => `
                 <div class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
@@ -710,16 +742,16 @@ window.DocenteModule = {
             </div>
           </div>
 
-          <!-- SECCIÓN DE FIRMAS DOCENTE Y DIRECCIÓN -->
+          <!-- SECCIÓN DE FIRMAS DOCENTE Y DIRECCIÓN DEL COLEGIO -->
           <div class="report-block pt-8 mt-6 border-t-2 border-slate-300">
             <div class="grid grid-cols-2 gap-12 text-center text-xs">
               <div class="border-t border-slate-400 pt-2 mx-8">
-                <span class="font-bold text-slate-800 block">Profesor/a de Aula</span>
-                <span class="text-slate-500 text-[10px]">Educación Inicial (5 Años)</span>
+                <span class="font-bold text-slate-800 block">${config.teacherName}</span>
+                <span class="text-slate-500 text-[10px]">Profesor/a de Aula • ${config.activeClass}</span>
               </div>
               <div class="border-t border-slate-400 pt-2 mx-8">
-                <span class="font-bold text-slate-800 block">Dirección / Coordinación Pedagógica</span>
-                <span class="text-slate-500 text-[10px]">I.E. Inicial • Ciclo II</span>
+                <span class="font-bold text-slate-800 block">Dirección Pedagógica</span>
+                <span class="text-slate-500 text-[10px]">${config.schoolName}</span>
               </div>
             </div>
           </div>
@@ -735,13 +767,197 @@ window.DocenteModule = {
     });
   },
 
+  // =========================================================================
+  // PESTAÑA 3: CONFIGURACIÓN EXCLUSIVA DEL COLEGIO Y MASCOTA (SOLO DOCENTE)
+  // =========================================================================
+  renderSettingsTab(container, actions) {
+    const config = window.AppState.getSchoolConfig();
+    let currentSelectedIcon = config.mascotIcon || '🦙';
+
+    if (actions) {
+      actions.innerHTML = '';
+    }
+
+    container.innerHTML = `
+      <div class="max-w-2xl mx-auto space-y-6 py-2">
+        
+        <div class="bg-gradient-to-r from-purple-100 via-indigo-50 to-amber-100 border-2 border-purple-300 rounded-3xl p-4 flex items-center gap-4 shadow-sm">
+          <div class="w-14 h-14 rounded-2xl bg-white border-2 border-purple-400 flex items-center justify-center text-3xl shadow">
+            ⚙️
+          </div>
+          <div>
+            <h3 class="text-xl font-black text-purple-950 font-fun">Personalización del Colegio y Mascota</h3>
+            <p class="text-xs text-slate-600 font-semibold">
+              Cambia la figura del animalito guía, su nombre y los datos de tu Institución Educativa. Solo tú como docente tienes acceso a estos cambios.
+            </p>
+          </div>
+        </div>
+
+        <!-- Previsualización en Vivo de la Cabecera -->
+        <div class="bg-white border-3 border-amber-300 rounded-2xl p-4 shadow-sm text-center">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Vista previa en la cabecera para los niños y familias:</span>
+          <div class="inline-flex items-center gap-2.5 bg-amber-50 border-2 border-amber-300 px-5 py-2.5 rounded-2xl shadow-inner">
+            <span id="preview-logo-mascot" class="text-4xl animate-bounce-soft">${currentSelectedIcon}</span>
+            <div class="text-left">
+              <span id="preview-logo-title" class="text-xl font-black text-amber-950 font-fun leading-none block">Matemática ${config.mascotName}</span>
+              <span id="preview-logo-school" class="text-xs font-bold text-amber-800 block mt-0.5">${config.schoolName}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario de Configuración -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          
+          <!-- 1. Catálogo de Animales para la Mascota -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              1. Escoge la Figura / Animal de la Mascota Guía:
+            </label>
+            <div class="grid grid-cols-4 sm:grid-cols-7 gap-2 my-2">
+              ${this.mascotCatalog.map(m => `
+                <button type="button" class="mascot-choice-btn p-2 rounded-2xl border-3 flex flex-col items-center justify-center hover:scale-105 active:scale-95 transition-all ${
+                  m.icon === currentSelectedIcon 
+                    ? 'border-purple-600 bg-purple-50 shadow-md scale-105' 
+                    : 'border-slate-200 bg-white hover:border-purple-300'
+                }" data-icon="${m.icon}" data-default-name="${m.defaultName}" title="${m.desc}">
+                  <span class="text-3xl mb-1">${m.icon}</span>
+                  <span class="text-[10px] font-bold text-slate-700 truncate w-full text-center">${m.defaultName}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- 2. Nombre de la Mascota Guía -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              2. Nombre de la Mascota Guía:
+            </label>
+            <input type="text" id="setting-mascot-name" value="${config.mascotName}" class="w-full text-base font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-purple-500 focus:outline-none bg-slate-50 text-slate-800" placeholder="Ej. Kusi, Leo, Sami, Fito...">
+            <span class="text-[11px] text-slate-500 mt-0.5 block">La aplicación se llamará "Matemática [Nombre]"</span>
+          </div>
+
+          <!-- 3. Nombre de la Institución Educativa (Colegio) -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              3. Nombre de tu Institución Educativa / Colegio:
+            </label>
+            <input type="text" id="setting-school-name" value="${config.schoolName}" class="w-full text-base font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-purple-500 focus:outline-none bg-slate-50 text-slate-800" placeholder="Ej. I.E.P. Santa María de la Providencia">
+            <span class="text-[11px] text-slate-500 mt-0.5 block">Este nombre aparecerá en las actas de evaluación, encabezados y diplomas.</span>
+          </div>
+
+          <!-- 4. Aula / Sección -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              4. Aula, Grado o Sección:
+            </label>
+            <input type="text" id="setting-active-class" value="${config.activeClass}" class="w-full text-base font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-purple-500 focus:outline-none bg-slate-50 text-slate-800" placeholder="Ej. Inicial 5 Años - Sección Los Creativos">
+          </div>
+
+          <!-- 5. Nombre de la Docente -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              5. Nombre de la Profesora / Docente de Aula:
+            </label>
+            <input type="text" id="setting-teacher-name" value="${config.teacherName}" class="w-full text-base font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-purple-500 focus:outline-none bg-slate-50 text-slate-800" placeholder="Ej. Prof. Yanet Salvador">
+          </div>
+
+          <!-- 6. PIN de Acceso Docente -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              6. PIN Secreto de Acceso Docente:
+            </label>
+            <input type="text" id="setting-teacher-pin" value="${config.teacherPin}" maxlength="8" class="w-36 text-center text-lg font-black p-2 border-2 border-slate-300 rounded-xl focus:border-purple-500 focus:outline-none bg-slate-50 text-slate-800 tracking-widest">
+            <span class="text-[11px] text-slate-500 mt-0.5 block">Código numérico para entrar a este panel (por defecto 1234).</span>
+          </div>
+
+          <!-- Botón Guardar -->
+          <div class="pt-4 border-t border-slate-200 flex justify-end">
+            <button id="btn-save-settings" class="btn-chunky btn-green text-base py-3 px-8 shadow-lg flex items-center gap-2">
+              <span>💾</span>
+              <span>Guardar Configuración del Colegio</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    // Interactividad en tiempo real de la previsualización
+    const inputMascotName = document.getElementById('setting-mascot-name');
+    const inputSchoolName = document.getElementById('setting-school-name');
+    const previewMascot = document.getElementById('preview-logo-mascot');
+    const previewTitle = document.getElementById('preview-logo-title');
+    const previewSchool = document.getElementById('preview-logo-school');
+
+    const updatePreview = () => {
+      if (previewMascot) previewMascot.textContent = currentSelectedIcon;
+      if (previewTitle) previewTitle.textContent = `Matemática ${inputMascotName.value.trim() || 'Kusi'}`;
+      if (previewSchool) previewSchool.textContent = inputSchoolName.value.trim() || 'Mi Colegio';
+    };
+
+    inputMascotName?.addEventListener('input', updatePreview);
+    inputSchoolName?.addEventListener('input', updatePreview);
+
+    // Selección de animal en el catálogo
+    container.querySelectorAll('.mascot-choice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.SoundEngine.playPop();
+        container.querySelectorAll('.mascot-choice-btn').forEach(b => {
+          b.classList.remove('border-purple-600', 'bg-purple-50', 'shadow-md', 'scale-105');
+        });
+        btn.classList.add('border-purple-600', 'bg-purple-50', 'shadow-md', 'scale-105');
+        currentSelectedIcon = btn.dataset.icon;
+        
+        // Si el nombre no ha sido personalizado o era el default anterior, sugiere el nuevo
+        if (!inputMascotName.value || this.mascotCatalog.some(m => m.defaultName === inputMascotName.value.trim())) {
+          inputMascotName.value = btn.dataset.defaultName;
+        }
+
+        updatePreview();
+      });
+    });
+
+    // Guardar cambios
+    document.getElementById('btn-save-settings')?.addEventListener('click', () => {
+      const newSchoolName = document.getElementById('setting-school-name').value.trim();
+      const newActiveClass = document.getElementById('setting-active-class').value.trim();
+      const newTeacherName = document.getElementById('setting-teacher-name').value.trim();
+      const newMascotName = document.getElementById('setting-mascot-name').value.trim();
+      const newTeacherPin = document.getElementById('setting-teacher-pin').value.trim();
+
+      if (!newSchoolName) {
+        alert("Por favor ingresa el nombre de la Institución Educativa o Colegio.");
+        return;
+      }
+
+      window.AppState.updateSchoolConfig({
+        schoolName: newSchoolName,
+        activeClass: newActiveClass,
+        teacherName: newTeacherName,
+        mascotIcon: currentSelectedIcon,
+        mascotName: newMascotName || 'Kusi',
+        teacherPin: newTeacherPin || '1234'
+      });
+
+      window.SoundEngine.playSuccess();
+      alert(`¡Configuración guardada con éxito!\n\nMascota: ${currentSelectedIcon} ${newMascotName}\nColegio: ${newSchoolName}`);
+      
+      // Cierra modal para que la docente aprecie los cambios en toda la interfaz
+      const modal = document.getElementById('docente-dashboard-modal');
+      if (modal) modal.remove();
+    });
+  },
+
   // EXPORTACIÓN A FORMATO CSV / EXCEL
   exportCSV() {
     window.SoundEngine.playSuccess();
+    const config = window.AppState.getSchoolConfig();
     const summary = window.AppState.getClassSummary();
     const students = summary.students;
 
     let csv = '\uFEFF'; // UTF-8 BOM para Excel
+    csv += `"${config.schoolName}","${config.activeClass}","Docente: ${config.teacherName}"\n`;
     csv += 'ID,Nombre,Avatar,Edad,Ultima Actividad,Mundo 1 Cantidad (Nota),Cantidad Resueltos,Mundo 2 Espacio (Nota),Espacio Resueltos,Total Resueltos,Avance %,Estado,Estrellas\n';
 
     students.forEach(s => {
@@ -754,7 +970,7 @@ window.DocenteModule = {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Reporte_Aula_Matematica_5Anos_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `Reporte_${config.schoolName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

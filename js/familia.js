@@ -10,6 +10,7 @@ window.FamiliaModule = {
     const student = window.AppState.getCurrentStudent();
     if (!student) return;
 
+    const config = window.AppState.getSchoolConfig();
     const summary = window.AppState.getStudentSummary(student.id);
     const todayDate = new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -27,7 +28,7 @@ window.FamiliaModule = {
             </div>
             <div>
               <h2 class="text-2xl font-black text-slate-900 font-fun leading-tight">Portal para Familias: Mi Progreso</h2>
-              <p class="text-xs text-emerald-800 font-bold">Acompañando el aprendizaje matemático en Educación Inicial (5 Años)</p>
+              <p class="text-xs text-emerald-800 font-bold">${config.schoolName} • ${config.activeClass}</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -53,7 +54,7 @@ window.FamiliaModule = {
               <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 block">Estudiante del Ciclo II:</span>
                 <h3 class="text-2xl font-black text-slate-900 font-fun">${student.name}</h3>
-                <p class="text-xs text-slate-600 font-semibold">5 Años • ${window.AppState.state.activeClass}</p>
+                <p class="text-xs text-slate-600 font-semibold">${config.schoolName} • ${config.activeClass}</p>
               </div>
             </div>
 
@@ -194,8 +195,9 @@ window.FamiliaModule = {
              =================================================================== -->
         <div id="diploma-printable" class="print-only">
           <div class="p-8 border-8 border-double border-amber-500 rounded-3xl bg-amber-50 text-center max-w-2xl mx-auto my-4 relative">
-            <div class="text-5xl mb-2">⭐ 🦙 ⭐</div>
-            <p class="text-xs uppercase font-bold text-amber-800 tracking-widest">MINISTERIO DE EDUCACIÓN DEL PERÚ • EDUCACIÓN INICIAL</p>
+            <div class="text-5xl mb-2">${config.mascotIcon} ⭐ ${config.mascotIcon}</div>
+            <p class="text-sm uppercase font-black text-amber-900 tracking-widest">${config.schoolName}</p>
+            <p class="text-xs font-bold text-amber-700">${config.activeClass}</p>
             <h1 class="text-3xl font-black text-amber-950 font-fun mt-2 mb-1">DIPLOMA DE LOGRO MATEMÁTICO</h1>
             <p class="text-sm font-bold text-slate-600">Se otorga con mucho cariño y alegría a:</p>
             
@@ -204,7 +206,7 @@ window.FamiliaModule = {
             </div>
 
             <p class="text-sm text-slate-700 max-w-lg mx-auto font-medium">
-              Por su curiosidad, esfuerzo y entusiasmo al resolver los desafíos matemáticos de <strong>Cantidad, Formas y Espacio (Ciclo II - 5 Años)</strong> junto a su amiga Kusi.
+              Por su curiosidad, esfuerzo y entusiasmo al resolver los desafíos matemáticos de <strong>Cantidad, Formas y Espacio (Ciclo II - 5 Años)</strong> junto a su mascota amiga <strong>${config.mascotName} ${config.mascotIcon}</strong>.
             </p>
 
             <div class="flex items-center justify-around mt-8 pt-4 border-t-2 border-amber-300 text-xs">
@@ -217,8 +219,12 @@ window.FamiliaModule = {
                 <span class="text-slate-500">Fecha de entrega</span>
               </div>
               <div>
-                <span class="font-fun font-bold text-amber-900 text-base block">Kusi la Alpaca 🦙</span>
+                <span class="font-fun font-bold text-amber-900 text-base block">${config.mascotName} ${config.mascotIcon}</span>
                 <span class="text-slate-500">Mascota Guía</span>
+              </div>
+              <div>
+                <span class="font-bold text-slate-800 block text-sm">${config.teacherName}</span>
+                <span class="text-slate-500">Docente de Aula</span>
               </div>
             </div>
           </div>

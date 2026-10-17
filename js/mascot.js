@@ -111,10 +111,33 @@ class KusiMascot {
     const host = document.querySelector(containerSelector);
     if (!host) return;
 
+    const config = window.AppState ? window.AppState.getSchoolConfig() : { mascotIcon: '🦙', mascotName: 'Kusi' };
+    const isLlama = config.mascotIcon === '🦙';
+
     host.innerHTML = `
       <div id="kusi-mascot-wrapper" class="mascot-container flex items-end">
-        <div id="kusi-svg-holder" class="mascot-svg-wrapper animate-bounce-soft" title="¡Soy Kusi! Tócame para escucharte">
-          ${this.getSVG(110)}
+        <div id="kusi-svg-holder" class="mascot-svg-wrapper animate-bounce-soft flex flex-col items-center cursor-pointer select-none" title="¡Soy ${config.mascotName}! Tócame para escucharte">
+          ${isLlama 
+            ? `
+              <div class="relative flex flex-col items-center">
+                ${this.getSVG(105)}
+                <span class="mt-0.5 font-black text-amber-950 font-fun text-xs bg-amber-300 border-2 border-white px-2.5 py-0.5 rounded-full shadow-md">
+                  ${config.mascotName}
+                </span>
+              </div>
+            `
+            : `
+              <div class="relative flex flex-col items-center">
+                <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-200 via-amber-100 to-white border-4 border-amber-400 shadow-xl flex items-center justify-center text-6xl relative overflow-hidden group">
+                  <span class="mascot-emoji-char transform group-hover:scale-110 transition-transform drop-shadow">${config.mascotIcon}</span>
+                  <div class="mascot-shine absolute inset-0 bg-white/20 rounded-full pointer-events-none"></div>
+                </div>
+                <span class="mt-1 font-black text-amber-950 font-fun text-xs bg-amber-300 border-2 border-white px-2.5 py-0.5 rounded-full shadow-md">
+                  ${config.mascotName}
+                </span>
+              </div>
+            `
+          }
         </div>
         <div id="kusi-bubble" class="mascot-speech-bubble select-none flex items-center gap-3">
           <span id="kusi-text" class="flex-1">${this.currentMessage}</span>
@@ -216,3 +239,10 @@ class KusiMascot {
 
 // Instancia global
 window.Kusi = new KusiMascot();
+
+// Actualizar renderizado cuando la docente cambie la mascota o el colegio
+window.addEventListener('cneb:config-updated', () => {
+  if (window.Kusi) {
+    window.Kusi.render();
+  }
+});
