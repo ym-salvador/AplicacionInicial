@@ -14,6 +14,7 @@ window.App = {
     this.applySchoolConfig();
     this.renderTopNav();
     window.StudentProfileModule?.init();
+    this.checkSyncUrl();
     this.showHome();
 
     // Actualización reactiva al cambiar configuración escolar y de mascota
@@ -49,6 +50,58 @@ window.App = {
       window.SoundEngine.playPop();
       this.showHome();
     });
+  },
+
+  checkSyncUrl() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('sync')) {
+        const token = urlParams.get('sync');
+        const res = window.AppState.importSyncPayload(token);
+        if (res.success) {
+          window.SoundEngine.playSuccess();
+          this.renderTopNav();
+
+          // Modal festivo de confirmación de sincronización
+          const syncModal = document.createElement('div');
+          syncModal.className = 'modal-overlay';
+          syncModal.innerHTML = `
+            <div class="modal-content p-6 max-w-md mx-auto text-center border-4 border-emerald-400 shadow-2xl animate-pop">
+              <div class="w-20 h-20 rounded-full bg-emerald-100 border-3 border-emerald-400 flex items-center justify-center text-4xl mx-auto mb-3 shadow">
+                ${res.student.avatar || '🎉'}
+              </div>
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">¡Sincronización Exitosa!</span>
+              <h3 class="text-2xl font-black text-slate-900 font-fun mt-2 mb-1">
+                ${res.isNew ? '¡Nuevo Alumno Registrado!' : '¡Avance Actualizado!'}
+              </h3>
+              <p class="text-sm text-slate-700 font-bold mb-3">
+                Los datos de <span class="text-emerald-700">${res.student.name}</span> (${res.student.stars} ⭐ estrellas) se han guardado en tu Panel Docente.
+              </p>
+              <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-3 text-xs text-emerald-950 font-medium mb-4 text-left space-y-1">
+                <div>🎯 Misiones completadas: <strong>${res.summary?.totalCompleted || 0}/23</strong> (${res.summary?.totalProgress || 0}%)</div>
+                <div>🧺 Cantidad: <strong>${res.summary?.cantidad?.grade || 'Sin evaluar'}</strong> (${res.summary?.cantidad?.completed || 0} retos)</div>
+                <div>🚀 Espacio y Formas: <strong>${res.summary?.espacio?.grade || 'Sin evaluar'}</strong> (${res.summary?.espacio?.completed || 0} retos)</div>
+              </div>
+              <button id="btn-sync-modal-close" class="btn-chunky btn-green text-base py-2.5 px-6 shadow-md w-full">
+                ¡Entendido! Ver en la App 🚀
+              </button>
+            </div>
+          `;
+          document.body.appendChild(syncModal);
+          document.getElementById('btn-sync-modal-close')?.addEventListener('click', () => {
+            window.SoundEngine.playPop();
+            syncModal.remove();
+          });
+
+          // Limpiar el parámetro de la URL sin recargar
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error checking sync param:', e);
+    }
   },
 
   applySchoolConfig() {
@@ -92,12 +145,13 @@ window.App = {
     const mainContainer = document.getElementById('app-main-content');
 
     const config = window.AppState.getSchoolConfig();
+    const currentStudent = window.AppState.getCurrentStudent();
     const evalCant = window.AppState.getWorldOverallAssessment('cantidad');
     const evalEsp = window.AppState.getWorldOverallAssessment('espacio');
 
     mainContainer.innerHTML = `
       <div class="max-w-5xl mx-auto flex flex-col items-center justify-center min-h-[75vh] px-4 py-6">
-        <div class="text-center mb-8">
+        <div class="text-center mb-6">
           <div class="inline-flex items-center gap-2.5 bg-white/95 border-4 border-amber-300 px-6 py-2 rounded-full shadow-lg mb-3">
             <span class="text-2xl">${config.mascotIcon}</span>
             <span class="font-black text-amber-950 font-fun text-lg md:text-xl">${config.schoolName} • ${config.activeClass}</span>
@@ -108,6 +162,24 @@ window.App = {
           <p class="text-lg md:text-xl text-slate-700 font-bold mt-1 font-fun">
             Elige un mundo para explorar sus 3 sesiones de aprendizaje:
           </p>
+
+          <!-- Banner Amigable de Identificación para Familias -->
+          <div class="flex flex-wrap items-center justify-center gap-2.5 bg-gradient-to-r from-amber-50 to-emerald-50 border-2 border-amber-300 rounded-2xl px-4 py-2 mt-4 shadow-sm inline-flex">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">${currentStudent?.avatar || '🦙'}</span>
+              <span class="text-xs md:text-sm font-bold text-slate-800">
+                Jugando en casa como: <strong class="text-amber-950 font-black font-fun text-base">${currentStudent?.name || 'Estudiante'}</strong>
+              </span>
+            </div>
+            <button id="btn-quick-change-name" class="btn-chunky bg-white text-emerald-800 border-emerald-300 text-xs py-1 px-3 shadow-sm flex items-center gap-1 hover:bg-emerald-50">
+              <span>✏️</span>
+              <span>Cambiar Nombre / Animalito</span>
+            </button>
+            <button id="btn-quick-family-portal" class="btn-chunky bg-emerald-100 text-emerald-900 border-emerald-300 text-xs py-1 px-3 shadow-sm flex items-center gap-1 hover:bg-emerald-200">
+              <span>👨‍👩‍👧</span>
+              <span>Ver Avances Familia</span>
+            </button>
+          </div>
         </div>
 
         <!-- Tarjetas de los Dos Grandes Mundos del CNEB -->
@@ -168,6 +240,15 @@ window.App = {
     document.getElementById('card-world-espacio').addEventListener('click', () => {
       window.SoundEngine.playPop();
       this.showWorld('espacio');
+    });
+
+    document.getElementById('btn-quick-change-name')?.addEventListener('click', () => {
+      window.SoundEngine.playPop();
+      window.StudentProfileModule.openRegisterModal(true);
+    });
+
+    document.getElementById('btn-quick-family-portal')?.addEventListener('click', () => {
+      window.FamiliaModule.openPortal();
     });
   },
 

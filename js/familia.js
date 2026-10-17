@@ -32,6 +32,10 @@ window.FamiliaModule = {
             </div>
           </div>
           <div class="flex items-center gap-2">
+            <button id="btn-share-whatsapp-top" class="btn-chunky bg-emerald-600 text-white border-emerald-500 text-xs md:text-sm py-2 px-3.5 shadow flex items-center gap-1.5 hover:bg-emerald-700" title="Enviar avance por WhatsApp">
+              <span>📲</span>
+              <span class="hidden sm:inline">Enviar a la Profe</span>
+            </button>
             <button id="btn-print-diploma" class="btn-chunky btn-yellow text-xs md:text-sm py-2 px-4 shadow flex items-center gap-1.5" title="Imprimir diploma de reconocimiento">
               <span>📜</span>
               <span>Imprimir Diploma</span>
@@ -74,6 +78,37 @@ window.FamiliaModule = {
                 <span class="text-xl">📈</span>
                 <span class="font-black text-sky-950 font-fun text-xl block leading-tight">${summary.totalProgress}%</span>
                 <span class="text-[10px] text-slate-500 font-bold">Avance</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===================================================================
+               NUEVA SECCIÓN: ENVIAR REPORTE A LA PROFESORA DESDE CASA
+               =================================================================== -->
+          <div class="bg-gradient-to-r from-emerald-500 to-teal-600 border-4 border-emerald-400 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+            <div class="relative z-10">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-3xl">📲</span>
+                <div>
+                  <h4 class="text-xl font-black font-fun leading-tight text-white">¿Jugaron en casa? Envía el reporte a la Profesora</h4>
+                  <p class="text-xs text-emerald-100 font-medium">Al pulsar el botón se abrirá WhatsApp con el reporte oficial y un enlace para que la profesora lo guarde en su registro.</p>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3 mt-4">
+                <button id="btn-share-whatsapp" class="btn-chunky bg-white text-emerald-900 border-emerald-200 text-sm md:text-base py-2.5 px-5 shadow-lg flex items-center gap-2 hover:bg-emerald-50 active:scale-95 transition-all">
+                  <span class="text-xl">💬</span>
+                  <span class="font-bold">Enviar por WhatsApp a la Profesora</span>
+                </button>
+
+                <button id="btn-copy-sync-code" class="btn-chunky bg-emerald-700 text-white border-emerald-400 text-xs md:text-sm py-2.5 px-4 shadow flex items-center gap-1.5 hover:bg-emerald-800">
+                  <span>📋</span>
+                  <span>Copiar Enlace de Reporte</span>
+                </button>
+              </div>
+
+              <div id="copy-sync-toast" class="hidden text-xs bg-emerald-900/90 text-emerald-100 px-3 py-1.5 rounded-xl font-bold mt-2 inline-block">
+                ✓ ¡Enlace copiado! Ya puedes pegarlo en el chat de la profesora.
               </div>
             </div>
           </div>
@@ -244,5 +279,58 @@ window.FamiliaModule = {
       window.SoundEngine.playSuccess();
       window.print();
     });
+
+    const handleShareWhatsApp = () => {
+      window.SoundEngine.playSuccess();
+      const syncToken = window.AppState.generateSyncPayload(student.id);
+      const baseUrl = window.location.origin + window.location.pathname;
+      const syncUrl = `${baseUrl}?sync=${encodeURIComponent(syncToken)}`;
+
+      const message = `¡Hola Profesora ${config.teacherName}! 🌟\n` +
+        `Le comparto el avance de mi hijo(a) en Matemática Divertida (${config.mascotName} ${config.mascotIcon}):\n\n` +
+        `👶 Estudiante: *${student.name}*\n` +
+        `🏫 ${config.schoolName} - ${config.activeClass}\n` +
+        `⭐ Estrellas ganadas: *${student.stars}*\n` +
+        `🎯 Misiones completadas: *${summary.totalCompleted}/23* (${summary.totalProgress}% de avance)\n` +
+        `🧺 Cantidad: *${summary.cantidad.grade}* (${summary.cantidad.completed}/${summary.cantidad.total})\n` +
+        `🚀 Espacio y Formas: *${summary.espacio.grade}* (${summary.espacio.completed}/${summary.espacio.total})\n\n` +
+        `📲 *Para sincronizar automáticamente estos datos en su Panel Docente, pulse aquí:*\n` +
+        `${syncUrl}`;
+
+      let waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+      if (config.teacherPhone) {
+        const cleanPhone = config.teacherPhone.replace(/[^0-9]/g, '');
+        if (cleanPhone) {
+          waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
+        }
+      }
+
+      window.open(waUrl, '_blank');
+    };
+
+    const handleCopySyncCode = () => {
+      window.SoundEngine.playPop();
+      const syncToken = window.AppState.generateSyncPayload(student.id);
+      const baseUrl = window.location.origin + window.location.pathname;
+      const syncUrl = `${baseUrl}?sync=${encodeURIComponent(syncToken)}`;
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(syncUrl).then(() => {
+          const toast = document.getElementById('copy-sync-toast');
+          if (toast) {
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+          }
+        }).catch(() => {
+          prompt("Copia este enlace de reporte para enviarlo a la profesora:", syncUrl);
+        });
+      } else {
+        prompt("Copia este enlace de reporte para enviarlo a la profesora:", syncUrl);
+      }
+    };
+
+    document.getElementById('btn-share-whatsapp')?.addEventListener('click', handleShareWhatsApp);
+    document.getElementById('btn-share-whatsapp-top')?.addEventListener('click', handleShareWhatsApp);
+    document.getElementById('btn-copy-sync-code')?.addEventListener('click', handleCopySyncCode);
   }
 };

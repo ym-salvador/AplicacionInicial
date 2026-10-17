@@ -116,6 +116,7 @@ class AppStateManager {
       activeClass: 'Aula Los Creativos (5 Años)',
       schoolName: 'I.E. Inicial San Gabriel',
       teacherName: 'Prof. Yanet Salvador',
+      teacherPhone: '',
       mascotIcon: '🦙',
       mascotName: 'Kusi',
       appTitle: 'Matemática Kusi',
@@ -130,6 +131,7 @@ class AppStateManager {
       schoolName: this.state.schoolName || 'I.E. Inicial San Gabriel',
       activeClass: this.state.activeClass || 'Aula 5 Años',
       teacherName: this.state.teacherName || 'Docente de Aula',
+      teacherPhone: this.state.teacherPhone || '',
       mascotIcon: this.state.mascotIcon || '🦙',
       mascotName: this.state.mascotName || 'Kusi',
       appTitle: this.state.appTitle || `Matemática ${this.state.mascotName || 'Kusi'}`,
@@ -141,6 +143,7 @@ class AppStateManager {
     if (config.schoolName !== undefined) this.state.schoolName = config.schoolName.trim();
     if (config.activeClass !== undefined) this.state.activeClass = config.activeClass.trim();
     if (config.teacherName !== undefined) this.state.teacherName = config.teacherName.trim();
+    if (config.teacherPhone !== undefined) this.state.teacherPhone = config.teacherPhone.trim();
     if (config.mascotIcon !== undefined) this.state.mascotIcon = config.mascotIcon;
     if (config.mascotName !== undefined) {
       this.state.mascotName = config.mascotName.trim() || 'Kusi';
@@ -150,6 +153,112 @@ class AppStateManager {
 
     this.saveState();
     window.dispatchEvent(new CustomEvent('cneb:config-updated', { detail: this.getSchoolConfig() }));
+  }
+
+  // GENERAR CARGA ÚTIL DE SINCRONIZACIÓN PARA ENVÍO POR WHATSAPP O ENLACE
+  generateSyncPayload(studentId = null) {
+    const student = studentId ? this.state.students.find(s => s.id === studentId) : this.getCurrentStudent();
+    if (!student) return null;
+
+    const summary = this.getStudentSummary(student.id);
+
+    const payload = {
+      v: 1,
+      id: student.id,
+      name: student.name,
+      avatar: student.avatar || '🦙',
+      stars: student.stars || 0,
+      lastActive: student.lastActive || new Date().toLocaleString('es-PE'),
+      evals: student.evaluaciones || {},
+      summary: {
+        totalCompleted: summary?.totalCompleted || 0,
+        totalProgress: summary?.totalProgress || 0,
+        cantGrade: summary?.cantidad?.grade || 'Sin evaluar',
+        espGrade: summary?.espacio?.grade || 'Sin evaluar'
+      }
+    };
+
+    try {
+      const jsonStr = JSON.stringify(payload);
+      // Codificación Base64 segura para UTF-8 (soporta tildes y emojis)
+      const encoded = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
+      return encoded;
+    } catch (e) {
+      console.error('Error al generar payload de sincronización:', e);
+      return null;
+    }
+  }
+
+  // IMPORTAR CARGA ÚTIL DE SINCRONIZACIÓN (DESDE ENLACE O CÓDIGO)
+  importSyncPayload(rawToken) {
+    if (!rawToken || typeof rawToken !== 'string') {
+      return { success: false, error: 'Código o enlace vacío.' };
+    }
+
+    try {
+      let token = rawToken.trim();
+      // Si el usuario pegó el enlace completo
+      if (token.includes('sync=')) {
+        const urlMatch = token.match(/sync=([^&#\s]+)/);
+        if (urlMatch) {
+          token = urlMatch[1];
+        }
+      }
+
+      token = decodeURIComponent(token);
+      // Decodificación Base64 segura para UTF-8
+      const jsonStr = decodeURIComponent(Array.prototype.map.call(atob(token), c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+      const data = JSON.parse(jsonStr);
+
+      if (!data || !data.name) {
+        return { success: false, error: 'El formato de los datos no es válido.' };
+      }
+
+      // Buscar si el estudiante ya existe en la lista de la docente por nombre
+      const cleanName = data.name.trim();
+      let student = this.state.students.find(s => s.name.toLowerCase() === cleanName.toLowerCase());
+      let isNew = false;
+
+      if (!student) {
+        isNew = true;
+        const newId = 'est_' + Date.now();
+        student = {
+          id: newId,
+          name: cleanName,
+          avatar: data.avatar || '🦙',
+          age: 5,
+          registeredAt: new Date().toISOString().split('T')[0],
+          lastActive: data.lastActive || new Date().toLocaleString('es-PE'),
+          stars: data.stars || 0,
+          evaluaciones: data.evals || this.getDefaultEvaluations()
+        };
+        this.state.students.push(student);
+      } else {
+        // Actualizar datos del estudiante existente con lo jugado en casa
+        student.stars = Math.max(student.stars || 0, data.stars || 0);
+        if (data.avatar) student.avatar = data.avatar;
+        student.lastActive = data.lastActive || new Date().toLocaleString('es-PE');
+        if (data.evals) {
+          student.evaluaciones = {
+            ...student.evaluaciones,
+            ...data.evals
+          };
+        }
+      }
+
+      this.state.currentStudentId = student.id;
+      this.saveState();
+
+      return {
+        success: true,
+        isNew,
+        student,
+        summary: this.getStudentSummary(student.id)
+      };
+    } catch (e) {
+      console.error('Error al importar sincronización:', e);
+      return { success: false, error: 'El código no es válido o está dañado.' };
+    }
   }
 
   loadState() {

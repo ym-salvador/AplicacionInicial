@@ -94,8 +94,24 @@ window.GameDesplazamiento = {
   updateGrid() {
     const gridEl = document.getElementById('nav-grid');
     if (!gridEl) return;
-
     gridEl.innerHTML = '';
+
+    const student = window.AppState.getCurrentStudent();
+    const avatar = student?.avatar || '🐶';
+    const goalMap = {
+      '🐰': '🥕',
+      '🐱': '🐟',
+      '🐶': '🦴',
+      '🦙': '🌸',
+      '🐻': '🍯',
+      '🐒': '🍌',
+      '🦁': '🥩',
+      '🐼': '🎋',
+      '🐹': '🌻',
+      '🐧': '🐟'
+    };
+    const goalItem = goalMap[avatar] || '⭐';
+
     for (let r = 0; r < this.gridSize; r++) {
       for (let c = 0; c < this.gridSize; c++) {
         const cell = document.createElement('div');
@@ -103,10 +119,10 @@ window.GameDesplazamiento = {
 
         if (r === this.playerPos.r && c === this.playerPos.c) {
           cell.className += ' bg-amber-200 border-amber-500 scale-105 shadow-md';
-          cell.innerHTML = '<span class="animate-bounce-soft">🐶</span>';
+          cell.innerHTML = `<span class="animate-bounce-soft">${avatar}</span>`;
         } else if (r === this.goalPos.r && c === this.goalPos.c) {
           cell.className += ' bg-emerald-100 border-emerald-500 animate-pulse';
-          cell.innerHTML = '<span class="text-3xl">🦴</span>';
+          cell.innerHTML = `<span class="text-3xl">${goalItem}</span>`;
         } else {
           cell.className += ' bg-white border-slate-200';
           if (r === 3 && c === 0) cell.innerHTML = '<span class="text-xs opacity-20">🐾</span>';
@@ -132,7 +148,9 @@ window.GameDesplazamiento = {
       if (this.playerPos.r === this.goalPos.r && this.playerPos.c === this.goalPos.c) {
         window.SoundEngine.playVictory();
         window.AppState.recordResult(this.desempenoId, true, this.hintsCount);
-        window.Kusi.celebrate("¡Yupi! ¡Fido llegó a su rico huesito gracias a tus indicaciones!");
+        const student = window.AppState.getCurrentStudent();
+        const studentName = student?.name ? student.name.split(' ')[0] : 'Tu amiguito';
+        window.Kusi.celebrate(`¡Yupi! ¡${studentName} llegó a su meta gracias a tus indicaciones con las flechas!`);
         setTimeout(() => window.App.showGameSuccess(this.desempenoId), 2500);
       } else {
         window.Kusi.say(directionVoice);

@@ -5,7 +5,16 @@
  */
 
 window.StudentProfileModule = {
-  avatars: ['🦙', '🦁', '🐰', '🐻', '🦊', '🐬', '🦋', '🐼', '🐸', '🦄', '🐝', '🦉'],
+  avatars: [
+    // Animalitos Andinos y Peruanos
+    '🦙', '🦊', '🐹', '🦅', '🐬', '🐧',
+    // Animalitos de la Selva y Sabana
+    '🦁', '🐘', '🦒', '🐒', '🐯', '🐼', '🐨', '🦓', '🦥', '🦩', '🦜', '🐆',
+    // Animalitos de la Granja y Hogar
+    '🐶', '🐱', '🐰', '🐻', '🐸', '🐥', '🦆', '🐮', '🐷', '🐑', '🐴',
+    // Mar, Jardín y Fantasía
+    '🐳', '🐙', '🐢', '🦋', '🐝', '🐞', '🐌', '🦄', '🦕'
+  ],
   selectedAvatar: '🦙',
 
   init() {
@@ -16,6 +25,24 @@ window.StudentProfileModule = {
       window.SoundEngine.playPop();
       this.openSelectorModal();
     });
+
+    // Revisar si es la primera visita familiar desde casa para invitar a colocar el nombre
+    this.checkFirstHomeVisit();
+  },
+
+  checkFirstHomeVisit() {
+    const hasConfigured = localStorage.getItem('cneb_family_welcomed');
+    if (!hasConfigured) {
+      // Si el estudiante activo es el de prueba por defecto
+      const current = window.AppState.getCurrentStudent();
+      if (current && (current.id === 'est_1' || current.id === 'est_4')) {
+        // Marcamos para no ser invasivos pero mostrar la invitación
+        localStorage.setItem('cneb_family_welcomed', 'true');
+        setTimeout(() => {
+          this.openRegisterModal(true); // Modo bienvenida familiar
+        }, 900);
+      }
+    }
   },
 
   updateHeaderDisplay() {
@@ -56,7 +83,7 @@ window.StudentProfileModule = {
         </div>
 
         <!-- Cuadrícula de Estudiantes Registrados -->
-        <div class="grid grid-cols-2 sm:grid-cols-2 gap-3.5 my-3 overflow-y-auto max-h-[50vh] p-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-3 overflow-y-auto max-h-[50vh] p-1">
           ${students.map(st => {
             const isSelected = st.id === currentStudent?.id;
             const summary = window.AppState.getStudentSummary(st.id);
@@ -112,7 +139,6 @@ window.StudentProfileModule = {
           modal.remove();
           window.Kusi.say(`¡Hola ${switched.name.split(' ')[0]}! ¡Vamos a divertirnos aprendiendo matemática!`);
           
-          // Refresca la vista actual si corresponde
           if (window.App.currentView === 'home') {
             window.App.showHome();
           }
@@ -127,35 +153,45 @@ window.StudentProfileModule = {
     });
   },
 
-  // MODAL: REGISTRARSE COMO NUEVO ESTUDIANTE
-  openRegisterModal() {
+  // MODAL: REGISTRARSE COMO NUEVO ESTUDIANTE / MODO FAMILIA EN CASA
+  openRegisterModal(isFamilyWelcome = false) {
     this.selectedAvatar = '🦙';
 
     const modal = document.createElement('div');
     modal.id = 'student-register-modal';
     modal.className = 'modal-overlay';
     modal.innerHTML = `
-      <div class="modal-content p-6 max-w-md mx-auto text-center border-4 border-emerald-400 shadow-2xl">
+      <div class="modal-content p-6 max-w-lg mx-auto text-center border-4 border-emerald-400 shadow-2xl">
         
-        <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-4xl mx-auto mb-3 shadow">
-          🎨
+        <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-4xl mx-auto mb-2 shadow">
+          ${isFamilyWelcome ? '👨‍👩‍👧' : '🎨'}
         </div>
 
-        <h3 class="text-2xl font-black text-slate-900 font-fun mb-1">¡Bienvenido a Matemática Divertida!</h3>
-        <p class="text-slate-600 text-sm mb-4">Escribe tu nombre y elige tu animalito favorito:</p>
+        <h3 class="text-2xl font-black text-slate-900 font-fun mb-1">
+          ${isFamilyWelcome ? '¡Bienvenidos a Matemática Divertida en Casa!' : '¡Escribe tu Nombre para Jugar!'}
+        </h3>
+        <p class="text-slate-600 text-xs sm:text-sm mb-3">
+          ${isFamilyWelcome 
+            ? 'Papito o mamita: escribe el nombre de tu hijo/a y elijan juntos su animalito favorito para guardar sus avances y estrellas ⭐' 
+            : 'Escribe tu nombre y elige tu animalito favorito entre más de 35 opciones:'}
+        </p>
 
         <!-- Campo de Nombre -->
         <div class="my-3 text-left">
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Tu Nombre o Apodo:</label>
-          <input type="text" id="reg-student-name" placeholder="Ej. Valentina, Mateo..." maxlength="25" class="w-full text-xl font-black font-fun p-3 border-3 border-amber-300 rounded-2xl focus:border-emerald-500 focus:outline-none shadow-inner bg-amber-50/50 text-slate-800">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nombre del Niño o Niña:</label>
+          <input type="text" id="reg-student-name" placeholder="Ej. Mateo, Valentina, Liam, Sofía..." maxlength="25" class="w-full text-xl font-black font-fun p-3 border-3 border-amber-300 rounded-2xl focus:border-emerald-500 focus:outline-none shadow-inner bg-amber-50/50 text-slate-800">
         </div>
 
-        <!-- Selector de Avatar -->
-        <div class="my-4 text-left">
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Elige tu animalito:</label>
-          <div id="avatar-grid" class="grid grid-cols-6 gap-2">
+        <!-- Selector de Avatar Extendido -->
+        <div class="my-3 text-left">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Elige su animalito favorito:</label>
+            <span class="text-[11px] text-emerald-800 bg-emerald-100 font-bold px-2 py-0.5 rounded-full">¡37 Animalitos!</span>
+          </div>
+          
+          <div id="avatar-grid" class="grid grid-cols-6 sm:grid-cols-9 gap-2 p-2 border-2 border-emerald-200 rounded-2xl bg-slate-50 max-h-[160px] overflow-y-auto shadow-inner">
             ${this.avatars.map(av => `
-              <button type="button" class="avatar-option-btn w-12 h-12 rounded-2xl border-3 border-slate-200 bg-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all ${av === '🦙' ? 'border-emerald-500 bg-emerald-50 scale-105' : ''}" data-avatar="${av}">
+              <button type="button" class="avatar-option-btn w-11 h-11 rounded-xl border-2 border-slate-200 bg-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-sm ${av === '🦙' ? 'border-emerald-500 bg-emerald-100 scale-105' : ''}" data-avatar="${av}">
                 ${av}
               </button>
             `).join('')}
@@ -163,12 +199,19 @@ window.StudentProfileModule = {
         </div>
 
         <!-- Botones de Acción -->
-        <div class="flex gap-3 justify-center mt-6">
-          <button id="btn-cancel-register" class="btn-chunky bg-slate-200 text-slate-700 border-slate-300 text-sm py-2 px-5">
-            Cancelar
-          </button>
-          <button id="btn-submit-register" class="btn-chunky btn-green text-base py-3 px-6 shadow-md">
-            ¡Listo para Jugar! 🚀
+        <div class="flex gap-3 justify-center mt-5">
+          ${!isFamilyWelcome ? `
+            <button id="btn-cancel-register" class="btn-chunky bg-slate-200 text-slate-700 border-slate-300 text-sm py-2 px-5">
+              Cancelar
+            </button>
+          ` : `
+            <button id="btn-cancel-register" class="btn-chunky bg-slate-100 text-slate-600 border-slate-300 text-xs py-2 px-4">
+              Jugar como invitado
+            </button>
+          `}
+          <button id="btn-submit-register" class="btn-chunky btn-green text-base py-3 px-6 shadow-md flex items-center gap-2">
+            <span>🚀</span>
+            <span>¡Empezar a Jugar!</span>
           </button>
         </div>
       </div>

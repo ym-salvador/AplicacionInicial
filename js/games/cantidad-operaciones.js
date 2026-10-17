@@ -5,30 +5,37 @@
  */
 
 window.GameOperaciones = {
-  // 3.2 AGREGAR EN LA LAGUNA (2 + 1 = 3)
+  // 3.2 AGREGAR CON ANIMALITOS (2 + 1 = 3)
   playAgregar(container) {
     let hints = 0;
+    const animalThemes = [
+      { name: 'patitos', icon: '🦆', habitat: 'en la laguna' },
+      { name: 'ranitas', icon: '🐸', habitat: 'en el charquito' },
+      { name: 'conejitos', icon: '🐰', habitat: 'en el jardín' },
+      { name: 'gatitos', icon: '🐱', habitat: 'en el parque' }
+    ];
+    const theme = animalThemes[Math.floor(Math.random() * animalThemes.length)];
 
     container.innerHTML = `
       <div class="flex flex-col items-center justify-between h-full max-w-4xl mx-auto p-3">
         <div class="w-full flex items-center justify-between mb-2">
           <div class="bg-white/95 px-4 py-2 rounded-2xl shadow border-2 border-sky-300 flex items-center gap-2">
-            <span class="text-2xl">🦆</span>
+            <span class="text-2xl">${theme.icon}</span>
             <span class="font-bold text-sky-950 text-base font-fun">Juego 3.2: ¡Vamos a Agregar!</span>
           </div>
         </div>
 
-        <!-- Escenario Laguna -->
+        <!-- Escenario Laguna / Prado -->
         <div class="w-full bg-gradient-to-b from-sky-200 to-cyan-300 border-4 border-sky-400 rounded-3xl p-5 shadow-xl relative min-h-[200px] flex flex-col justify-between overflow-hidden">
           <div class="text-center font-fun text-lg text-sky-900 font-bold bg-white/80 py-1 px-4 rounded-full self-center shadow">
-            Habían 2 patitos y llega 1 amigo más...
+            Habían 2 ${theme.name} ${theme.habitat} y llega 1 amigo más...
           </div>
 
-          <!-- Patitos -->
+          <!-- Animalitos -->
           <div class="flex items-center justify-center gap-5 my-3">
             <div class="flex gap-2 bg-white/40 p-2.5 rounded-2xl border-2 border-sky-200">
-              <span class="text-5xl animate-bounce-soft">🦆</span>
-              <span class="text-5xl animate-bounce-soft" style="animation-delay: 0.2s;">🦆</span>
+              <span class="text-5xl animate-bounce-soft">${theme.icon}</span>
+              <span class="text-5xl animate-bounce-soft" style="animation-delay: 0.2s;">${theme.icon}</span>
             </div>
 
             <div class="text-3xl font-black text-sky-700 bg-white/80 w-10 h-10 rounded-full flex items-center justify-center shadow">
@@ -36,18 +43,18 @@ window.GameOperaciones = {
             </div>
 
             <div class="flex gap-2 bg-emerald-100/70 p-2.5 rounded-2xl border-2 border-emerald-300 animate-pop">
-              <span class="text-5xl animate-bounce-soft" style="animation-delay: 0.4s;">🦆</span>
+              <span class="text-5xl animate-bounce-soft" style="animation-delay: 0.4s;">${theme.icon}</span>
             </div>
           </div>
 
           <div class="text-center text-xs font-bold text-sky-900">
-            ¿Cuántos patitos hay en total ahora en la laguna?
+            ¿Cuántos ${theme.name} hay en total ahora?
           </div>
         </div>
 
         <!-- Opciones Numéricas Grandes -->
         <div class="w-full bg-white/90 backdrop-blur-md rounded-3xl p-3 shadow-lg border-3 border-sky-200 my-2">
-          <p class="text-center font-bold text-slate-700 mb-2 text-sm font-fun">Toca el número de patitos que hay ahora:</p>
+          <p class="text-center font-bold text-slate-700 mb-2 text-sm font-fun">Toca el número de ${theme.name} que hay ahora:</p>
           <div class="flex justify-center gap-5">
             <button class="btn-chunky btn-yellow flex-1 max-w-[110px] opt-btn-add" data-value="2">
               <span class="text-3xl">2</span>
@@ -63,7 +70,7 @@ window.GameOperaciones = {
       </div>
     `;
 
-    window.Kusi.say("En la laguna estaban nadando 2 patitos. De pronto llega 1 patito amigo más. ¿Cuántos patitos hay ahora en total?");
+    window.Kusi.say(`Estaban jugando 2 ${theme.name}. De pronto llega 1 amigo más. ¿Cuántos son en total?`);
 
     const btns = container.querySelectorAll('.opt-btn-add');
     btns.forEach(btn => {
@@ -72,17 +79,17 @@ window.GameOperaciones = {
         if (val === 3) {
           window.SoundEngine.playSuccess();
           window.AppState.recordResult('j3_2_agregar', true, hints);
-          window.Kusi.celebrate("¡Excelente! Habían 2 patitos y con 1 más, ¡ahora son 3 patitos!");
+          window.Kusi.celebrate(`¡Excelente! Habían 2 y con 1 más, ¡ahora son 3 ${theme.name}!`);
           setTimeout(() => window.App.showGameSuccess('j3_2_agregar'), 2200);
         } else {
           hints++;
-          window.Kusi.giveHint("¡Buen intento! Contemos los patitos juntos: uno, dos, ¡y tres! Busca el número tres.");
+          window.Kusi.giveHint(`¡Buen intento! Contemos los animalitos juntos: uno, dos, ¡y tres! Busca el número tres.`);
         }
       });
     });
   },
 
-  // 3.3 QUITAR EN EL PÍCNIC (4 - 1 = 3)
+  // 3.3 QUITAR EN EL PÍCNIC CON EL MONITO (4 - 1 = 3)
   playQuitar(container) {
     let hints = 0;
 
@@ -95,10 +102,11 @@ window.GameOperaciones = {
           </div>
         </div>
 
-        <!-- Plato de Galletas -->
+        <!-- Plato de Galletas con Monito -->
         <div class="w-full bg-gradient-to-b from-amber-100 to-orange-200 border-4 border-amber-400 rounded-3xl p-5 shadow-xl relative min-h-[200px] flex flex-col justify-between overflow-hidden">
-          <div class="text-center font-fun text-lg text-amber-950 font-bold bg-white/80 py-1 px-4 rounded-full self-center shadow">
-            Habían 4 galletitas y el monito comió 1...
+          <div class="text-center font-fun text-lg text-amber-950 font-bold bg-white/80 py-1 px-4 rounded-full self-center shadow flex items-center justify-center gap-2">
+            <span>Habían 4 galletitas y el monito travieso comió 1...</span>
+            <span class="text-3xl animate-bounce-soft">🐒</span>
           </div>
 
           <!-- Galletas -->

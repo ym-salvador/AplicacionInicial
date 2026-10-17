@@ -14,22 +14,49 @@ window.DocenteModule = {
   selectedStudentId: null,
   filterStatus: 'all', // 'all', 'completed', 'in_progress', 'pending'
 
-  // Catálogo de animales para la mascota guía
+  // Catálogo extendido de animales para la mascota guía (Más de 30 opciones)
   mascotCatalog: [
+    // Andinos y Fauna Peruana
     { icon: '🦙', defaultName: 'Kusi', desc: 'Llamita Andina (Kusi)' },
+    { icon: '🐹', defaultName: 'Pipo', desc: 'Cuycito Mágico (Pipo)' },
+    { icon: '🦊', defaultName: 'Sami', desc: 'Zorrito Andino (Sami)' },
+    { icon: '🦅', defaultName: 'Apu', desc: 'Cóndor de las Alturas (Apu)' },
+    { icon: '🐬', defaultName: 'Yaku', desc: 'Delfín Rosado (Yaku)' },
+    { icon: '🐧', defaultName: 'Piti', desc: 'Pingüino de Humboldt (Piti)' },
+    { icon: '🐆', defaultName: 'Rayas', desc: 'Otorongo de la Selva (Rayas)' },
+
+    // Animalitos de la Selva y Sabana
     { icon: '🦁', defaultName: 'Leo', desc: 'Leoncito Valiente (Leo)' },
-    { icon: '🐻', defaultName: 'Teddy', desc: 'Osito Cariñoso (Teddy)' },
-    { icon: '🦊', defaultName: 'Sami', desc: 'Zorrito Curioso (Sami)' },
-    { icon: '🐰', defaultName: 'Bunny', desc: 'Conejito Saltarín (Bunny)' },
-    { icon: '🦉', defaultName: 'Tito', desc: 'Búho Sabio (Tito)' },
-    { icon: '🐬', defaultName: 'Delfi', desc: 'Delfincito Alegre (Delfi)' },
+    { icon: '🐘', defaultName: 'Trompi', desc: 'Elefantito Alegre (Trompi)' },
+    { icon: '🦒', defaultName: 'Rafa', desc: 'Jirafita Curiosa (Rafa)' },
+    { icon: '🐒', defaultName: 'Chito', desc: 'Monito Saltarín (Chito)' },
     { icon: '🐼', defaultName: 'Pandi', desc: 'Pandita Tierno (Pandi)' },
-    { icon: '🐯', defaultName: 'Tigrito', desc: 'Tigrecito Rayas (Tigrito)' },
-    { icon: '🐶', defaultName: 'Fido', desc: 'Perrito Amigo (Fido)' },
-    { icon: '🐸', defaultName: 'Sapo', desc: 'Ranita Saltarina (Sapo)' },
     { icon: '🐨', defaultName: 'Koko', desc: 'Koalita Tierno (Koko)' },
+    { icon: '🐯', defaultName: 'Tigrito', desc: 'Tigrecito Rayitas (Tigrito)' },
+    { icon: '🦓', defaultName: 'Zipi', desc: 'Cebrita Veloz (Zipi)' },
+    { icon: '🦥', defaultName: 'Perez', desc: 'Perezoso Cariñoso (Perez)' },
+    { icon: '🦩', defaultName: 'Rosa', desc: 'Flamenco Elegante (Rosa)' },
+    { icon: '🦜', defaultName: 'Paco', desc: 'Lorito Parlanchín (Paco)' },
+
+    // Granja y Hogar
+    { icon: '🐶', defaultName: 'Fido', desc: 'Perrito Amigo (Fido)' },
+    { icon: '🐱', defaultName: 'Mishi', desc: 'Gatito Juguetón (Mishi)' },
+    { icon: '🐰', defaultName: 'Bunny', desc: 'Conejito Saltarín (Bunny)' },
+    { icon: '🐻', defaultName: 'Teddy', desc: 'Osito Cariñoso (Teddy)' },
+    { icon: '🐸', defaultName: 'Sapo', desc: 'Ranita Saltarina (Sapo)' },
+    { icon: '🐥', defaultName: 'Pío', desc: 'Pollito Amarillo (Pío)' },
+    { icon: '🦆', defaultName: 'Pato', desc: 'Patito Nadador (Pato)' },
+    { icon: '🐮', defaultName: 'Lola', desc: 'Vaquita Lola (Lola)' },
+    { icon: '🐑', defaultName: 'Copito', desc: 'Ovejita de Lana (Copito)' },
+
+    // Criaturas Marinas, del Jardín y Fantasía
+    { icon: '🐢', defaultName: 'Tuga', desc: 'Tortuguita Sabia (Tuga)' },
+    { icon: '🐳', defaultName: 'Luna', desc: 'Ballenita Azul (Luna)' },
+    { icon: '🦉', defaultName: 'Tito', desc: 'Búho Sabio (Tito)' },
+    { icon: '🦋', defaultName: 'Alitas', desc: 'Mariposa Mágica (Alitas)' },
+    { icon: '🐝', defaultName: 'Maya', desc: 'Abejita Maya (Maya)' },
     { icon: '🦄', defaultName: 'Estrella', desc: 'Unicornio Mágico (Estrella)' },
-    { icon: '🐝', defaultName: 'Maya', desc: 'Abejita Maya (Maya)' }
+    { icon: '🦕', defaultName: 'Dino', desc: 'Dinosaurio Amigo (Dino)' }
   ],
 
   getBadgeClass(grade) {
@@ -275,6 +302,10 @@ window.DocenteModule = {
     // Barra de acciones superiores
     if (actions) {
       actions.innerHTML = `
+        <button id="btn-sync-student-docente" class="btn-chunky bg-purple-600 text-white border-purple-500 text-xs py-1.5 px-3 shadow flex items-center gap-1.5 hover:bg-purple-700" title="Pegar código o enlace de avance enviado por un papá/mamá">
+          <span>📲</span>
+          <span>Sincronizar Reporte</span>
+        </button>
         <button id="btn-export-csv" class="btn-chunky bg-emerald-600 text-white border-emerald-500 text-xs py-1.5 px-3 shadow flex items-center gap-1.5" title="Descargar reporte en formato Excel/CSV">
           <span>📥</span>
           <span>Descargar Excel</span>
@@ -285,6 +316,7 @@ window.DocenteModule = {
         </button>
       `;
 
+      document.getElementById('btn-sync-student-docente')?.addEventListener('click', () => this.openSyncModal());
       document.getElementById('btn-export-csv')?.addEventListener('click', () => this.exportCSV());
       document.getElementById('btn-add-student-docente')?.addEventListener('click', () => {
         window.StudentProfileModule.openRegisterModal();
@@ -870,6 +902,15 @@ window.DocenteModule = {
             <span class="text-[11px] text-slate-500 mt-0.5 block">Código numérico para entrar a este panel (por defecto 1234).</span>
           </div>
 
+          <!-- 7. Número de WhatsApp para recibir reportes -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              7. Tu WhatsApp para recibir reportes de las familias (Opcional):
+            </label>
+            <input type="text" id="setting-teacher-phone" value="${config.teacherPhone || ''}" class="w-full text-base font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-purple-500 focus:outline-none bg-slate-50 text-slate-800" placeholder="Ej. 51987654321 o 987654321">
+            <span class="text-[11px] text-slate-500 mt-0.5 block">Cuando los papás pulsen "Enviar por WhatsApp a la Profesora", se abrirá un chat directo a este número con el avance de su hijo/a.</span>
+          </div>
+
           <!-- Botón Guardar -->
           <div class="pt-4 border-t border-slate-200 flex justify-end">
             <button id="btn-save-settings" class="btn-chunky btn-green text-base py-3 px-8 shadow-lg flex items-center gap-2">
@@ -923,6 +964,7 @@ window.DocenteModule = {
       const newSchoolName = document.getElementById('setting-school-name').value.trim();
       const newActiveClass = document.getElementById('setting-active-class').value.trim();
       const newTeacherName = document.getElementById('setting-teacher-name').value.trim();
+      const newTeacherPhone = document.getElementById('setting-teacher-phone')?.value.trim() || '';
       const newMascotName = document.getElementById('setting-mascot-name').value.trim();
       const newTeacherPin = document.getElementById('setting-teacher-pin').value.trim();
 
@@ -935,6 +977,7 @@ window.DocenteModule = {
         schoolName: newSchoolName,
         activeClass: newActiveClass,
         teacherName: newTeacherName,
+        teacherPhone: newTeacherPhone,
         mascotIcon: currentSelectedIcon,
         mascotName: newMascotName || 'Kusi',
         teacherPin: newTeacherPin || '1234'
@@ -946,6 +989,81 @@ window.DocenteModule = {
       // Cierra modal para que la docente aprecie los cambios en toda la interfaz
       const modal = document.getElementById('docente-dashboard-modal');
       if (modal) modal.remove();
+    });
+  },
+
+  // MODAL PARA PEGAR ENLACE O CÓDIGO DE SINCRONIZACIÓN RECIBIDO POR WHATSAPP
+  openSyncModal() {
+    window.SoundEngine.playPop();
+
+    const modal = document.createElement('div');
+    modal.id = 'docente-sync-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content p-6 max-w-lg mx-auto text-center border-4 border-purple-400 shadow-2xl">
+        <div class="w-16 h-16 rounded-full bg-purple-100 border-2 border-purple-400 flex items-center justify-center text-3xl mx-auto mb-2 shadow">
+          📲
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 font-fun mb-1">Sincronizar Reporte de Familia</h3>
+        <p class="text-slate-600 text-xs sm:text-sm mb-3">
+          Pega aquí el enlace o código que la mamá o el papá te envió por WhatsApp para agregarlo automáticamente al registro del aula:
+        </p>
+
+        <div class="my-3 text-left">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Enlace o Código recibido por WhatsApp:
+          </label>
+          <textarea id="sync-input-payload" rows="3" class="w-full text-xs font-mono p-3 border-2 border-purple-300 rounded-xl focus:border-purple-500 focus:outline-none bg-purple-50/40 text-slate-800" placeholder="Ej. https://.../?sync=... o código de reporte..."></textarea>
+        </div>
+
+        <div id="sync-error-msg" class="text-xs text-rose-600 font-bold hidden mb-2"></div>
+
+        <div class="flex gap-3 justify-center mt-4">
+          <button id="btn-cancel-sync" class="btn-chunky bg-slate-200 text-slate-700 border-slate-300 text-xs md:text-sm py-2 px-5">
+            Cancelar
+          </button>
+          <button id="btn-confirm-sync" class="btn-chunky btn-purple text-xs md:text-sm py-2.5 px-6 shadow-md flex items-center gap-2">
+            <span>📥</span>
+            <span>Importar y Actualizar</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const txtInput = document.getElementById('sync-input-payload');
+    txtInput.focus();
+
+    document.getElementById('btn-cancel-sync')?.addEventListener('click', () => {
+      window.SoundEngine.playPop();
+      modal.remove();
+    });
+
+    document.getElementById('btn-confirm-sync')?.addEventListener('click', () => {
+      const val = txtInput.value.trim();
+      const errEl = document.getElementById('sync-error-msg');
+      if (!val) {
+        if (errEl) {
+          errEl.textContent = 'Por favor pega el enlace o código recibido.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+
+      const res = window.AppState.importSyncPayload(val);
+      if (res.success) {
+        window.SoundEngine.playSuccess();
+        modal.remove();
+        alert(`¡Sincronización exitosa!\n\nEstudiante: ${res.student.name}\nEstrellas: ${res.student.stars} ⭐\nProgreso: ${res.summary.totalProgress}%\n\nSe ha registrado en el Panel de Monitoreo.`);
+        this.renderCurrentTab();
+      } else {
+        window.SoundEngine.playGentleTryAgain();
+        if (errEl) {
+          errEl.textContent = res.error || 'Código inválido. Asegúrate de copiar el enlace completo.';
+          errEl.classList.remove('hidden');
+        }
+      }
     });
   },
 
