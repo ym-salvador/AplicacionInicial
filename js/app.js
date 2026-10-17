@@ -12,9 +12,14 @@ window.App = {
 
   init() {
     this.renderTopNav();
+    window.StudentProfileModule?.init();
     this.showHome();
 
     // Eventos globales de la barra superior
+    document.getElementById('btn-family-portal')?.addEventListener('click', () => {
+      window.FamiliaModule.openPortal();
+    });
+
     document.getElementById('btn-docente-gate')?.addEventListener('click', () => {
       window.DocenteModule.openGate();
     });
@@ -38,16 +43,13 @@ window.App = {
   },
 
   renderTopNav() {
-    const starCount = document.getElementById('star-count');
-    if (starCount) {
-      starCount.textContent = window.AppState.state.stars;
-    }
+    window.StudentProfileModule?.updateHeaderDisplay();
   },
 
   updateStars() {
     const starCount = document.getElementById('star-count');
     if (starCount) {
-      starCount.textContent = window.AppState.state.stars;
+      starCount.textContent = window.AppState.stars;
       starCount.parentElement.classList.add('animate-wiggle');
       setTimeout(() => starCount.parentElement.classList.remove('animate-wiggle'), 600);
     }

@@ -134,19 +134,29 @@ El botón `🔒 Zona Docente` formula una suma aritmética aleatoria para adulto
 ### 5.3 Conclusiones Descriptivas Oficiales
 El sistema genera automáticamente la redacción técnica pedagógica para **ambas competencias**, lista para ser transcrita a las libretas o al sistema **SIAGIE**, detallando logros observados y recomendaciones prácticas para el hogar.
 
-### 5.4 Impresión de Reportes y Exportación a PDF Oficial
-El sistema cuenta con un motor de estilos de impresión `@media print` especialmente calibrado para páginas A4:
-- **Membrete Oficial Institucional**: Encabezado formal de Educación Inicial con fecha y año lectivo.
-- **Cero Solapamientos**: Se eliminaron posicionamientos absolutos y desbordamientos en scroll para garantizar una paginación natural de varias páginas.
-- **Formateo de Conclusiones**: Los textos de conclusiones descriptivas son procesados mediante un convertidor Markdown-to-HTML que resalta en negrita semántica los logros y recomendaciones.
-- **Ficha de Datos Limpia**: En pantalla permite editar interactivamente el nombre del estudiante y en el PDF se imprime en tipografía ejecutiva limpia sin cajas de entrada.
-- **Bloque de Firmas**: Incluye tres campos de rúbrica oficial (Docente de Aula, Dirección de la I.E. Inicial y Padre/Madre/Apoderado).
+### 5.4 Panel Docente: Monitoreo Integral del Aula
+El panel docente cuenta con dos pestañas de trabajo protegidas por compuerta de seguridad matemática:
+1. **Monitoreo del Aula (Sábana Grupal):**
+   - Resumen KPI en tiempo real: total de alumnos, cuántos han resuelto misiones, cuántos están pendientes y promedio de avance del aula.
+   - Filtros de estado: Todos, Completados (100%), En Proceso y Pendientes (sin actividad).
+   - Tabla con última fecha de actividad, porcentaje de avance en Cantidad y Espacio, calificación CNEB y estado semaforizado.
+   - Herramientas de aula: Registrar nuevos alumnos, eliminar o reiniciar progresos, y exportar la sábana completa a formato Excel (archivo `.csv`).
+2. **Ficha Individual CNEB:**
+   - Permite seleccionar a cualquier estudiante de la lista y visualizar/imprimir su informe pedagógico oficial en formato PDF limpio de varias páginas.
+
+### 5.5 Portal para Familias (Acompañamiento en el Hogar)
+- **Privacidad Total:** Cada familia visualiza exclusivamente los avances de su propio hijo/a (no tienen acceso al listado general ni a las calificaciones de otros niños).
+- **Medallero Infantil:** 6 medallas gamificadas correspondientes a las sesiones del CNEB.
+- **Pautas Formativas para Casa:** Consejos prácticos de 5 minutos para jugar matemática cotidiana en la cocina, con la ropa o en el parque.
+- **Diploma de Logro Imprimible:** Ficha de honor personalizada con el nombre del niño y las felicitaciones de Kusi lista para imprimir.
 
 ---
 
 ## 6. Instrucciones de Uso
 
 1. Abra el archivo `index.html` en su navegador web favorito.
-2. Elija entre **Aventuras de Cantidad** o **Exploradores del Espacio**.
-3. Seleccione cualquiera de las **6 Sesiones Pedagógicas** y disfrute de los retos interactivos.
-4. Para consultar las calificaciones y el informe de evaluación formativa, presione el botón `Zona Docente` en la esquina superior.
+2. En la barra superior, toque el botón de perfil (`🦙 Estudiante ▼`) para elegir al niño/a que jugará o registrar a un nuevo estudiante.
+3. Elija entre **Aventuras de Cantidad** o **Exploradores del Espacio**, y disfrute de los retos interactivos guiados por voz y arrastre físico.
+4. **Para la Familia:** Presione el botón `👨‍👩‍👧 Familia` en la cabecera para ver el medallero, consejos para el hogar e imprimir el diploma de su hijo/a.
+5. **Para la Docente:** Presione el botón `👩‍🏫 Zona Docente 🔒`, resuelva la compuerta de seguridad y acceda a la sábana de monitoreo de todo el salón y a las fichas oficiales del SIAGIE/CNEB.
+

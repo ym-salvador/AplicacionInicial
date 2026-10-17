@@ -53,11 +53,21 @@
 
 ---
 
-## 👩‍🏫 Panel de Gestión Docente
+## 👩‍🏫 Panel de Gestión Docente y Monitoreo del Aula
 
+- **Sábana de Monitoreo Grupal:** Visualización en tiempo real de todos los estudiantes registrados, indicando quiénes ya resolvieron, quiénes están en proceso y quiénes están pendientes (sin actividad).
 - **Escala Oficial CNEB Ciclo II:** Evaluación cualitativa automática (`AD`: Logro Destacado, `A`: Logro Esperado, `B`: En Proceso, `C`: En Inicio).
-- **Registro de Desempeños y Evidencias:** Monitoreo en tiempo real de aciertos, intentos y nivel de andamiaje pedagógico.
-- **Reporte Pedagógico Imprimible y Exportable a PDF:** Formato estructurado para carpetas pedagógicas e informes para familias.
+- **Exportación a Excel (CSV):** Descarga en un clic de la sábana de notas de todo el salón para la carpeta pedagógica.
+- **Reporte Pedagógico Imprimible y Exportable a PDF:** Formato oficial con membrete MINEDU y conclusiones descriptivas oficiales para el SIAGIE.
+
+---
+
+## 👨‍👩‍👧 Portal para Familias
+
+- **Privacidad Total:** Cada familia consulta únicamente el progreso de su propio hijo/a.
+- **Medallero Infantil:** Logros gamificados para incentivar la motivación.
+- **Pautas para Casa:** 3 ideas sencillas y cotidianas para estimular el pensamiento matemático en el hogar.
+- **Diploma de Honor:** Diploma personalizado imprimible para reconocer el esfuerzo del niño/a.
 
 ---
 

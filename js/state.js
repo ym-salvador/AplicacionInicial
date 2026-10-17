@@ -1,58 +1,123 @@
 /**
- * GESTOR DE ESTADO Y EVALUACIÓN FORMATIVA CNEB (MUNDOS 1 Y 2)
- * Evaluación formativa completa para las 6 sesiones (3 de Cantidad y 3 de Espacio)
- * Escala oficial (AD, A, B, C) y conclusiones descriptivas oficiales para SIAGIE.
+ * GESTOR DE ESTADO MULTI-ESTUDIANTE Y EVALUACIÓN FORMATIVA CNEB (CICLO II - 5 AÑOS)
+ * Soporta registro y seguimiento individual y grupal de todos los estudiantes del aula,
+ * almacenamiento en localStorage, cálculo de avances para el panel docente y portal familiar.
  */
 
 class AppStateManager {
   constructor() {
-    this.storageKey = 'cneb_mate5_app_state_v3';
+    this.storageKey = 'cneb_mate5_multistudent_v1';
     this.state = this.loadState();
+  }
+
+  // Desempeños y minijuegos vacíos para un estudiante
+  getDefaultEvaluations() {
+    return {
+      // MUNDO 1: CANTIDAD
+      j1_1_color: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j1_2_tamano: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j1_3_cuantificadores: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j1_4_mas_menos: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j2_1_plantas: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j2_2_zanahorias: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j2_3_trencito: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j2_4_primero_ultimo: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j3_1_conteo10: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j3_2_agregar: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j3_3_quitar: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j3_4_balanza: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      j3_5_tiempo: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+
+      // MUNDO 2: ESPACIO, FORMA Y MOVIMIENTO
+      esp_j1_formas2d: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j1_cuerpos3d: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j1_clasificacion: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j2_cerca_lejos: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j2_al_lado: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j2_posiciones: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j3_desplazamiento: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j3_mas_largo: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j3_mas_corto: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
+      esp_j3_puente: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null }
+    };
+  }
+
+  // Estudiantes iniciales con progreso de muestra para que la docente vea el seguimiento
+  getInitialStudents() {
+    const student1Evals = this.getDefaultEvaluations();
+    // Valentina ha avanzado varios retos
+    student1Evals.j1_1_color = { attempts: 1, successes: 1, hintsUsed: 0, completed: true, lastGrade: 'AD' };
+    student1Evals.j1_2_tamano = { attempts: 1, successes: 1, hintsUsed: 0, completed: true, lastGrade: 'AD' };
+    student1Evals.j1_3_cuantificadores = { attempts: 2, successes: 1, hintsUsed: 1, completed: true, lastGrade: 'A' };
+    student1Evals.j1_4_mas_menos = { attempts: 1, successes: 1, hintsUsed: 0, completed: true, lastGrade: 'AD' };
+    student1Evals.j2_1_plantas = { attempts: 1, successes: 1, hintsUsed: 0, completed: true, lastGrade: 'AD' };
+    student1Evals.esp_j1_formas2d = { attempts: 1, successes: 1, hintsUsed: 0, completed: true, lastGrade: 'AD' };
+    student1Evals.esp_j2_cerca_lejos = { attempts: 1, successes: 1, hintsUsed: 0, completed: true, lastGrade: 'AD' };
+
+    const student2Evals = this.getDefaultEvaluations();
+    // Mateo en proceso
+    student2Evals.j1_1_color = { attempts: 2, successes: 1, hintsUsed: 1, completed: true, lastGrade: 'A' };
+    student2Evals.j1_2_tamano = { attempts: 3, successes: 1, hintsUsed: 2, completed: true, lastGrade: 'B' };
+    student2Evals.esp_j1_formas2d = { attempts: 2, successes: 1, hintsUsed: 1, completed: true, lastGrade: 'A' };
+
+    const student3Evals = this.getDefaultEvaluations();
+    // Camila empezando
+    student3Evals.j1_1_color = { attempts: 1, successes: 1, hintsUsed: 0, completed: true, lastGrade: 'AD' };
+
+    // Liam pendiente (sin jugar aún)
+    const student4Evals = this.getDefaultEvaluations();
+
+    return [
+      {
+        id: 'est_1',
+        name: 'Valentina Gómez',
+        avatar: '🦙',
+        age: 5,
+        registeredAt: '2026-10-15',
+        lastActive: '2026-10-17 16:30',
+        stars: 21,
+        evaluaciones: student1Evals
+      },
+      {
+        id: 'est_2',
+        name: 'Mateo Quispe',
+        avatar: '🦁',
+        age: 5,
+        registeredAt: '2026-10-15',
+        lastActive: '2026-10-17 11:15',
+        stars: 9,
+        evaluaciones: student2Evals
+      },
+      {
+        id: 'est_3',
+        name: 'Camila Flores',
+        avatar: '🐰',
+        age: 5,
+        registeredAt: '2026-10-16',
+        lastActive: '2026-10-16 15:45',
+        stars: 3,
+        evaluaciones: student3Evals
+      },
+      {
+        id: 'est_4',
+        name: 'Liam Rojas',
+        avatar: '🐻',
+        age: 5,
+        registeredAt: '2026-10-16',
+        lastActive: null, // Pendiente: No ha iniciado
+        stars: 0,
+        evaluaciones: student4Evals
+      }
+    ];
   }
 
   getDefaultState() {
     return {
-      childName: 'Estudiante de 5 años',
-      childAge: 5,
+      activeClass: 'Aula Los Creativos (5 Años)',
       institution: 'I.E. Inicial',
-      stars: 0,
-      currentWorld: null,
-      currentSession: null,
-      currentGame: null,
-      evaluaciones: {
-        // MUNDO 1: CANTIDAD
-        // Sesión 1
-        j1_1_color: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j1_2_tamano: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j1_3_cuantificadores: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j1_4_mas_menos: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        // Sesión 2
-        j2_1_plantas: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j2_2_zanahorias: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j2_3_trencito: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j2_4_primero_ultimo: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        // Sesión 3
-        j3_1_conteo10: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j3_2_agregar: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j3_3_quitar: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j3_4_balanza: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        j3_5_tiempo: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-
-        // MUNDO 2: ESPACIO, FORMA Y MOVIMIENTO
-        // Sesión 1: Formas 2D y 3D
-        esp_j1_formas2d: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        esp_j1_cuerpos3d: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        esp_j1_clasificacion: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        // Sesión 2: Ubicación Espacial
-        esp_j2_cerca_lejos: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        esp_j2_al_lado: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        esp_j2_posiciones: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        // Sesión 3: Desplazamiento y Longitud
-        esp_j3_desplazamiento: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        esp_j3_mas_largo: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        esp_j3_mas_corto: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null },
-        esp_j3_puente: { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null }
-      }
+      teacherPin: '1234',
+      currentStudentId: 'est_1',
+      students: this.getInitialStudents()
     };
   }
 
@@ -61,14 +126,15 @@ class AppStateManager {
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return {
-          ...this.getDefaultState(),
-          ...parsed,
-          evaluaciones: { ...this.getDefaultState().evaluaciones, ...(parsed.evaluaciones || {}) }
-        };
+        if (parsed.students && Array.isArray(parsed.students) && parsed.students.length > 0) {
+          return {
+            ...this.getDefaultState(),
+            ...parsed
+          };
+        }
       }
     } catch (e) {
-      console.warn('Error al cargar estado:', e);
+      console.warn('Error al cargar estado multi-estudiante:', e);
     }
     return this.getDefaultState();
   }
@@ -77,34 +143,70 @@ class AppStateManager {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(this.state));
     } catch (e) {
-      console.warn('Error al guardar estado:', e);
+      console.warn('Error al guardar estado multi-estudiante:', e);
     }
   }
 
-  // Registra el resultado de un minijuego aplicando la escala CNEB
+  // Obtiene el estudiante activo actual
+  getCurrentStudent() {
+    let student = this.state.students.find(s => s.id === this.state.currentStudentId);
+    if (!student && this.state.students.length > 0) {
+      student = this.state.students[0];
+      this.state.currentStudentId = student.id;
+    }
+    return student;
+  }
+
+  // Compatibilidad con código previo que accede a this.state.childName y this.state.stars
+  get childName() {
+    const s = this.getCurrentStudent();
+    return s ? s.name : 'Estudiante de 5 años';
+  }
+
+  get stars() {
+    const s = this.getCurrentStudent();
+    return s ? s.stars : 0;
+  }
+
+  set stars(val) {
+    const s = this.getCurrentStudent();
+    if (s) {
+      s.stars = val;
+      this.saveState();
+    }
+  }
+
+  // Acceso seguro a las evaluaciones del estudiante activo
+  get evaluaciones() {
+    const s = this.getCurrentStudent();
+    return s ? s.evaluaciones : this.getDefaultEvaluations();
+  }
+
+  // REGISTRA RESULTADO DE UN JUEGO PARA EL ESTUDIANTE ACTIVO
   recordResult(gameId, isSuccess, hintsCount = 0) {
-    if (!this.state.evaluaciones[gameId]) {
-      this.state.evaluaciones[gameId] = { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null };
+    const student = this.getCurrentStudent();
+    if (!student) return;
+
+    if (!student.evaluaciones[gameId]) {
+      student.evaluaciones[gameId] = { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null };
     }
 
-    const item = this.state.evaluaciones[gameId];
+    const item = student.evaluaciones[gameId];
     item.attempts += 1;
     item.hintsUsed += hintsCount;
 
     if (isSuccess) {
       item.successes += 1;
       item.completed = true;
-      this.state.stars += 3;
+      student.stars += 3;
 
       // Criterios CNEB Nivel 2 (RVM N° 094-2020-MINEDU)
       if (item.attempts === 1 && hintsCount === 0) {
         item.lastGrade = 'AD'; // Logro Destacado (autonomía inmediata)
       } else if (item.attempts <= 2 && hintsCount <= 1) {
         item.lastGrade = 'A'; // Logro Esperado (autónomo)
-      } else if (hintsCount >= 2 || item.attempts > 2) {
-        item.lastGrade = 'B'; // En Proceso (error constructivo con pistas)
       } else {
-        item.lastGrade = 'B';
+        item.lastGrade = 'B'; // En Proceso (con andamiaje)
       }
     } else {
       if (!item.completed) {
@@ -112,11 +214,80 @@ class AppStateManager {
       }
     }
 
+    // Actualiza timestamp de última actividad
+    const now = new Date();
+    student.lastActive = now.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' }) + ' ' + 
+                         now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+
     this.saveState();
   }
 
-  // Obtiene evaluación y porcentaje de una sesión específica en cualquier mundo
-  getSessionAssessment(worldId, sessionId) {
+  // CAMBIAR DE ESTUDIANTE ACTIVO
+  switchStudent(studentId) {
+    const student = this.state.students.find(s => s.id === studentId);
+    if (student) {
+      this.state.currentStudentId = studentId;
+      this.saveState();
+      return student;
+    }
+    return null;
+  }
+
+  // REGISTRAR NUEVO ESTUDIANTE
+  addStudent(name, avatar = '🦙') {
+    const cleanName = name.trim();
+    if (!cleanName) return null;
+
+    const newId = 'est_' + Date.now();
+    const newStudent = {
+      id: newId,
+      name: cleanName,
+      avatar: avatar || '🦙',
+      age: 5,
+      registeredAt: new Date().toISOString().split('T')[0],
+      lastActive: null,
+      stars: 0,
+      evaluaciones: this.getDefaultEvaluations()
+    };
+
+    this.state.students.push(newStudent);
+    this.state.currentStudentId = newId;
+    this.saveState();
+    return newStudent;
+  }
+
+  // ELIMINAR ESTUDIANTE
+  deleteStudent(studentId) {
+    if (this.state.students.length <= 1) {
+      alert("Debe haber al menos un estudiante en la lista.");
+      return false;
+    }
+    this.state.students = this.state.students.filter(s => s.id !== studentId);
+    if (this.state.currentStudentId === studentId) {
+      this.state.currentStudentId = this.state.students[0].id;
+    }
+    this.saveState();
+    return true;
+  }
+
+  // REINICIAR PROGRESO DE UN ESTUDIANTE ESPECÍFICO
+  resetStudentProgress(studentId) {
+    const student = this.state.students.find(s => s.id === studentId);
+    if (student) {
+      student.stars = 0;
+      student.lastActive = null;
+      student.evaluaciones = this.getDefaultEvaluations();
+      this.saveState();
+      return true;
+    }
+    return false;
+  }
+
+  // EVALUACIÓN DE UNA SESIÓN (Soporta studentId opcional para ver a cualquier alumno)
+  getSessionAssessment(worldId, sessionId, studentId = null) {
+    const student = studentId ? this.state.students.find(s => s.id === studentId) : this.getCurrentStudent();
+    if (!student) return null;
+
     const mundo = window.CNEB_DATA.mundos[worldId];
     if (!mundo) return null;
 
@@ -124,7 +295,7 @@ class AppStateManager {
     if (!session) return null;
 
     const items = session.juegos.map(j => {
-      const ev = this.state.evaluaciones[j.id];
+      const ev = student.evaluaciones[j.id];
       return {
         juego: j,
         calificacion: ev?.lastGrade || 'Sin evaluar',
@@ -159,12 +330,15 @@ class AppStateManager {
     };
   }
 
-  // Evaluación global de un mundo ('cantidad' o 'espacio')
-  getWorldOverallAssessment(worldId) {
+  // EVALUACIÓN GLOBAL DE UN MUNDO (Soporta studentId opcional)
+  getWorldOverallAssessment(worldId, studentId = null) {
+    const student = studentId ? this.state.students.find(s => s.id === studentId) : this.getCurrentStudent();
+    if (!student) return null;
+
     const mundo = window.CNEB_DATA.mundos[worldId];
     if (!mundo) return null;
 
-    const sessionAssessments = mundo.sesiones.map(ses => this.getSessionAssessment(worldId, ses.id));
+    const sessionAssessments = mundo.sesiones.map(ses => this.getSessionAssessment(worldId, ses.id, student.id));
     const validGrades = sessionAssessments.map(s => s.grade).filter(g => g !== 'Sin evaluar');
 
     let overall = 'Sin evaluar';
@@ -178,17 +352,92 @@ class AppStateManager {
       else overall = 'C';
     }
 
+    const totalGames = sessionAssessments.reduce((acc, s) => acc + s.totalCount, 0);
+    const totalCompleted = sessionAssessments.reduce((acc, s) => acc + s.completedCount, 0);
+    const progressPercent = Math.round((totalCompleted / totalGames) * 100);
+
     return {
       competencia: mundo,
       overall,
-      sesiones: sessionAssessments
+      sesiones: sessionAssessments,
+      totalGames,
+      totalCompleted,
+      progressPercent
     };
   }
 
-  // Genera Conclusiones Descriptivas Oficiales MINEDU para SIAGIE
-  generateConclusion(worldId) {
-    const assessment = this.getWorldOverallAssessment(worldId);
-    const name = this.state.childName || 'El niño/a';
+  // CÁLCULO DE PROGRESO COMPLETO DE CADA ESTUDIANTE PARA EL PANEL DOCENTE
+  getStudentSummary(studentId) {
+    const student = this.state.students.find(s => s.id === studentId);
+    if (!student) return null;
+
+    const cant = this.getWorldOverallAssessment('cantidad', student.id);
+    const esp = this.getWorldOverallAssessment('espacio', student.id);
+
+    const totalGames = (cant?.totalGames || 13) + (esp?.totalGames || 10);
+    const totalCompleted = (cant?.totalCompleted || 0) + (esp?.totalCompleted || 0);
+    const totalProgress = Math.round((totalCompleted / totalGames) * 100);
+
+    let status = 'pendiente'; // 'pendiente', 'en_proceso', 'completado'
+    if (totalCompleted === totalGames) {
+      status = 'completado';
+    } else if (totalCompleted > 0) {
+      status = 'en_proceso';
+    }
+
+    return {
+      id: student.id,
+      name: student.name,
+      avatar: student.avatar,
+      age: student.age,
+      lastActive: student.lastActive || 'Aún no ha jugado',
+      hasPlayed: totalCompleted > 0,
+      totalCompleted,
+      totalGames,
+      totalProgress,
+      status,
+      stars: student.stars,
+      cantidad: {
+        grade: cant?.overall || 'Sin evaluar',
+        percent: cant?.progressPercent || 0,
+        completed: cant?.totalCompleted || 0,
+        total: cant?.totalGames || 13
+      },
+      espacio: {
+        grade: esp?.overall || 'Sin evaluar',
+        percent: esp?.progressPercent || 0,
+        completed: esp?.totalCompleted || 0,
+        total: esp?.totalGames || 10
+      }
+    };
+  }
+
+  // RESUMEN CONSOLIDADO DE TODA LA CLASE PARA LA DOCENTE
+  getClassSummary() {
+    const summaries = this.state.students.map(s => this.getStudentSummary(s.id));
+    const total = summaries.length;
+    const completed = summaries.filter(s => s.status === 'completado').length;
+    const inProgress = summaries.filter(s => s.status === 'en_proceso').length;
+    const pending = summaries.filter(s => s.status === 'pendiente').length;
+
+    const avgProgress = total > 0 ? Math.round(summaries.reduce((acc, s) => acc + s.totalProgress, 0) / total) : 0;
+
+    return {
+      total,
+      completed,
+      inProgress,
+      pending,
+      activeCount: completed + inProgress,
+      avgProgress,
+      students: summaries
+    };
+  }
+
+  // CONCLUSIONES DESCRIPTIVAS SIAGIE
+  generateConclusion(worldId, studentId = null) {
+    const student = studentId ? this.state.students.find(s => s.id === studentId) : this.getCurrentStudent();
+    const assessment = this.getWorldOverallAssessment(worldId, student?.id);
+    const name = student?.name || 'El niño/a';
 
     if (worldId === 'cantidad') {
       switch (assessment.overall) {
@@ -240,16 +489,6 @@ class AppStateManager {
           \n**Recomendación Pedagógica:** Propiciar la manipulación diaria de pelotas, cajas y latas vacías para experimentar cómo ruedan o se apilan los objetos.`;
       }
     }
-  }
-
-  updateChildName(name) {
-    this.state.childName = name.trim() || 'Estudiante de 5 años';
-    this.saveState();
-  }
-
-  resetProgress() {
-    this.state = this.getDefaultState();
-    this.saveState();
   }
 }
 
