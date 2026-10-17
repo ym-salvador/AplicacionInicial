@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Matemática Divertida - CNEB Ciclo II (5 Años) | Aventuras con Kusi</title>
+  <meta name="description" content="Aplicación web interactiva y gamificada de Matemática para niños de 5 años basada en el Currículo Nacional de la Educación Básica (CNEB) del Perú. Módulos de Cantidad, Espacio y Evaluación Formativa.">
+  <meta name="theme-color" content="#38BDF8">
+
+  <!-- Fuentes Infantiles Amigables de Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Fredoka:wght@400;600;700;800&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fun: ['"Bubblegum Sans"', '"Fredoka"', 'cursive'],
+            main: ['"Fredoka"', '"Nunito"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Estilos Personalizados del Sistema Infantil UX/UI -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="relative flex flex-col justify-between min-h-screen">
+
+  <!-- =========================================================================
+       BARRA SUPERIOR (HEADER) ADAPTADA A EDUCACIÓN INICIAL
+       ========================================================================= -->
+  <header class="w-full bg-white/80 backdrop-blur-md border-b-4 border-amber-300 py-3 px-4 shadow-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      
+      <!-- Logo y Botón de Inicio Rápido -->
+      <div class="flex items-center gap-3">
+        <button id="btn-nav-home" class="btn-chunky btn-yellow btn-circle hidden" style="width: 54px; height: 54px; min-width: 54px; min-height: 54px;" title="Ir al Menú Principal">
+          <span class="text-2xl">🏠</span>
+        </button>
+        <div class="flex items-center gap-2 cursor-pointer" onclick="window.App.showHome()">
+          <span class="text-3xl animate-bounce-soft">🦙</span>
+          <div>
+            <span class="text-xl md:text-2xl font-black text-amber-950 font-fun leading-none block">Matemática Kusi</span>
+            <span class="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full inline-block">CNEB 5 Años</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicadores y Controles para Niños y Docentes -->
+      <div class="flex items-center gap-3">
+        <!-- Contador de Estrellas Ganadas -->
+        <div class="flex items-center gap-1.5 bg-amber-400 border-2 border-white px-3 py-1.5 rounded-full shadow-md">
+          <span class="text-xl">⭐</span>
+          <span id="star-count" class="font-fun font-black text-amber-950 text-xl leading-none">0</span>
+        </div>
+
+        <!-- Botón de Silencio / Sonido -->
+        <button id="btn-sound-toggle" class="btn-chunky bg-white text-slate-700 border-slate-200 btn-circle" style="width: 50px; height: 50px; min-width: 50px; min-height: 50px;" title="Activar o desactivar sonido">
+          <span id="sound-icon" class="text-xl">🔊</span>
+        </button>
+
+        <!-- Botón Discreto Zona Docente / Familias (Protegido) -->
+        <button id="btn-docente-gate" class="btn-chunky bg-purple-100 text-purple-900 border-purple-300 px-3 py-2 text-xs md:text-sm font-bold flex items-center gap-1.5 hover:bg-purple-200" title="Zona para Profesora y Familias">
+          <span class="text-base">👩‍🏫</span>
+          <span class="hidden sm:inline">Zona Docente</span>
+          <span class="text-xs bg-purple-300 text-purple-950 px-1.5 py-0.5 rounded-md">🔒</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       ÁREA PRINCIPAL DE CONTENIDO DINÁMICO (MUNDOS Y MINIJUEGOS)
+       ========================================================================= -->
+  <main id="app-main-content" class="flex-1 w-full relative z-10 flex flex-col justify-center">
+    <!-- El contenido se inyecta dinámicamente con JavaScript -->
+  </main>
+
+  <!-- =========================================================================
+       ZONA DE LA MASCOTA KUSI Y RETROALIMENTACIÓN AUDITIVA / VISUAL
+       ========================================================================= -->
+  <footer class="w-full relative z-30 pb-4 px-4 pointer-events-none">
+    <div class="max-w-4xl mx-auto flex justify-center">
+      <div id="mascot-host" class="pointer-events-auto">
+        <!-- Renderizado de Kusi y su burbuja parlante -->
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       SCRIPTS DE LA APLICACIÓN (MÓDULOS JAVASCRIPT AUTOCONTENIDOS)
+       ========================================================================= -->
+  <script src="js/audio.js"></script>
+  <script src="js/confetti.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/mascot.js"></script>
+  <script src="js/dragdrop.js"></script>
+  
+  <!-- Minijuegos Mundo 1: Cantidad -->
+  <script src="js/games/cantidad-agrupacion.js"></script>
+  <script src="js/games/cantidad-seriacion.js"></script>
+  <script src="js/games/cantidad-conteo.js"></script>
+  <script src="js/games/cantidad-operaciones.js"></script>
+  <script src="js/games/cantidad-peso-tiempo.js"></script>
+
+  <!-- Minijuegos Mundo 2: Espacio -->
+  <script src="js/games/espacio-formas.js"></script>
+  <script src="js/games/espacio-ubicacion.js"></script>
+  <script src="js/games/espacio-desplazamiento.js"></script>
+  <script src="js/games/espacio-longitud.js"></script>
+
+  <!-- Módulo Docente y App Principal -->
+  <script src="js/docente.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

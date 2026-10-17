@@ -1,0 +1,692 @@
+/* ==========================================================================
+   MATEMÁTICA DIVERTIDA - CICLO II (5 AÑOS) - CNEB PERÚ
+   Sistema de Estilos y Animaciones Infantiles UX/UI
+   ========================================================================== */
+
+:root {
+  --font-main: 'Fredoka', 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-fun: 'Bubblegum Sans', 'Fredoka', cursive;
+  
+  /* Paleta Amigable para 5 Años */
+  --color-sun: #FBBF24;
+  --color-sun-dark: #D97706;
+  --color-sky: #38BDF8;
+  --color-sky-dark: #0284C7;
+  --color-grass: #34D399;
+  --color-grass-dark: #059669;
+  --color-coral: #FB7185;
+  --color-coral-dark: #E11D48;
+  --color-purple: #A78BFA;
+  --color-purple-dark: #7C3AED;
+  --color-orange: #FB923C;
+  --color-orange-dark: #EA580C;
+
+  --bg-gradient-sky: linear-gradient(180deg, #BAE6FD 0%, #E0F2FE 50%, #F0FDF4 100%);
+  --bg-gradient-world1: linear-gradient(180deg, #FEF3C7 0%, #FDE68A 30%, #D1FAE5 100%);
+  --bg-gradient-world2: linear-gradient(180deg, #E0E7FF 0%, #C7D2FE 30%, #BAE6FD 100%);
+
+  --shadow-chunky: 0 8px 0 rgba(0, 0, 0, 0.15);
+  --shadow-chunky-pressed: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-main);
+  background: var(--bg-gradient-sky);
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: #1E293B;
+  touch-action: manipulation;
+}
+
+/* ==========================================================================
+   Botones Infantiles Grandes con Efecto 3D Táctil (Mínimo 64x64px)
+   ========================================================================== */
+.btn-chunky {
+  font-family: var(--font-fun);
+  font-size: 1.5rem;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.75rem;
+  min-height: 64px;
+  min-width: 64px;
+  border-radius: 2rem;
+  border: 4px solid #FFFFFF;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.18), 0 12px 20px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  font-weight: 700;
+  text-shadow: 0 2px 2px rgba(0,0,0,0.15);
+}
+
+.btn-chunky:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 11px 0 rgba(0, 0, 0, 0.18), 0 16px 24px rgba(0, 0, 0, 0.12);
+}
+
+.btn-chunky:active {
+  transform: translateY(6px) scale(0.98);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.btn-yellow {
+  background: linear-gradient(180deg, #FDE047 0%, #EAB308 100%);
+  color: #713F12;
+  border-color: #FEF08A;
+}
+
+.btn-green {
+  background: linear-gradient(180deg, #4ADE80 0%, #16A34A 100%);
+  color: #FFFFFF;
+  border-color: #BBF7D0;
+}
+
+.btn-blue {
+  background: linear-gradient(180deg, #38BDF8 0%, #0284C7 100%);
+  color: #FFFFFF;
+  border-color: #BAE6FD;
+}
+
+.btn-purple {
+  background: linear-gradient(180deg, #C084FC 0%, #9333EA 100%);
+  color: #FFFFFF;
+  border-color: #E9D5FF;
+}
+
+.btn-coral {
+  background: linear-gradient(180deg, #FB7185 0%, #E11D48 100%);
+  color: #FFFFFF;
+  border-color: #FECDD3;
+}
+
+.btn-orange {
+  background: linear-gradient(180deg, #FB923C 0%, #EA580C 100%);
+  color: #FFFFFF;
+  border-color: #FED7AA;
+}
+
+/* Botón Circular Gigante (Sonido / Repetir / Atrás) */
+.btn-circle {
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  min-height: 72px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   Animaciones Infantiles y Micro-interacciones
+   ========================================================================== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes bounceSoft {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-12px) scale(1.03); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+  50% { box-shadow: 0 0 0 18px rgba(251, 191, 36, 0); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+
+@keyframes celebrationJump {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-30px) scale(1.15) rotate(-5deg); }
+  60% { transform: translateY(-15px) scale(1.1) rotate(5deg); }
+  100% { transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes speechWiggle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.05) rotate(-2deg); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-bounce-soft {
+  animation: bounceSoft 2.5s ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 1.2s ease-in-out infinite;
+}
+
+.animate-pop {
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.pulse-target {
+  animation: pulseGlow 1.8s infinite;
+}
+
+/* ==========================================================================
+   Mascota Kusi la Vicuñita
+   ========================================================================== */
+.mascot-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.mascot-svg-wrapper {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.2s ease;
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15));
+}
+
+.mascot-svg-wrapper:hover {
+  transform: scale(1.05);
+}
+
+.mascot-speech-bubble {
+  pointer-events: auto;
+  background: #FFFFFF;
+  border: 4px solid #F59E0B;
+  border-radius: 1.75rem;
+  padding: 1rem 1.25rem;
+  position: relative;
+  max-width: 380px;
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.25);
+  font-family: var(--font-fun);
+  font-size: 1.35rem;
+  line-height: 1.35;
+  color: #78350F;
+  cursor: pointer;
+}
+
+.mascot-speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 18px;
+  left: -16px;
+  width: 0;
+  height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-right: 16px solid #F59E0B;
+}
+
+.mascot-speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  left: -10px;
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 12px solid #FFFFFF;
+}
+
+/* ==========================================================================
+   Tarjetas de Juegos y Mundos
+   ========================================================================== */
+.world-card {
+  border-radius: 2.5rem;
+  padding: 2rem;
+  border: 6px solid #FFFFFF;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12), 0 6px 0 rgba(0, 0, 0, 0.08);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.world-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.16), 0 8px 0 rgba(0, 0, 0, 0.08);
+}
+
+.game-card {
+  border-radius: 2rem;
+  padding: 1.5rem;
+  background: #FFFFFF;
+  border: 5px solid #E2E8F0;
+  box-shadow: 0 10px 0 #CBD5E1, 0 12px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 220px;
+}
+
+.game-card:hover {
+  transform: translateY(-6px) scale(1.03);
+  border-color: #FBBF24;
+  box-shadow: 0 16px 0 #F59E0B, 0 18px 30px rgba(245, 158, 11, 0.2);
+}
+
+.game-card:active {
+  transform: translateY(4px);
+  box-shadow: 0 4px 0 #F59E0B;
+}
+
+/* ==========================================================================
+   Objetos Concretos Manipulables (Drag & Drop / Tap)
+   ========================================================================== */
+.concrete-item {
+  width: 90px;
+  height: 90px;
+  border-radius: 1.5rem;
+  background: #FFFFFF;
+  border: 4px solid #F1F5F9;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12), 0 4px 0 #CBD5E1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+
+.concrete-item:active {
+  cursor: grabbing;
+  transform: scale(1.15) rotate(3deg);
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+}
+
+.concrete-item.selected {
+  border-color: #F59E0B;
+  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.4), 0 8px 16px rgba(0,0,0,0.15);
+  transform: scale(1.08);
+}
+
+/* Canasta / Zona de Soltado (Drop Zone) */
+.drop-zone {
+  min-height: 180px;
+  border-radius: 2rem;
+  border: 4px dashed #94A3B8;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  transition: all 0.25s ease;
+}
+
+.drop-zone.drag-over {
+  border-color: #10B981;
+  background: rgba(209, 250, 229, 0.85);
+  transform: scale(1.02);
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.25);
+}
+
+/* ==========================================================================
+   Balanza Interactiva
+   ========================================================================== */
+.scale-base {
+  width: 28px;
+  height: 140px;
+  background: linear-gradient(180deg, #94A3B8 0%, #64748B 100%);
+  margin: 0 auto;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+}
+
+.scale-fulcrum {
+  width: 48px;
+  height: 48px;
+  background: #F59E0B;
+  border: 4px solid #FFFFFF;
+  border-radius: 50%;
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.scale-beam {
+  width: 380px;
+  height: 16px;
+  background: linear-gradient(90deg, #D97706 0%, #FBBF24 50%, #D97706 100%);
+  border-radius: 8px;
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform-origin: center center;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  margin-left: -190px;
+}
+
+.scale-pan-left, .scale-pan-right {
+  position: absolute;
+  top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 140px;
+}
+
+.scale-pan-left { left: 10px; }
+.scale-pan-right { right: 10px; }
+
+.scale-rope {
+  width: 3px;
+  height: 60px;
+  background: #94A3B8;
+}
+
+.scale-plate {
+  width: 130px;
+  height: 50px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 100%);
+  border-radius: 0 0 65px 65px;
+  border: 4px solid #CBD5E1;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+}
+
+/* ==========================================================================
+   Cuadrícula de Desplazamientos
+   ========================================================================== */
+.grid-cell {
+  aspect-ratio: 1;
+  background: #FFFFFF;
+  border: 3px solid #E2E8F0;
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.grid-cell.highlight {
+  background: #FEF08A;
+  border-color: #F59E0B;
+}
+
+.grid-cell.goal {
+  background: #D1FAE5;
+  border-color: #10B981;
+}
+
+/* ==========================================================================
+   Modal y Estilos de Evaluación Docente (CNEB)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: #FFFFFF;
+  border-radius: 2rem;
+  max-width: 820px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 6px solid #F1F5F9;
+}
+
+/* Escala CNEB Badges */
+.badge-ad {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 2px solid #86EFAC;
+}
+.badge-a {
+  background: #E0E7FF;
+  color: #4338CA;
+  border: 2px solid #A5B4FC;
+}
+.badge-b {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 2px solid #FCD34D;
+}
+.badge-c {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 2px solid #FCA5A5;
+}
+
+/* ==========================================================================
+   ESTILOS DE IMPRESIÓN Y EXPORTACIÓN A PDF (INFORME CNEB MINEDU)
+   Diseño ejecutivo limpio, sin solapamientos, paginación natural y bordes nítidos
+   ========================================================================== */
+.print-only {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+
+  /* Ocultar elementos de navegación y decoraciones interactivas */
+  header, footer, #app-main-content, #confetti-canvas, #docente-gate-modal, .no-print {
+    display: none !important;
+  }
+
+  .screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Desactivar fondos oscuros, sombras y efectos de pantalla */
+  html, body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, Arial, sans-serif !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Desarmar la ventana modal para convertirla en documento plano imprimible */
+  .modal-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .modal-content {
+    position: static !important;
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    display: block !important;
+  }
+
+  #docente-report-printable {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Bloques que no deben romperse en medio de una página */
+  .report-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 6mm !important;
+    display: block !important;
+    position: static !important;
+  }
+
+  .report-page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  /* Tablas con bordes limpios y texto compacto */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 4px !important;
+    margin-bottom: 6px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  th, td {
+    border: 1px solid #CBD5E1 !important;
+    padding: 4px 6px !important;
+    font-size: 8.5pt !important;
+    color: #1E293B !important;
+  }
+
+  th {
+    background-color: #F8FAFC !important;
+    font-weight: 800 !important;
+  }
+
+  /* Badges de calificación en blanco y negro o color suave para impresión */
+  .badge-ad, .badge-a, .badge-b, .badge-c {
+    border: 1px solid #64748B !important;
+    padding: 2px 6px !important;
+    font-weight: 800 !important;
+    font-size: 8pt !important;
+  }
+
+  .badge-ad { background-color: #DCFCE7 !important; color: #166534 !important; }
+  .badge-a  { background-color: #E0E7FF !important; color: #3730A3 !important; }
+  .badge-b  { background-color: #FEF3C7 !important; color: #92400E !important; }
+  .badge-c  { background-color: #FEE2E2 !important; color: #991B1B !important; }
+}
+
+/* ==========================================================================
+   Utilidades Básicas de Respaldo Offline (Garantía 100% Sin Internet)
+   ========================================================================== */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-1 { flex: 1 1 0%; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-shrink-0 { flex-shrink: 0; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-cols-10 { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.max-w-md { max-width: 28rem; }
+.max-w-lg { max-width: 32rem; }
+.max-w-2xl { max-width: 42rem; }
+.max-w-4xl { max-width: 56rem; }
+.max-w-5xl { max-width: 64rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.my-2 { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+.my-4 { margin-top: 1rem; margin-bottom: 1rem; }
+.my-6 { margin-top: 1.5rem; margin-bottom: 1.5rem; }
+.p-2 { padding: 0.5rem; }
+.p-3 { padding: 0.75rem; }
+.p-4 { padding: 1rem; }
+.p-6 { padding: 1.5rem; }
+.text-center { text-align: center; }
+.font-bold { font-weight: 700; }
+.font-black { font-weight: 900; }
+.font-fun { font-family: var(--font-fun); }
+.rounded-xl { border-radius: 0.75rem; }
+.rounded-2xl { border-radius: 1rem; }
+.rounded-3xl { border-radius: 1.5rem; }
+.rounded-full { border-radius: 9999px; }
+.shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+.shadow-xl { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
+.hidden { display: none !important; }
+.cursor-pointer { cursor: pointer; }
+
