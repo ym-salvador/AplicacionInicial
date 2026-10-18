@@ -77,12 +77,13 @@ window.SupabaseService = {
 
       if (error && error.code !== 'PGRST116') throw error;
       if (data) {
+        const mascotIcon = (!data.mascot_icon || data.mascot_icon === 'llama' || data.mascot_icon.length > 4) ? '🦙' : data.mascot_icon;
         return {
           schoolName: data.school_name,
           activeClass: data.active_class,
           teacherName: data.teacher_name,
           teacherPhone: data.teacher_phone || '',
-          mascotIcon: data.mascot_icon || '🦙',
+          mascotIcon: mascotIcon,
           mascotName: data.mascot_name || 'Kusi',
           appTitle: data.app_title || `Matemática ${data.mascot_name || 'Kusi'}`,
           teacherPin: data.teacher_pin || '1234'
@@ -98,21 +99,32 @@ window.SupabaseService = {
   async saveSchoolConfig(config) {
     if (!this.isConfigured()) return false;
     try {
-      const { error } = await this.client
+      const cleanIcon = (!config.mascotIcon || config.mascotIcon === 'llama' || config.mascotIcon.length > 4) ? '🦙' : config.mascotIcon;
+      const payload = {
+        school_name: config.schoolName,
+        active_class: config.activeClass,
+        teacher_name: config.teacherName,
+        teacher_phone: config.teacherPhone || '',
+        mascot_icon: cleanIcon,
+        mascot_name: config.mascotName || 'Kusi',
+        app_title: config.appTitle || `Matemática ${config.mascotName || 'Kusi'}`,
+        teacher_pin: config.teacherPin || '1234',
+        updated_at: new Date().toISOString()
+      };
+
+      // Intentar update directo del registro único del aula
+      const { data: updated, error: updateErr } = await this.client
         .from('colegio_config')
-        .upsert({
-          id: 'aula_default',
-          school_name: config.schoolName,
-          active_class: config.activeClass,
-          teacher_name: config.teacherName,
-          teacher_phone: config.teacherPhone || '',
-          mascot_icon: config.mascotIcon || '🦙',
-          mascot_name: config.mascotName || 'Kusi',
-          app_title: config.appTitle || `Matemática ${config.mascotName || 'Kusi'}`,
-          teacher_pin: config.teacherPin || '1234',
-          updated_at: new Date().toISOString()
-        });
-      if (error) throw error;
+        .update(payload)
+        .eq('id', 'aula_default')
+        .select();
+
+      if (updateErr || !updated || updated.length === 0) {
+        const { error: upsertErr } = await this.client
+          .from('colegio_config')
+          .upsert({ id: 'aula_default', ...payload }, { onConflict: 'id' });
+        if (upsertErr) throw upsertErr;
+      }
       return true;
     } catch (err) {
       console.warn('Error guardando colegio_config en Supabase:', err);

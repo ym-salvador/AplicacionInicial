@@ -127,12 +127,14 @@ class AppStateManager {
   }
 
   getSchoolConfig() {
+    let icon = this.state.mascotIcon;
+    if (!icon || icon === 'llama' || icon.length > 4) icon = '🦙';
     return {
       schoolName: this.state.schoolName || 'I.E. Inicial San Gabriel',
       activeClass: this.state.activeClass || 'Aula 5 Años',
       teacherName: this.state.teacherName || 'Docente de Aula',
       teacherPhone: this.state.teacherPhone || '',
-      mascotIcon: this.state.mascotIcon || '🦙',
+      mascotIcon: icon,
       mascotName: this.state.mascotName || 'Kusi',
       appTitle: this.state.appTitle || `Matemática ${this.state.mascotName || 'Kusi'}`,
       teacherPin: this.state.teacherPin || '1234'
@@ -144,7 +146,9 @@ class AppStateManager {
     if (config.activeClass !== undefined) this.state.activeClass = config.activeClass.trim();
     if (config.teacherName !== undefined) this.state.teacherName = config.teacherName.trim();
     if (config.teacherPhone !== undefined) this.state.teacherPhone = config.teacherPhone.trim();
-    if (config.mascotIcon !== undefined) this.state.mascotIcon = config.mascotIcon;
+    if (config.mascotIcon !== undefined) {
+      this.state.mascotIcon = (!config.mascotIcon || config.mascotIcon === 'llama' || config.mascotIcon.length > 4) ? '🦙' : config.mascotIcon;
+    }
     if (config.mascotName !== undefined) {
       this.state.mascotName = config.mascotName.trim() || 'Kusi';
       this.state.appTitle = `Matemática ${this.state.mascotName}`;
@@ -274,10 +278,14 @@ class AppStateManager {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.students && Array.isArray(parsed.students) && parsed.students.length > 0) {
-          return {
+          const loaded = {
             ...this.getDefaultState(),
             ...parsed
           };
+          if (!loaded.mascotIcon || loaded.mascotIcon === 'llama' || loaded.mascotIcon.length > 4) {
+            loaded.mascotIcon = '🦙';
+          }
+          return loaded;
         }
       }
     } catch (e) {

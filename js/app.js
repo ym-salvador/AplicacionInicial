@@ -159,7 +159,9 @@ window.App = {
     const logoTitle = document.getElementById('app-logo-title');
     const logoSchool = document.getElementById('app-logo-school');
 
-    if (logoMascot) logoMascot.textContent = config.mascotIcon || '🦙';
+    const cleanIcon = (!config.mascotIcon || config.mascotIcon === 'llama' || config.mascotIcon.length > 4) ? '🦙' : config.mascotIcon;
+
+    if (logoMascot) logoMascot.textContent = cleanIcon;
     if (logoTitle) logoTitle.textContent = config.appTitle || `Matemática ${config.mascotName || 'Kusi'}`;
     if (logoSchool) {
       logoSchool.textContent = config.schoolName || 'CNEB 5 Años';
@@ -193,6 +195,7 @@ window.App = {
     const mainContainer = document.getElementById('app-main-content');
 
     const config = window.AppState.getSchoolConfig();
+    const cleanIcon = (!config.mascotIcon || config.mascotIcon === 'llama' || config.mascotIcon.length > 4) ? '🦙' : config.mascotIcon;
     const isAuth = window.AuthModule && window.AuthModule.currentSession;
     const currentStudent = isAuth ? window.AppState.getCurrentStudent() : null;
     const evalCant = window.AppState.getWorldOverallAssessment('cantidad');
@@ -202,7 +205,7 @@ window.App = {
       <div class="max-w-5xl mx-auto flex flex-col items-center justify-center min-h-[75vh] px-4 py-6">
         <div class="text-center mb-6">
           <div class="inline-flex items-center gap-2.5 bg-white/95 border-4 border-amber-300 px-6 py-2 rounded-full shadow-lg mb-3">
-            <span class="text-2xl">${config.mascotIcon}</span>
+            <span class="text-2xl">${cleanIcon}</span>
             <span class="font-black text-amber-950 font-fun text-lg md:text-xl">${config.schoolName} • ${config.activeClass}</span>
           </div>
           <h1 class="text-4xl md:text-5xl font-black text-slate-800 font-fun drop-shadow-md">

@@ -1204,7 +1204,10 @@ window.DocenteModule = {
   // =========================================================================
   renderSettingsTab(container, actions) {
     const config = window.AppState.getSchoolConfig();
-    let currentSelectedIcon = config.mascotIcon || '🦙';
+    let currentSelectedIcon = config.mascotIcon;
+    if (!currentSelectedIcon || currentSelectedIcon === 'llama' || currentSelectedIcon.length > 4 || !this.mascotCatalog.some(m => m.icon === currentSelectedIcon)) {
+      currentSelectedIcon = '🦙';
+    }
 
     if (actions) {
       actions.innerHTML = '';
@@ -1379,12 +1382,14 @@ window.DocenteModule = {
         btnSave.innerHTML = `<span>⏳</span><span>Guardando en la nube...</span>`;
       }
 
+      const finalIcon = (!currentSelectedIcon || currentSelectedIcon === 'llama' || currentSelectedIcon.length > 4) ? '🦙' : currentSelectedIcon;
+
       const configObj = {
         schoolName: newSchoolName,
         activeClass: newActiveClass,
         teacherName: newTeacherName,
         teacherPhone: newTeacherPhone,
-        mascotIcon: currentSelectedIcon,
+        mascotIcon: finalIcon,
         mascotName: newMascotName || 'Kusi',
         teacherPin: newTeacherPin || '1234'
       };
