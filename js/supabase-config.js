@@ -11,8 +11,8 @@ window.SupabaseService = {
   isReady: false,
 
   // CREDENCIALES GLOBALES DEL AULA (Permiten que GitHub Pages funcione automáticamente en los celulares de los padres)
-  defaultUrl: '',
-  defaultKey: '',
+  defaultUrl: 'https://xzmlusxjnvlfftncrkdh.supabase.co',
+  defaultKey: 'sb_publishable__ObKQyunta2TcQxLiRNu5A_5nV8bVod',
 
   init() {
     const creds = this.getCredentials();
@@ -31,6 +31,13 @@ window.SupabaseService = {
   },
 
   getCredentials() {
+    // Si están configuradas permanentemente en el código, usarlas en todos los dispositivos
+    if (this.defaultUrl && this.defaultKey) {
+      return {
+        url: this.defaultUrl,
+        key: this.defaultKey
+      };
+    }
     try {
       const saved = localStorage.getItem(this.configKey);
       if (saved) {
@@ -41,8 +48,8 @@ window.SupabaseService = {
       }
     } catch (e) {}
     return {
-      url: this.defaultUrl || '',
-      key: this.defaultKey || ''
+      url: '',
+      key: ''
     };
   },
 

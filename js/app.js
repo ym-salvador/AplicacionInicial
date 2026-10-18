@@ -71,14 +71,21 @@ window.App = {
 
       // 2. Estudiantes y notas desde la nube
       const remoteStudents = await window.SupabaseService.fetchStudentsWithEvals();
-      if (remoteStudents && Array.isArray(remoteStudents) && remoteStudents.length > 0) {
-        const map = new Map();
-        remoteStudents.forEach(st => map.set(st.id, st));
-        window.AppState.state.students.forEach(st => {
-          if (!map.has(st.id)) map.set(st.id, st);
-        });
-        window.AppState.state.students = Array.from(map.values());
-        window.AppState.saveState();
+      if (remoteStudents && Array.isArray(remoteStudents)) {
+        if (remoteStudents.length > 0) {
+          const map = new Map();
+          remoteStudents.forEach(st => map.set(st.id, st));
+          window.AppState.state.students.forEach(st => {
+            if (!map.has(st.id)) map.set(st.id, st);
+          });
+          window.AppState.state.students = Array.from(map.values());
+          window.AppState.saveState();
+        } else if (window.AppState.state.students.length > 0) {
+          // Si Supabase recién se crea y está vacío, subir automáticamente los estudiantes
+          for (const st of window.AppState.state.students) {
+            await window.SupabaseService.saveStudent(st);
+          }
+        }
       }
     } catch (e) {
       console.warn('Advertencia al sincronizar con la nube:', e);

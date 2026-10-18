@@ -61,13 +61,6 @@ window.AuthModule = {
       this.loadSession();
     }
     this.updateHeaderAuthUI();
-
-    // Si no hay sesión iniciada, abrir el Portal de Ingreso automáticamente tras 400ms
-    if (!this.currentSession) {
-      setTimeout(() => {
-        this.openLoginModal();
-      }, 400);
-    }
   },
 
   loadSession() {
