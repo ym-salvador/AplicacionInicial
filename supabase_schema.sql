@@ -16,10 +16,25 @@ CREATE TABLE IF NOT EXISTS public.colegio_config (
     teacher_phone TEXT DEFAULT '',
     mascot_icon TEXT DEFAULT '🦙',
     mascot_name TEXT DEFAULT 'Kusi',
-    app_title TEXT DEFAULT 'Matemática Kusi',
     teacher_pin TEXT DEFAULT '1234',
+    institution_logo TEXT DEFAULT '',
+    director_name TEXT DEFAULT 'Lic. María Elena Pérez',
+    director_title TEXT DEFAULT 'Directora',
+    director_signature TEXT DEFAULT '',
+    teacher_title TEXT DEFAULT 'Docente de Aula',
+    teacher_signature TEXT DEFAULT '',
+    certificate_city TEXT DEFAULT 'Lima',
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+
+-- Migraciones seguras para colegio_config
+ALTER TABLE public.colegio_config ADD COLUMN IF NOT EXISTS institution_logo TEXT DEFAULT '';
+ALTER TABLE public.colegio_config ADD COLUMN IF NOT EXISTS director_name TEXT DEFAULT 'Lic. María Elena Pérez';
+ALTER TABLE public.colegio_config ADD COLUMN IF NOT EXISTS director_title TEXT DEFAULT 'Directora';
+ALTER TABLE public.colegio_config ADD COLUMN IF NOT EXISTS director_signature TEXT DEFAULT '';
+ALTER TABLE public.colegio_config ADD COLUMN IF NOT EXISTS teacher_title TEXT DEFAULT 'Docente de Aula';
+ALTER TABLE public.colegio_config ADD COLUMN IF NOT EXISTS teacher_signature TEXT DEFAULT '';
+ALTER TABLE public.colegio_config ADD COLUMN IF NOT EXISTS certificate_city TEXT DEFAULT 'Lima';
 
 -- 2. USUARIOS Y FAMILIAS (PADRES DE FAMILIA Y DOCENTE)
 CREATE TABLE IF NOT EXISTS public.usuarios (

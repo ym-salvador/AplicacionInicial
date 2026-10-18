@@ -1433,11 +1433,112 @@ window.DocenteModule = {
             <span class="text-[11px] text-slate-500 mt-0.5 block">Cuando los papás pulsen "Enviar por WhatsApp a la Profesora", se abrirá un chat directo a este número con el avance de su hijo/a.</span>
           </div>
 
+          <!-- SECCIÓN: PERSONALIZACIÓN DEL DIPLOMA OFICIAL Y FIRMAS DIGITALES -->
+          <div class="mt-6 pt-5 border-t-2 border-amber-300 bg-amber-50/60 rounded-2xl p-4 sm:p-5 space-y-4">
+            <div class="flex items-center gap-2.5 pb-2 border-b border-amber-200">
+              <span class="text-3xl">🎓</span>
+              <div>
+                <h3 class="text-lg font-black text-amber-950 font-fun">Personalización del Diploma Oficial y Firmas Digitales</h3>
+                <p class="text-xs text-amber-800 font-semibold">Configura el logo de tu universidad/colegio, las firmas digitales de dirección y profesora, y los cargos para los diplomas imprimibles.</p>
+              </div>
+            </div>
+
+            <!-- 8. Logo de la Universidad o Colegio -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                8. Logo de la Universidad o Institución Educativa:
+              </label>
+              <div class="flex flex-col sm:flex-row items-center gap-3">
+                <input type="text" id="setting-institution-logo" value="${config.institutionLogo || ''}" class="flex-1 w-full text-xs font-mono p-2.5 border-2 border-slate-300 rounded-xl focus:border-purple-500 focus:outline-none bg-white text-slate-800" placeholder="Pega el enlace de la imagen o presiona Subir Imagen...">
+                <label class="btn-chunky bg-purple-100 hover:bg-purple-200 text-purple-900 border-purple-300 text-xs py-2 px-3.5 shadow-sm cursor-pointer flex items-center gap-1.5 whitespace-nowrap">
+                  <span>📁</span>
+                  <span>Subir Imagen</span>
+                  <input type="file" id="setting-logo-file" accept="image/*" class="hidden">
+                </label>
+                <button type="button" id="btn-clear-logo" class="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1 ${config.institutionLogo ? '' : 'hidden'}">
+                  Quitar logo
+                </button>
+              </div>
+              <div id="preview-logo-container" class="mt-2 ${config.institutionLogo ? '' : 'hidden'}">
+                <span class="text-[10px] text-slate-500 font-bold block mb-1">Vista previa del logo:</span>
+                <img id="preview-logo-img" src="${config.institutionLogo || ''}" alt="Logo Institución" class="h-14 max-w-[200px] object-contain border border-slate-200 rounded-lg p-1 bg-white shadow-xs">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Datos de Dirección -->
+              <div class="bg-white border-2 border-purple-200 rounded-xl p-3.5 space-y-2.5">
+                <div class="flex items-center gap-1.5 pb-1 border-b border-purple-100">
+                  <span class="text-lg">🏛️</span>
+                  <h4 class="font-bold text-xs uppercase text-purple-900">Firma 1: Dirección de la Institución</h4>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Nombre de la Directora / Director:</label>
+                  <input type="text" id="setting-director-name" value="${config.directorName || 'Lic. María Elena Pérez'}" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-slate-50">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Cargo oficial:</label>
+                  <input type="text" id="setting-director-title" value="${config.directorTitle || 'Directora'}" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-slate-50">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Firma Digital / Sello de Dirección (Imagen PNG/JPG):</label>
+                  <div class="flex items-center gap-2">
+                    <input type="text" id="setting-director-signature" value="${config.directorSignature || ''}" class="flex-1 text-[11px] font-mono p-1.5 border border-slate-300 rounded-lg bg-slate-50" placeholder="URL o subir firma...">
+                    <label class="btn-chunky bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-300 text-[11px] py-1.5 px-2.5 cursor-pointer whitespace-nowrap">
+                      <span>✍️ Subir</span>
+                      <input type="file" id="setting-director-signature-file" accept="image/*" class="hidden">
+                    </label>
+                  </div>
+                  <div id="preview-director-sig-box" class="mt-1.5 ${config.directorSignature ? '' : 'hidden'}">
+                    <img id="preview-director-sig-img" src="${config.directorSignature || ''}" alt="Firma Dirección" class="h-10 max-w-[140px] object-contain border rounded p-0.5 bg-white">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Datos de la Profesora -->
+              <div class="bg-white border-2 border-indigo-200 rounded-xl p-3.5 space-y-2.5">
+                <div class="flex items-center gap-1.5 pb-1 border-b border-indigo-100">
+                  <span class="text-lg">👩‍🏫</span>
+                  <h4 class="font-bold text-xs uppercase text-indigo-900">Firma 2: Profesora / Docente</h4>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Cargo de la Docente:</label>
+                  <input type="text" id="setting-teacher-title" value="${config.teacherTitle || 'Docente de Aula'}" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-slate-50">
+                  <span class="text-[10px] text-slate-500">El nombre se toma del campo "5. Nombre de la Profesora"</span>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-0.5">Firma Digital de la Docente (Imagen PNG/JPG):</label>
+                  <div class="flex items-center gap-2">
+                    <input type="text" id="setting-teacher-signature" value="${config.teacherSignature || ''}" class="flex-1 text-[11px] font-mono p-1.5 border border-slate-300 rounded-lg bg-slate-50" placeholder="URL o subir firma...">
+                    <label class="btn-chunky bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border-indigo-300 text-[11px] py-1.5 px-2.5 cursor-pointer whitespace-nowrap">
+                      <span>✍️ Subir</span>
+                      <input type="file" id="setting-teacher-signature-file" accept="image/*" class="hidden">
+                    </label>
+                  </div>
+                  <div id="preview-teacher-sig-box" class="mt-1.5 ${config.teacherSignature ? '' : 'hidden'}">
+                    <img id="preview-teacher-sig-img" src="${config.teacherSignature || ''}" alt="Firma Docente" class="h-10 max-w-[140px] object-contain border rounded p-0.5 bg-white">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ciudad y Nota de Fecha de Entrega -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-xl border border-amber-200">
+              <div class="w-full sm:w-auto">
+                <label class="block text-[11px] font-bold text-slate-700 mb-0.5">Ciudad de Emisión del Diploma:</label>
+                <input type="text" id="setting-certificate-city" value="${config.certificateCity || 'Lima'}" class="w-full sm:w-48 text-xs font-bold p-2 border border-slate-300 rounded-lg bg-slate-50" placeholder="Ej. Lima, Iquitos...">
+              </div>
+              <div class="text-[11px] text-amber-900 font-semibold bg-amber-100/70 border border-amber-300 p-2.5 rounded-lg flex-1">
+                📅 <strong>Fecha de entrega en el diploma:</strong> Se asigna automáticamente con el día exacto en que cada alumno finaliza el 100% de los retos (23 misiones).
+              </div>
+            </div>
+          </div>
+
           <!-- Botón Guardar -->
           <div class="pt-4 border-t border-slate-200 flex justify-end">
             <button id="btn-save-settings" class="btn-chunky btn-green text-base py-3 px-8 shadow-lg flex items-center gap-2">
               <span>💾</span>
-              <span>Guardar Configuración del Colegio</span>
+              <span>Guardar Configuración del Colegio y Diploma</span>
             </button>
           </div>
 
@@ -1461,6 +1562,48 @@ window.DocenteModule = {
 
     inputMascotName?.addEventListener('input', updatePreview);
     inputSchoolName?.addEventListener('input', updatePreview);
+
+    // Manejador de subida de imágenes (Logo, Firma Directora, Firma Docente)
+    const handleFileUpload = (fileInputId, textInputId, previewBoxId, previewImgId) => {
+      const fileInput = document.getElementById(fileInputId);
+      const textInput = document.getElementById(textInputId);
+      const previewBox = document.getElementById(previewBoxId);
+      const previewImg = document.getElementById(previewImgId);
+
+      fileInput?.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+          alert('La imagen seleccionada supera los 2 MB. Por favor elige una imagen más ligera.');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+          const dataUrl = loadEvent.target.result;
+          if (textInput) textInput.value = dataUrl;
+          if (previewImg) previewImg.src = dataUrl;
+          if (previewBox) previewBox.classList.remove('hidden');
+          const clearBtn = document.getElementById('btn-clear-logo');
+          if (clearBtn && fileInputId === 'setting-logo-file') clearBtn.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      });
+    };
+
+    handleFileUpload('setting-logo-file', 'setting-institution-logo', 'preview-logo-container', 'preview-logo-img');
+    handleFileUpload('setting-director-signature-file', 'setting-director-signature', 'preview-director-sig-box', 'preview-director-sig-img');
+    handleFileUpload('setting-teacher-signature-file', 'setting-teacher-signature', 'preview-teacher-sig-box', 'preview-teacher-sig-img');
+
+    document.getElementById('btn-clear-logo')?.addEventListener('click', () => {
+      const logoInput = document.getElementById('setting-institution-logo');
+      const logoBox = document.getElementById('preview-logo-container');
+      const clearBtn = document.getElementById('btn-clear-logo');
+      if (logoInput) logoInput.value = '';
+      if (logoBox) logoBox.classList.add('hidden');
+      if (clearBtn) clearBtn.classList.add('hidden');
+    });
 
     // Selección de animal en el catálogo
     container.querySelectorAll('.mascot-choice-btn').forEach(btn => {
@@ -1491,6 +1634,14 @@ window.DocenteModule = {
       const newMascotName = document.getElementById('setting-mascot-name').value.trim();
       const newTeacherPin = document.getElementById('setting-teacher-pin').value.trim();
 
+      const newInstitutionLogo = document.getElementById('setting-institution-logo')?.value.trim() || '';
+      const newDirectorName = document.getElementById('setting-director-name')?.value.trim() || 'Lic. María Elena Pérez';
+      const newDirectorTitle = document.getElementById('setting-director-title')?.value.trim() || 'Directora';
+      const newDirectorSignature = document.getElementById('setting-director-signature')?.value.trim() || '';
+      const newTeacherTitle = document.getElementById('setting-teacher-title')?.value.trim() || 'Docente de Aula';
+      const newTeacherSignature = document.getElementById('setting-teacher-signature')?.value.trim() || '';
+      const newCertificateCity = document.getElementById('setting-certificate-city')?.value.trim() || 'Lima';
+
       if (!newSchoolName) {
         alert("Por favor ingresa el nombre de la Institución Educativa o Colegio.");
         return;
@@ -1510,7 +1661,14 @@ window.DocenteModule = {
         teacherPhone: newTeacherPhone,
         mascotIcon: finalIcon,
         mascotName: newMascotName || 'Kusi',
-        teacherPin: newTeacherPin || '1234'
+        teacherPin: newTeacherPin || '1234',
+        institutionLogo: newInstitutionLogo,
+        directorName: newDirectorName,
+        directorTitle: newDirectorTitle,
+        directorSignature: newDirectorSignature,
+        teacherTitle: newTeacherTitle,
+        teacherSignature: newTeacherSignature,
+        certificateCity: newCertificateCity
       };
 
       // 1. Guardar localmente

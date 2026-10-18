@@ -229,9 +229,6 @@ window.App = {
                 <span>👨‍👩‍👧</span>
                 <span>Mi Progreso y Clave</span>
               </button>
-              <button id="btn-quick-logout" class="btn-chunky bg-white text-slate-600 border-slate-300 text-xs py-1 px-2.5 shadow-sm flex items-center gap-1 hover:bg-slate-100">
-                <span>🚪 Salir</span>
-              </button>
             </div>
           ` : `
             <!-- Banner Seguro para Visitantes (Sin exponer datos de alumnos) -->
@@ -329,10 +326,6 @@ window.App = {
 
     document.getElementById('btn-quick-family-portal')?.addEventListener('click', () => {
       window.FamiliaModule.openPortal();
-    });
-
-    document.getElementById('btn-quick-logout')?.addEventListener('click', () => {
-      window.AuthModule.logout();
     });
   },
 

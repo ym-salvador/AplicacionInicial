@@ -434,7 +434,25 @@ window.FamiliaModule = {
     window.SoundEngine.playSuccess();
     if (window.Kusi?.celebrate) window.Kusi.celebrate("¡Felicitaciones por tu gran logro matemático!");
 
-    const todayDate = new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
+    // Fecha exacta de culminación de las 23 actividades (según requerimiento de entrega)
+    let completionDate = null;
+    if (summary && summary.lastCompletedAt) {
+      completionDate = new Date(summary.lastCompletedAt);
+    } else if (student && student.evaluaciones) {
+      const dates = Object.values(student.evaluaciones)
+        .filter(e => e && e.completedAt)
+        .map(e => new Date(e.completedAt))
+        .filter(d => !isNaN(d.getTime()));
+      if (dates.length > 0) {
+        dates.sort((a, b) => b - a);
+        completionDate = dates[0];
+      }
+    }
+    if (!completionDate || isNaN(completionDate.getTime())) {
+      completionDate = new Date();
+    }
+    const deliveryDateFormatted = completionDate.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
+    const issueLocationAndDate = `${config.certificateCity || 'Lima'}, ${deliveryDateFormatted}`;
 
     const modal = document.createElement('div');
     modal.id = 'diploma-view-modal';
@@ -468,7 +486,7 @@ window.FamiliaModule = {
         <div class="overflow-y-auto flex-1 p-2">
           
           <!-- MARCO OFICIAL DEL CERTIFICADO (A4 LANDSCAPE / PORTRAIT COMPATIBLE) -->
-          <div id="diploma-certificate-frame" class="p-6 sm:p-10 border-8 border-double border-amber-500 rounded-3xl bg-amber-50/90 text-center max-w-3xl mx-auto shadow-xl relative overflow-hidden">
+          <div id="diploma-certificate-frame" class="p-6 sm:p-10 border-8 border-double border-amber-500 rounded-3xl bg-amber-50/95 text-center max-w-3xl mx-auto shadow-xl relative overflow-hidden">
             
             <!-- Decoraciones de esquina -->
             <div class="absolute top-2 left-3 text-2xl select-none opacity-40">✨</div>
@@ -476,70 +494,91 @@ window.FamiliaModule = {
             <div class="absolute bottom-2 left-3 text-2xl select-none opacity-40">✨</div>
             <div class="absolute bottom-2 right-3 text-2xl select-none opacity-40">✨</div>
 
-            <!-- Encabezado Institucional -->
-            <div class="mb-2">
-              <div class="text-4xl sm:text-5xl mb-1">${config.mascotIcon} ⭐ ${config.mascotIcon}</div>
+            <!-- Encabezado Institucional y Logo de la Universidad / Colegio -->
+            <div class="mb-3">
+              ${config.institutionLogo 
+                ? `<div class="mb-2"><img src="${config.institutionLogo}" alt="Logo Institucional" class="h-16 sm:h-20 max-w-[220px] object-contain mx-auto filter drop-shadow-sm"></div>`
+                : `<div class="text-3xl sm:text-4xl mb-1">🏛️ ⭐ 📚</div>`
+              }
               <p class="text-[10px] sm:text-xs uppercase font-extrabold text-amber-800 tracking-widest">
-                REPÚBLICA DEL PERÚ • CURRÍCULO NACIONAL CNEB (CICLO II - 5 AÑOS)
+                REPÚBLICA DEL PERÚ • CURRÍCULO NACIONAL DE EDUCACIÓN BÁSICA (CNEB)
               </p>
               <h2 class="text-sm sm:text-base uppercase font-black text-amber-950 tracking-wider mt-0.5">
                 ${config.schoolName}
               </h2>
-              <p class="text-xs font-bold text-amber-800">${config.activeClass}</p>
+              <p class="text-xs font-bold text-amber-900">${config.activeClass}</p>
             </div>
 
             <!-- Título Principal del Diploma -->
             <div class="my-4">
-              <h1 class="text-3xl sm:text-4xl font-black text-amber-950 font-fun tracking-wide drop-shadow-xs">
+              <h1 class="text-2xl sm:text-4xl font-black text-amber-950 font-fun tracking-wide drop-shadow-xs">
                 DIPLOMA DE LOGRO MATEMÁTICO
               </h1>
               <p class="text-xs sm:text-sm font-bold text-slate-600 mt-1 uppercase tracking-wider">
-                Se otorga con mucho orgullo y alegría a:
+                Se otorga con especial reconocimiento y honor a:
               </p>
             </div>
 
             <!-- Nombre Destacado del Estudiante -->
             <div class="my-3 py-2 border-b-4 border-dashed border-amber-400 max-w-lg mx-auto">
-              <span class="text-3xl sm:text-4xl font-black text-amber-900 font-fun tracking-wide block">
+              <span class="text-2xl sm:text-4xl font-black text-amber-950 font-fun tracking-wide block">
                 ${student.avatar} ${student.name}
               </span>
             </div>
 
-            <!-- Texto Oficial de Mérito -->
+            <!-- Texto Oficial de Mérito (Sin mascota guía) -->
             <p class="text-xs sm:text-sm text-slate-700 max-w-xl mx-auto font-medium leading-relaxed my-4">
-              Por su curiosidad, constancia y notable entusiasmo al resolver exitosamente los desafíos lúdicos de 
-              <strong>Cantidad, Formas, Movimiento y Localización</strong> junto a su mascota compañera 
-              <strong>${config.mascotName} ${config.mascotIcon}</strong>.
+              Por haber culminado con éxito, perseverancia y autonomía todas las actividades de aprendizaje del área de 
+              <strong>Matemática (Ciclo II - 5 Años)</strong>, evidenciando un destacado desarrollo en las competencias de 
+              <strong>Resolución de Problemas de Cantidad</strong> y <strong>Forma, Movimiento y Localización</strong>.
             </p>
 
             <!-- Sellos de Logro -->
-            <div class="flex items-center justify-center gap-4 my-4">
+            <div class="flex items-center justify-center gap-3 sm:gap-4 my-4">
               <span class="bg-amber-100 text-amber-950 border-2 border-amber-300 font-black text-xs px-3 py-1 rounded-full shadow-xs">
-                ⭐ ${student.stars} Estrellas Ganadas
+                ⭐ ${student.stars || 69} Estrellas Ganadas
               </span>
               <span class="bg-emerald-100 text-emerald-950 border-2 border-emerald-300 font-black text-xs px-3 py-1 rounded-full shadow-xs">
                 🎯 23/23 Misiones Completadas (100%)
               </span>
             </div>
 
-            <!-- Sección de Firmas y Fecha -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 items-end mt-8 pt-4 border-t-2 border-amber-300 text-xs">
-              <div class="text-center">
-                <span class="font-bold text-slate-800 block text-xs sm:text-sm">${todayDate}</span>
-                <span class="text-slate-500 text-[10px]">Fecha de Entrega</span>
+            <!-- Sección de Firmas Digitales Oficiales (Dirección y Profesora) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 items-end mt-8 pt-4 border-t-2 border-amber-300">
+              <!-- Firma 1: Dirección Institucional -->
+              <div class="flex flex-col items-center justify-end text-center">
+                <div class="h-16 flex items-end justify-center mb-1">
+                  ${config.directorSignature 
+                    ? `<img src="${config.directorSignature}" alt="Firma Dirección" class="h-14 sm:h-16 max-w-[170px] object-contain">`
+                    : `<div class="font-serif italic text-purple-900 text-xs sm:text-sm font-bold opacity-75 border-b border-dashed border-purple-300 pb-1">Firma Digital y Sello Oficial</div>`
+                  }
+                </div>
+                <div class="w-48 sm:w-56 border-t-2 border-slate-700 pt-1">
+                  <span class="font-black text-slate-900 block text-xs sm:text-sm font-fun">${config.directorName || 'Lic. María Elena Pérez'}</span>
+                  <span class="text-slate-600 text-[11px] font-bold block">${config.directorTitle || 'Directora'}</span>
+                  <span class="text-slate-400 text-[10px] font-medium block truncate max-w-[210px] mx-auto">${config.schoolName}</span>
+                </div>
               </div>
-              <div class="text-center">
-                <span class="font-fun font-bold text-amber-900 text-sm sm:text-base block">${config.mascotName} ${config.mascotIcon}</span>
-                <span class="text-slate-500 text-[10px]">Mascota Guía</span>
+
+              <!-- Firma 2: Docente de Aula -->
+              <div class="flex flex-col items-center justify-end text-center">
+                <div class="h-16 flex items-end justify-center mb-1">
+                  ${config.teacherSignature 
+                    ? `<img src="${config.teacherSignature}" alt="Firma Docente" class="h-14 sm:h-16 max-w-[170px] object-contain">`
+                    : `<div class="font-serif italic text-indigo-900 text-xs sm:text-sm font-bold opacity-75 border-b border-dashed border-indigo-300 pb-1">Firma Digital y Sello Docente</div>`
+                  }
+                </div>
+                <div class="w-48 sm:w-56 border-t-2 border-slate-700 pt-1">
+                  <span class="font-black text-slate-900 block text-xs sm:text-sm font-fun">${config.teacherName || 'Prof. Yanet Huaman Salvador'}</span>
+                  <span class="text-slate-600 text-[11px] font-bold block">${config.teacherTitle || 'Docente de Aula'}</span>
+                  <span class="text-slate-400 text-[10px] font-medium block truncate max-w-[210px] mx-auto">${config.activeClass}</span>
+                </div>
               </div>
-              <div class="text-center border-t border-slate-400 sm:border-t-0 pt-1">
-                <span class="font-bold text-slate-800 block text-xs sm:text-sm">${config.teacherName}</span>
-                <span class="text-slate-500 text-[10px]">Docente de Aula</span>
-              </div>
-              <div class="text-center border-t border-slate-400 sm:border-t-0 pt-1">
-                <span class="font-bold text-slate-800 block text-xs sm:text-sm">Dirección Pedagógica</span>
-                <span class="text-slate-500 text-[10px]">${config.schoolName}</span>
-              </div>
+            </div>
+
+            <!-- Fecha y Lugar de Expedición Oficial (Mismo día que finaliza) -->
+            <div class="text-center mt-6 pt-2 text-xs text-slate-700 font-bold border-t border-amber-200/60">
+              <span>Fecha de Emisión: <strong>${issueLocationAndDate}</strong></span>
             </div>
 
           </div>

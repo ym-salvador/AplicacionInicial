@@ -86,7 +86,14 @@ window.SupabaseService = {
           mascotIcon: mascotIcon,
           mascotName: data.mascot_name || 'Kusi',
           appTitle: data.app_title || `Matemática ${data.mascot_name || 'Kusi'}`,
-          teacherPin: data.teacher_pin || '1234'
+          teacherPin: data.teacher_pin || '1234',
+          institutionLogo: data.institution_logo || '',
+          directorName: data.director_name || 'Lic. María Elena Pérez',
+          directorTitle: data.director_title || 'Directora',
+          directorSignature: data.director_signature || '',
+          teacherTitle: data.teacher_title || 'Docente de Aula',
+          teacherSignature: data.teacher_signature || '',
+          certificateCity: data.certificate_city || 'Lima'
         };
       }
     } catch (err) {
@@ -100,7 +107,7 @@ window.SupabaseService = {
     if (!this.isConfigured()) return false;
     try {
       const cleanIcon = (!config.mascotIcon || config.mascotIcon === 'llama' || config.mascotIcon.length > 4) ? '🦙' : config.mascotIcon;
-      const payload = {
+      const basePayload = {
         school_name: config.schoolName,
         active_class: config.activeClass,
         teacher_name: config.teacherName,
@@ -112,17 +119,38 @@ window.SupabaseService = {
         updated_at: new Date().toISOString()
       };
 
-      // Intentar update directo del registro único del aula
-      const { data: updated, error: updateErr } = await this.client
-        .from('colegio_config')
-        .update(payload)
-        .eq('id', 'aula_default')
-        .select();
+      // Payload extendido con personalización de diplomas
+      const fullPayload = {
+        ...basePayload,
+        institution_logo: config.institutionLogo || '',
+        director_name: config.directorName || 'Lic. María Elena Pérez',
+        director_title: config.directorTitle || 'Directora',
+        director_signature: config.directorSignature || '',
+        teacher_title: config.teacherTitle || 'Docente de Aula',
+        teacher_signature: config.teacherSignature || '',
+        certificate_city: config.certificateCity || 'Lima'
+      };
 
-      if (updateErr || !updated || updated.length === 0) {
+      try {
+        const { error: fullErr } = await this.client
+          .from('colegio_config')
+          .update(fullPayload)
+          .eq('id', 'aula_default');
+        if (!fullErr) return true;
+      } catch (e) {
+        // Fallback si las columnas nuevas aún no existen en Supabase
+      }
+
+      // Fallback seguro a columnas base
+      const { error: updateErr } = await this.client
+        .from('colegio_config')
+        .update(basePayload)
+        .eq('id', 'aula_default');
+
+      if (updateErr) {
         const { error: upsertErr } = await this.client
           .from('colegio_config')
-          .upsert({ id: 'aula_default', ...payload }, { onConflict: 'id' });
+          .upsert({ id: 'aula_default', ...basePayload }, { onConflict: 'id' });
         if (upsertErr) throw upsertErr;
       }
       return true;

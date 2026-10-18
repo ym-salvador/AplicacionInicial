@@ -113,14 +113,21 @@ class AppStateManager {
 
   getDefaultState() {
     return {
-      activeClass: 'Aula Los Creativos (5 Años)',
-      schoolName: 'I.E. Inicial San Gabriel',
-      teacherName: 'Prof. Yanet Salvador',
+      activeClass: 'Aula Los Conejitos (5 Años)',
+      schoolName: 'I.E.P. PNP HUGO GRANDEZ OCMIN',
+      teacherName: 'Prof. Yanet Huaman Salvador',
       teacherPhone: '',
       mascotIcon: '🦙',
       mascotName: 'Kusi',
       appTitle: 'Matemática Kusi',
       teacherPin: '1234',
+      institutionLogo: '',
+      directorName: 'Lic. María Elena Pérez',
+      directorTitle: 'Directora',
+      directorSignature: '',
+      teacherTitle: 'Docente de Aula',
+      teacherSignature: '',
+      certificateCity: 'Lima',
       currentStudentId: 'est_1',
       students: this.getInitialStudents()
     };
@@ -130,14 +137,21 @@ class AppStateManager {
     let icon = this.state.mascotIcon;
     if (!icon || icon === 'llama' || icon.length > 4) icon = '🦙';
     return {
-      schoolName: this.state.schoolName || 'I.E. Inicial San Gabriel',
-      activeClass: this.state.activeClass || 'Aula 5 Años',
-      teacherName: this.state.teacherName || 'Docente de Aula',
+      schoolName: this.state.schoolName || 'I.E.P. PNP HUGO GRANDEZ OCMIN',
+      activeClass: this.state.activeClass || 'Aula Los Conejitos (5 Años)',
+      teacherName: this.state.teacherName || 'Prof. Yanet Huaman Salvador',
       teacherPhone: this.state.teacherPhone || '',
       mascotIcon: icon,
       mascotName: this.state.mascotName || 'Kusi',
       appTitle: this.state.appTitle || `Matemática ${this.state.mascotName || 'Kusi'}`,
-      teacherPin: this.state.teacherPin || '1234'
+      teacherPin: this.state.teacherPin || '1234',
+      institutionLogo: this.state.institutionLogo || '',
+      directorName: this.state.directorName || 'Lic. María Elena Pérez',
+      directorTitle: this.state.directorTitle || 'Directora',
+      directorSignature: this.state.directorSignature || '',
+      teacherTitle: this.state.teacherTitle || 'Docente de Aula',
+      teacherSignature: this.state.teacherSignature || '',
+      certificateCity: this.state.certificateCity || 'Lima'
     };
   }
 
@@ -154,6 +168,13 @@ class AppStateManager {
       this.state.appTitle = `Matemática ${this.state.mascotName}`;
     }
     if (config.teacherPin !== undefined) this.state.teacherPin = config.teacherPin.trim() || '1234';
+    if (config.institutionLogo !== undefined) this.state.institutionLogo = config.institutionLogo.trim();
+    if (config.directorName !== undefined) this.state.directorName = config.directorName.trim();
+    if (config.directorTitle !== undefined) this.state.directorTitle = config.directorTitle.trim();
+    if (config.directorSignature !== undefined) this.state.directorSignature = config.directorSignature.trim();
+    if (config.teacherTitle !== undefined) this.state.teacherTitle = config.teacherTitle.trim();
+    if (config.teacherSignature !== undefined) this.state.teacherSignature = config.teacherSignature.trim();
+    if (config.certificateCity !== undefined) this.state.certificateCity = config.certificateCity.trim();
 
     this.saveState();
 
