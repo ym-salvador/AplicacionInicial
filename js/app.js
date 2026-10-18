@@ -10,10 +10,16 @@ window.App = {
   currentSessionId: null,
   currentGameId: null,
 
-  init() {
+  async init() {
     this.applySchoolConfig();
     this.renderTopNav();
     window.StudentProfileModule?.init();
+
+    // Sincronización en tiempo real desde Supabase si está configurado
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      await this.syncFromCloud();
+    }
+
     window.AuthModule?.init();
     this.checkSyncUrl();
     this.showHome();
@@ -51,6 +57,32 @@ window.App = {
       window.SoundEngine.playPop();
       this.showHome();
     });
+  },
+
+  async syncFromCloud() {
+    if (!window.SupabaseService || !window.SupabaseService.isConfigured()) return;
+    try {
+      // 1. Configuración del colegio
+      const remoteConfig = await window.SupabaseService.fetchSchoolConfig();
+      if (remoteConfig) {
+        window.AppState.updateSchoolConfig(remoteConfig);
+        this.applySchoolConfig();
+      }
+
+      // 2. Estudiantes y notas desde la nube
+      const remoteStudents = await window.SupabaseService.fetchStudentsWithEvals();
+      if (remoteStudents && Array.isArray(remoteStudents) && remoteStudents.length > 0) {
+        const map = new Map();
+        remoteStudents.forEach(st => map.set(st.id, st));
+        window.AppState.state.students.forEach(st => {
+          if (!map.has(st.id)) map.set(st.id, st);
+        });
+        window.AppState.state.students = Array.from(map.values());
+        window.AppState.saveState();
+      }
+    } catch (e) {
+      console.warn('Advertencia al sincronizar con la nube:', e);
+    }
   },
 
   checkSyncUrl() {

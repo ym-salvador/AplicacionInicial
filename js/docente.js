@@ -1027,9 +1027,10 @@ window.DocenteModule = {
         if (!st) return;
 
         const baseUrl = window.location.origin + window.location.pathname;
+        const directUrl = `${baseUrl}?alumno=${encodeURIComponent(st.name)}&pin=${st.pin || '1234'}`;
         const msg = `¡Hola ${st.parentName || 'Familia'}! 👋 Le saluda la Profesora ${config.teacherName}.\n\n` +
-          `Para que *${st.name}* ${st.avatar} practique los juegos matemáticos desde casa y guarde sus estrellas ⭐ en nuestro sistema escolar, ingrese aquí:\n` +
-          `🔗 ${baseUrl}\n\n` +
+          `Para que *${st.name}* ${st.avatar} practique los juegos matemáticos desde casa y guarde sus estrellas ⭐ en nuestro sistema escolar, ingrese con su enlace privado:\n` +
+          `🔗 ${directUrl}\n\n` +
           `👶 Estudiante: *${st.name}*\n` +
           `🔑 PIN de acceso: *${st.pin || '1234'}*\n\n` +
           `¡Muchos éxitos y gracias por apoyar su aprendizaje! ✨`;
@@ -1390,18 +1391,38 @@ window.DocenteModule = {
       if (window.SupabaseService.isConfigured()) {
         window.SoundEngine.playSuccess();
         if (alertEl) {
-          alertEl.textContent = '✓ ¡Conexión exitosa! Sincronizando datos con la nube...';
-          alertEl.className = 'text-xs p-2.5 rounded-xl font-bold mb-3 bg-emerald-100 text-emerald-900 border border-emerald-300';
+          alertEl.textContent = '✓ Conectando a Supabase y sincronizando aula...';
+          alertEl.className = 'text-xs p-2.5 rounded-xl font-bold mb-3 bg-indigo-100 text-indigo-900 border border-indigo-300';
         }
-        // Subir datos iniciales
-        await window.SupabaseService.saveSchoolConfig(window.AppState.getSchoolConfig());
+
+        // Subir configuración del colegio
+        const cfgOk = await window.SupabaseService.saveSchoolConfig(window.AppState.getSchoolConfig());
+
+        // Subir todos los estudiantes registrados
+        let savedCount = 0;
         for (const st of window.AppState.state.students) {
-          await window.SupabaseService.saveStudent(st);
+          const stOk = await window.SupabaseService.saveStudent(st);
+          if (stOk) savedCount++;
         }
+
+        // Si falló el guardado, las tablas aún no existen
+        if (!cfgOk && savedCount === 0) {
+          if (alertEl) {
+            alertEl.className = 'text-xs p-2.5 rounded-xl font-bold mb-3 bg-amber-100 text-amber-900 border border-amber-300 text-left';
+            alertEl.innerHTML = '⚠️ Claves conectadas, pero <strong>las tablas aún no existen en tu Supabase</strong>.<br>Abre tu Supabase -> <strong>SQL Editor</strong>, pega el archivo <code>supabase_schema.sql</code> y presiona <strong>Run</strong>.';
+          }
+          return;
+        }
+
+        if (alertEl) {
+          alertEl.className = 'text-xs p-2.5 rounded-xl font-bold mb-3 bg-emerald-100 text-emerald-900 border border-emerald-300';
+          alertEl.textContent = `✓ ¡Aula sincronizada con éxito! ${savedCount} estudiantes respaldados en la nube.`;
+        }
+
         setTimeout(() => {
           modal.remove();
           this.renderCurrentTab();
-        }, 1200);
+        }, 1500);
       } else {
         window.SoundEngine.playGentleTryAgain();
         if (alertEl) {

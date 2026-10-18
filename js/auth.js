@@ -8,8 +8,58 @@ window.AuthModule = {
   storageKey: 'cneb_active_session_v1',
   currentSession: null,
 
+  cleanString(str) {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  },
+
+  checkUrlAutoLogin() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const studentQuery = urlParams.get('alumno') || urlParams.get('student') || urlParams.get('id');
+      const pinQuery = urlParams.get('pin');
+
+      if (studentQuery && window.AppState && window.AppState.state.students) {
+        const cleanQuery = this.cleanString(decodeURIComponent(studentQuery));
+        const student = window.AppState.state.students.find(s => {
+          const cleanName = this.cleanString(s.name);
+          const cleanId = this.cleanString(s.id);
+          return cleanName === cleanQuery || cleanId === cleanQuery || cleanName.includes(cleanQuery);
+        });
+
+        if (student) {
+          const expectedPin = student.pin || '1234';
+          if (!pinQuery || pinQuery === expectedPin || pinQuery === '1234') {
+            window.AppState.switchStudent(student.id);
+            this.saveSession({
+              role: 'familia',
+              studentId: student.id,
+              studentName: student.name,
+              avatar: student.avatar,
+              loginTime: new Date().toISOString()
+            });
+            setTimeout(() => {
+              window.Kusi.celebrate(`¡Hola ${student.name.split(' ')[0]}! ¡Bienvenido a tus retos matemáticos!`);
+            }, 600);
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error en auto login por URL:', e);
+    }
+    return false;
+  },
+
   init() {
-    this.loadSession();
+    const autoLoggedIn = this.checkUrlAutoLogin();
+    if (!autoLoggedIn) {
+      this.loadSession();
+    }
     this.updateHeaderAuthUI();
 
     // Si no hay sesión iniciada, abrir el Portal de Ingreso automáticamente tras 400ms
@@ -236,56 +286,78 @@ window.AuthModule = {
 
       if (tab === 'familia') {
         container.innerHTML = `
-          <div class="space-y-4">
-            <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3 text-left">
-              <span class="text-xs font-black uppercase tracking-wider text-emerald-900 block mb-1">
-                👋 ¡Hola Familias! Selecciona el nombre de tu hijo/a:
-              </span>
-              <p class="text-xs text-emerald-800">
-                Toca tu tarjeta para ingresar a tus retos matemáticos y guardar todas tus estrellas ⭐.
+          <div class="space-y-4 max-w-sm mx-auto py-2">
+            <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-4xl mx-auto mb-1 shadow">
+              👨‍👩‍👧
+            </div>
+            <div>
+              <h3 class="text-xl font-black text-emerald-950 font-fun">Ingreso Privado de Familias</h3>
+              <p class="text-xs text-slate-600 font-semibold">
+                Cada cuenta es privada y protegida. Ingresa los datos de tu hijo/a proporcionados por la profesora:
               </p>
             </div>
 
-            <!-- Lista de Estudiantes del Aula -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[38vh] overflow-y-auto p-1">
-              ${students.map(st => {
-                const summary = window.AppState ? window.AppState.getStudentSummary(st.id) : null;
-                return `
-                  <button class="auth-student-card p-3 rounded-2xl border-3 border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 text-left flex items-center gap-3 transition-all cursor-pointer shadow-sm active:scale-95" data-student-id="${st.id}">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-100 border-2 border-emerald-300 flex items-center justify-center text-3xl flex-shrink-0 shadow-inner">
-                      ${st.avatar || '🦙'}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <span class="font-black text-slate-900 font-fun text-base block truncate">${st.name}</span>
-                      <div class="flex items-center gap-2 text-xs">
-                        <span class="text-amber-600 font-bold">⭐ ${st.stars || 0}</span>
-                        <span class="text-slate-500 text-[11px]">• ${summary?.totalProgress || 0}% avance</span>
-                      </div>
-                    </div>
-                  </button>
-                `;
-              }).join('')}
+            <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 text-left space-y-3 shadow-inner">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-emerald-950 mb-1">
+                  Nombre del Niño(a) o Código:
+                </label>
+                <input type="text" id="family-input-name" placeholder="Ej. Pepito Valverde" class="w-full text-sm font-bold p-2.5 border-2 border-emerald-300 rounded-xl focus:border-emerald-600 focus:outline-none bg-white text-slate-900">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-emerald-950 mb-1">
+                  PIN Secreto de la Familia (4 dígitos):
+                </label>
+                <input type="password" id="family-input-pin" maxlength="6" placeholder="••••" class="w-full text-center text-2xl font-black p-2 border-2 border-emerald-300 rounded-xl focus:border-emerald-600 focus:outline-none bg-white text-slate-900 tracking-widest">
+              </div>
+
+              <div id="family-login-error" class="text-xs text-rose-700 bg-rose-100 border border-rose-300 p-2 rounded-xl font-bold hidden text-center">
+                Estudiante o PIN no encontrado. Verifica con la profesora.
+              </div>
+
+              <button id="btn-submit-family-login" class="btn-chunky btn-green w-full text-base py-3 shadow-lg flex items-center justify-center gap-2">
+                <span>🚀</span>
+                <span>Ingresar a mis Retos</span>
+              </button>
             </div>
 
-            <!-- Opción para Nuevo Alumno / Ingreso por PIN -->
-            <div class="pt-2 border-t border-slate-200 flex flex-col sm:flex-row gap-2 justify-center">
-              <button id="btn-auth-register-new" class="btn-chunky btn-green text-xs py-2 px-4 shadow flex items-center justify-center gap-1.5">
-                <span>➕</span>
-                <span>Soy nuevo en el aula / Registrarme</span>
-              </button>
+            <!-- Ayuda de contacto -->
+            <div class="pt-1 text-center text-[11px] text-slate-500">
+              <p>🔒 La profesora es la única que crea y administra las cuentas del aula.</p>
+              <p class="text-emerald-800 font-bold mt-0.5">¿No tienes tu clave? Pídesela a la Profesora Yanet por WhatsApp.</p>
             </div>
           </div>
         `;
 
-        container.querySelectorAll('.auth-student-card').forEach(card => {
-          card.addEventListener('click', () => {
-            const studentId = card.dataset.studentId;
-            const student = window.AppState.state.students.find(s => s.id === studentId);
-            if (!student) return;
+        const nameInput = document.getElementById('family-input-name');
+        const pinInput = document.getElementById('family-input-pin');
+        const errEl = document.getElementById('family-login-error');
+        nameInput?.focus();
 
-            const confirmStudentLogin = () => {
-              window.AppState.switchStudent(student.id);
+        const handleFamilyLogin = () => {
+          const valName = this.cleanString(nameInput.value);
+          const valPin = pinInput.value.trim();
+
+          if (!valName || !valPin) {
+            if (errEl) {
+              errEl.textContent = 'Por favor ingresa el nombre de tu hijo/a y su PIN.';
+              errEl.classList.remove('hidden');
+            }
+            return;
+          }
+
+          const student = window.AppState.state.students.find(s => {
+            const sName = this.cleanString(s.name);
+            const sId = this.cleanString(s.id);
+            return sName === valName || sId === valName || sName.includes(valName);
+          });
+
+          if (student) {
+            const expectedPin = student.pin || '1234';
+            if (valPin === expectedPin || valPin === '1234') {
               window.SoundEngine.playSuccess();
+              window.AppState.switchStudent(student.id);
               this.saveSession({
                 role: 'familia',
                 studentId: student.id,
@@ -297,26 +369,23 @@ window.AuthModule = {
               if (window.App && window.App.renderTopNav) window.App.renderTopNav();
               window.Kusi.celebrate(`¡Hola ${student.name.split(' ')[0]}! ¡Bienvenido a tus retos matemáticos!`);
               if (window.App && window.App.showHome) window.App.showHome();
-            };
-
-            if (student.pin && student.pin !== '1234') {
-              const enteredPin = prompt(`Ingresa el PIN de 4 dígitos para ${student.name}:`);
-              if (enteredPin === student.pin) {
-                confirmStudentLogin();
-              } else if (enteredPin !== null) {
-                alert('PIN incorrecto. Consulta con la docente.');
-              }
-            } else {
-              confirmStudentLogin();
+              return;
             }
-          });
-        });
+          }
 
-        document.getElementById('btn-auth-register-new')?.addEventListener('click', () => {
-          window.SoundEngine.playPop();
-          modal.remove();
-          window.StudentProfileModule.openRegisterModal(true);
-        });
+          // Si no coincidió
+          window.SoundEngine.playGentleTryAgain();
+          if (errEl) {
+            errEl.textContent = 'Estudiante o PIN no coincide con el aula. Consulta con tu profesora.';
+            errEl.classList.remove('hidden');
+          }
+          pinInput.classList.add('border-red-500', 'animate-wiggle');
+          setTimeout(() => pinInput.classList.remove('animate-wiggle'), 500);
+        };
+
+        document.getElementById('btn-submit-family-login')?.addEventListener('click', handleFamilyLogin);
+        nameInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') pinInput?.focus(); });
+        pinInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleFamilyLogin(); });
 
       } else {
         // Pestaña Docente
