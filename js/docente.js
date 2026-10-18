@@ -447,89 +447,92 @@ window.DocenteModule = {
         </div>
 
         <!-- Sábana / Tabla de Seguimiento del Salón -->
-        <div class="bg-white border border-slate-300 rounded-2xl overflow-hidden shadow-sm">
-          <table class="w-full text-left text-xs border-collapse">
+        <div class="bg-white border-2 border-slate-200 rounded-2xl overflow-x-auto shadow-sm">
+          <table class="w-full text-left text-xs border-collapse min-w-[920px]">
             <thead>
-              <tr class="bg-slate-100 text-slate-800 font-bold border-b border-slate-300">
-                <th class="p-3">Estudiante</th>
-                <th class="p-3">Última Actividad</th>
-                <th class="p-3 text-center">Mundo 1: Cantidad</th>
-                <th class="p-3 text-center">Mundo 2: Espacio</th>
-                <th class="p-3 text-center">Avance Total</th>
-                <th class="p-3 text-center">Estado</th>
-                <th class="p-3 text-center">Acciones</th>
+              <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
+                <th class="p-3.5 min-w-[190px]">Estudiante</th>
+                <th class="p-3.5 text-center min-w-[145px]">Última Actividad</th>
+                <th class="p-3.5 text-center min-w-[115px]">Mundo 1: Cantidad</th>
+                <th class="p-3.5 text-center min-w-[115px]">Mundo 2: Espacio</th>
+                <th class="p-3.5 text-center min-w-[130px]">Avance Total</th>
+                <th class="p-3.5 text-center min-w-[145px]">Estado</th>
+                <th class="p-3.5 text-center min-w-[180px]">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200">
               ${filteredStudents.map(st => `
                 <tr class="hover:bg-slate-50/80 transition-colors">
-                  <td class="p-3">
+                  <td class="p-3.5 whitespace-nowrap">
                     <div class="flex items-center gap-2.5">
-                      <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-2xl flex-shrink-0">
+                      <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-2xl flex-shrink-0 shadow-xs">
                         ${st.avatar}
                       </div>
-                      <div>
-                        <span class="font-black text-slate-900 text-sm block font-fun">${st.name}</span>
-                        <span class="text-[11px] text-amber-600 font-bold">⭐ ${st.stars} estrellas</span>
+                      <div class="min-w-0">
+                        <span class="font-black text-slate-900 text-sm block font-fun leading-tight">${st.name}</span>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                          <span class="text-[11px] text-amber-600 font-bold">⭐ ${st.stars} estrellas</span>
+                          <span class="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1 rounded">ID: ${st.id}</span>
+                        </div>
                       </div>
                     </div>
                   </td>
 
-                  <td class="p-3 font-semibold text-slate-600">
+                  <td class="p-3.5 text-center whitespace-nowrap">
                     ${st.hasPlayed 
-                      ? `<span class="text-emerald-700 font-bold">🕒 ${st.lastActive}</span>` 
-                      : `<span class="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">⚠️ Sin actividad</span>`}
+                      ? `<span class="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full text-xs">🕒 ${st.lastActive}</span>` 
+                      : `<span class="inline-flex items-center gap-1 text-slate-500 font-bold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full text-xs">⚠️ Sin actividad</span>`}
                   </td>
 
-                  <td class="p-3 text-center">
+                  <td class="p-3.5 text-center whitespace-nowrap">
                     <div class="flex flex-col items-center gap-1">
-                      <span class="font-bold text-[11px] px-2 py-0.5 rounded ${this.getBadgeClass(st.cantidad.grade)}">
+                      <span class="font-bold text-[11px] px-2.5 py-0.5 rounded-md ${this.getBadgeClass(st.cantidad.grade)}">
                         ${st.cantidad.grade}
                       </span>
-                      <span class="text-[10px] text-slate-500">${st.cantidad.completed}/${st.cantidad.total} (${st.cantidad.percent}%)</span>
+                      <span class="text-[10px] text-slate-500 font-bold">${st.cantidad.completed}/${st.cantidad.total} (${st.cantidad.percent}%)</span>
                     </div>
                   </td>
 
-                  <td class="p-3 text-center">
+                  <td class="p-3.5 text-center whitespace-nowrap">
                     <div class="flex flex-col items-center gap-1">
-                      <span class="font-bold text-[11px] px-2 py-0.5 rounded ${this.getBadgeClass(st.espacio.grade)}">
+                      <span class="font-bold text-[11px] px-2.5 py-0.5 rounded-md ${this.getBadgeClass(st.espacio.grade)}">
                         ${st.espacio.grade}
                       </span>
-                      <span class="text-[10px] text-slate-500">${st.espacio.completed}/${st.espacio.total} (${st.espacio.percent}%)</span>
+                      <span class="text-[10px] text-slate-500 font-bold">${st.espacio.completed}/${st.espacio.total} (${st.espacio.percent}%)</span>
                     </div>
                   </td>
 
-                  <td class="p-3 text-center">
+                  <td class="p-3.5 text-center whitespace-nowrap">
                     <div class="w-28 mx-auto">
                       <div class="flex justify-between text-[11px] font-bold mb-1">
-                        <span class="text-slate-700">${st.totalCompleted}/23</span>
-                        <span class="text-purple-700">${st.totalProgress}%</span>
+                        <span class="text-slate-700 font-fun">${st.totalCompleted}/23</span>
+                        <span class="text-purple-700 font-black">${st.totalProgress}%</span>
                       </div>
-                      <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                        <div class="bg-gradient-to-r from-amber-400 to-purple-500 h-full rounded-full transition-all" style="width: ${st.totalProgress}%"></div>
+                      <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden shadow-inner">
+                        <div class="bg-gradient-to-r from-amber-400 to-purple-500 h-full rounded-full transition-all duration-300" style="width: ${st.totalProgress}%"></div>
                       </div>
                     </div>
                   </td>
 
-                  <td class="p-3 text-center">
+                  <td class="p-3.5 text-center whitespace-nowrap">
                     ${st.status === 'completado' 
-                      ? '<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded-full font-bold text-[11px]">✅ Al Día (100%)</span>' 
+                      ? '<span class="inline-flex items-center justify-center gap-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full font-bold text-xs whitespace-nowrap shadow-xs">✅ Al Día (100%)</span>' 
                       : st.status === 'en_proceso' 
-                      ? '<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1 rounded-full font-bold text-[11px]">⏳ En Proceso</span>' 
-                      : '<span class="bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full font-bold text-[11px]">⚠️ No ha iniciado</span>'}
+                      ? '<span class="inline-flex items-center justify-center gap-1.5 bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 rounded-full font-bold text-xs whitespace-nowrap shadow-xs">⏳ En Proceso</span>' 
+                      : '<span class="inline-flex items-center justify-center gap-1.5 bg-rose-100 text-rose-800 border border-rose-300 px-3 py-1 rounded-full font-bold text-xs whitespace-nowrap shadow-xs">⚠️ Sin Iniciar</span>'}
                   </td>
 
-                  <td class="p-3 text-center">
-                    <div class="flex items-center justify-center gap-1.5">
-                      <button class="btn-impersonate-student bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1" data-student-id="${st.id}" title="Ingresar a la app como este alumno (Modo Administradora)">
+                  <td class="p-3.5 text-center whitespace-nowrap">
+                    <div class="inline-flex items-center justify-center gap-1.5">
+                      <button class="btn-impersonate-student inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors shadow-xs" data-student-id="${st.id}" title="Ingresar a la app como este alumno (Modo Administradora)">
                         <span>👁️</span>
-                        <span class="hidden sm:inline">Ver como Alumno</span>
+                        <span>Ingresar</span>
                       </button>
-                      <button class="btn-view-student-report bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-300 px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1" data-student-id="${st.id}" title="Ver informe CNEB individual">
-                        <span>🔍</span>
-                        <span>Ficha CNEB</span>
+                      <button class="btn-view-student-report inline-flex items-center gap-1 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-300 px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors shadow-xs" data-student-id="${st.id}" title="Ver informe CNEB individual">
+                        <span>📋</span>
+                        <span>Ficha</span>
                       </button>
-                      <button class="btn-delete-student text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg" data-student-id="${st.id}" title="Eliminar estudiante">
+                      <button class="btn-delete-student text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors" data-student-id="${st.id}" title="Eliminar estudiante">
                         🗑️
                       </button>
                     </div>
