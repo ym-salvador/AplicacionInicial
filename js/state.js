@@ -338,7 +338,8 @@ class AppStateManager {
     if (isSuccess) {
       item.successes += 1;
       item.completed = true;
-      student.stars += 3;
+      student.stars = (student.stars || 0) + 3;
+      this.state.stars = student.stars;
 
       // Criterios CNEB Nivel 2 (RVM N° 094-2020-MINEDU)
       if (item.attempts === 1 && hintsCount === 0) {

@@ -625,6 +625,9 @@ window.App = {
     this.updateStars();
     window.ConfettiEngine.celebrate(3500);
 
+    const student = window.AppState.getCurrentStudent();
+    const totalStars = student ? (student.stars || 0) : (window.AppState.stars || 0);
+
     const mainContainer = document.getElementById('app-main-content');
     mainContainer.innerHTML = `
       <div class="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[70vh] p-6 text-center animate-pop">
@@ -645,7 +648,7 @@ window.App = {
           <div class="flex items-center justify-center gap-4 text-slate-600 bg-amber-50 p-3 rounded-2xl border border-amber-200">
             <span class="text-3xl">🎒</span>
             <span class="font-fun text-xl text-amber-900 font-black">
-              Total: ${window.AppState.state.stars} Estrellas
+              Total: ${totalStars} Estrellas
             </span>
           </div>
         </div>
