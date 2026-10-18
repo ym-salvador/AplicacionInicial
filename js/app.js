@@ -72,7 +72,7 @@ window.App = {
       // 1. Configuración del colegio
       const remoteConfig = await window.SupabaseService.fetchSchoolConfig();
       if (remoteConfig) {
-        window.AppState.updateSchoolConfig(remoteConfig);
+        window.AppState.updateSchoolConfig(remoteConfig, false);
         this.applySchoolConfig();
       }
 

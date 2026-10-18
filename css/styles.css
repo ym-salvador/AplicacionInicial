@@ -635,6 +635,35 @@ body {
   .badge-a  { background-color: #E0E7FF !important; color: #3730A3 !important; }
   .badge-b  { background-color: #FEF3C7 !important; color: #92400E !important; }
   .badge-c  { background-color: #FEE2E2 !important; color: #991B1B !important; }
+
+  /* Impresión Exclusiva y Aislada del Diploma */
+  body.printing-diploma-only > *:not(#diploma-view-modal) {
+    display: none !important;
+  }
+  body.printing-diploma-only #diploma-view-modal {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    background: #FFFFFF !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  body.printing-diploma-only .no-print-diploma {
+    display: none !important;
+  }
+  body.printing-diploma-only #diploma-certificate-frame {
+    box-shadow: none !important;
+    border: 6px double #D97706 !important;
+    background: #FFFDF7 !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 }
 
 /* ==========================================================================

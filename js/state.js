@@ -139,7 +139,7 @@ class AppStateManager {
     };
   }
 
-  updateSchoolConfig(config) {
+  updateSchoolConfig(config, syncToCloud = true) {
     if (config.schoolName !== undefined) this.state.schoolName = config.schoolName.trim();
     if (config.activeClass !== undefined) this.state.activeClass = config.activeClass.trim();
     if (config.teacherName !== undefined) this.state.teacherName = config.teacherName.trim();
@@ -152,6 +152,13 @@ class AppStateManager {
     if (config.teacherPin !== undefined) this.state.teacherPin = config.teacherPin.trim() || '1234';
 
     this.saveState();
+
+    if (syncToCloud && window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.saveSchoolConfig(this.getSchoolConfig()).catch(err => {
+        console.warn('Error sincronizando colegio_config a Supabase:', err);
+      });
+    }
+
     window.dispatchEvent(new CustomEvent('cneb:config-updated', { detail: this.getSchoolConfig() }));
   }
 

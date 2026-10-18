@@ -610,18 +610,29 @@ window.DocenteModule = {
       year: 'numeric'
     });
 
+    const summary = window.AppState.getStudentSummary(currentStudent.id);
+    const isDiplomaUnlocked = (summary?.totalCompleted >= 23);
+
     // Barra de acciones
     if (actions) {
       actions.innerHTML = `
-        <button id="btn-print-report" class="btn-chunky btn-blue text-xs py-1.5 px-3.5 shadow flex items-center gap-1.5" title="Imprimir o guardar en PDF">
+        <button id="btn-print-report" class="btn-chunky btn-blue text-xs py-1.5 px-3.5 shadow flex items-center gap-1.5" title="Imprimir o guardar informe CNEB en PDF">
           <span>🖨️</span>
           <span>Imprimir Reporte (PDF)</span>
+        </button>
+        <button id="btn-docente-diploma" class="btn-chunky ${isDiplomaUnlocked ? 'btn-yellow' : 'bg-slate-100 text-slate-700 border-slate-300'} text-xs py-1.5 px-3.5 shadow flex items-center gap-1.5" title="${isDiplomaUnlocked ? 'Imprimir Diploma Oficial de Logro' : 'Ver diploma del estudiante (' + (summary?.totalCompleted || 0) + '/23)'}">
+          <span>${isDiplomaUnlocked ? '🎓' : '📜'}</span>
+          <span>${isDiplomaUnlocked ? 'Diploma Oficial' : `Diploma (${summary?.totalCompleted || 0}/23)`}</span>
         </button>
       `;
 
       document.getElementById('btn-print-report')?.addEventListener('click', () => {
         window.SoundEngine.playSuccess();
         window.print();
+      });
+
+      document.getElementById('btn-docente-diploma')?.addEventListener('click', () => {
+        window.FamiliaModule.openDiplomaModal(currentStudent, config, summary, true);
       });
     }
 
@@ -1349,7 +1360,8 @@ window.DocenteModule = {
     });
 
     // Guardar cambios
-    document.getElementById('btn-save-settings')?.addEventListener('click', () => {
+    document.getElementById('btn-save-settings')?.addEventListener('click', async () => {
+      const btnSave = document.getElementById('btn-save-settings');
       const newSchoolName = document.getElementById('setting-school-name').value.trim();
       const newActiveClass = document.getElementById('setting-active-class').value.trim();
       const newTeacherName = document.getElementById('setting-teacher-name').value.trim();
@@ -1362,7 +1374,12 @@ window.DocenteModule = {
         return;
       }
 
-      window.AppState.updateSchoolConfig({
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<span>⏳</span><span>Guardando en la nube...</span>`;
+      }
+
+      const configObj = {
         schoolName: newSchoolName,
         activeClass: newActiveClass,
         teacherName: newTeacherName,
@@ -1370,10 +1387,30 @@ window.DocenteModule = {
         mascotIcon: currentSelectedIcon,
         mascotName: newMascotName || 'Kusi',
         teacherPin: newTeacherPin || '1234'
-      });
+      };
+
+      // 1. Guardar localmente
+      window.AppState.updateSchoolConfig(configObj, false);
+
+      // 2. Guardar en Supabase para toda el aula y los celulares de los padres
+      if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+        try {
+          await window.SupabaseService.saveSchoolConfig(configObj);
+        } catch (err) {
+          console.warn('Error al guardar en Supabase:', err);
+        }
+      }
+
+      // 3. Actualizar la interfaz de forma inmediata
+      if (window.App) {
+        window.App.applySchoolConfig();
+        if (window.App.currentView === 'home') {
+          window.App.showHome();
+        }
+      }
 
       window.SoundEngine.playSuccess();
-      alert(`¡Configuración guardada con éxito!\n\nMascota: ${currentSelectedIcon} ${newMascotName}\nColegio: ${newSchoolName}`);
+      alert(`¡Configuración guardada y sincronizada con éxito!\n\nMascota: ${currentSelectedIcon} ${newMascotName}\nColegio: ${newSchoolName}\nAula: ${newActiveClass}`);
       
       // Cierra modal para que la docente aprecie los cambios en toda la interfaz
       const modal = document.getElementById('docente-dashboard-modal');
