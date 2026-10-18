@@ -14,6 +14,7 @@ window.App = {
     this.applySchoolConfig();
     this.renderTopNav();
     window.StudentProfileModule?.init();
+    window.AuthModule?.init();
     this.checkSyncUrl();
     this.showHome();
 

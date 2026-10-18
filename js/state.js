@@ -360,6 +360,11 @@ class AppStateManager {
                          now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
 
     this.saveState();
+
+    // Sincronización transparente en tiempo real a Supabase
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.saveEvaluation(student.id, gameId, item, student.stars);
+    }
   }
 
   // CAMBIAR DE ESTUDIANTE ACTIVO
@@ -373,8 +378,8 @@ class AppStateManager {
     return null;
   }
 
-  // REGISTRAR NUEVO ESTUDIANTE
-  addStudent(name, avatar = '🦙') {
+  // REGISTRAR NUEVO ESTUDIANTE CON DATOS FAMILIARES
+  addStudent(name, avatar = '🦙', parentName = '', parentPhone = '', pin = '1234') {
     const cleanName = name.trim();
     if (!cleanName) return null;
 
@@ -384,6 +389,9 @@ class AppStateManager {
       name: cleanName,
       avatar: avatar || '🦙',
       age: 5,
+      parentName: parentName ? parentName.trim() : '',
+      parentPhone: parentPhone ? parentPhone.trim() : '',
+      pin: pin ? pin.trim() : '1234',
       registeredAt: new Date().toISOString().split('T')[0],
       lastActive: null,
       stars: 0,
@@ -393,6 +401,12 @@ class AppStateManager {
     this.state.students.push(newStudent);
     this.state.currentStudentId = newId;
     this.saveState();
+
+    // Sincronización en la nube Supabase
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.saveStudent(newStudent);
+    }
+
     return newStudent;
   }
 
@@ -407,6 +421,11 @@ class AppStateManager {
       this.state.currentStudentId = this.state.students[0].id;
     }
     this.saveState();
+
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.deleteStudent(studentId);
+    }
+
     return true;
   }
 

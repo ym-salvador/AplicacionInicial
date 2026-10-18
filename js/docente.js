@@ -208,14 +208,24 @@ window.DocenteModule = {
               <span>Ficha Individual</span>
             </button>
 
-            <!-- Pestaña 3: Configuración Colegio y Mascota -->
+            <!-- Pestaña 3: Familias y Accesos -->
+            <button id="tab-btn-families" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
+              this.activeTab === 'families' 
+                ? 'bg-purple-600 text-white shadow-md' 
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }">
+              <span>👥</span>
+              <span>Familias y Accesos</span>
+            </button>
+
+            <!-- Pestaña 4: Configuración Colegio y Mascota -->
             <button id="tab-btn-settings" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
               this.activeTab === 'settings' 
                 ? 'bg-purple-600 text-white shadow-md' 
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }">
               <span>⚙️</span>
-              <span>Cambiar Colegio y Mascota</span>
+              <span>Colegio y Mascota</span>
             </button>
           </div>
 
@@ -250,6 +260,11 @@ window.DocenteModule = {
       this.switchTab('individual');
     });
 
+    document.getElementById('tab-btn-families')?.addEventListener('click', () => {
+      window.SoundEngine.playPop();
+      this.switchTab('families');
+    });
+
     document.getElementById('tab-btn-settings')?.addEventListener('click', () => {
       window.SoundEngine.playPop();
       this.switchTab('settings');
@@ -262,6 +277,7 @@ window.DocenteModule = {
     this.activeTab = tab;
     const btnMon = document.getElementById('tab-btn-monitoring');
     const btnInd = document.getElementById('tab-btn-individual');
+    const btnFam = document.getElementById('tab-btn-families');
     const btnSet = document.getElementById('tab-btn-settings');
 
     const updateBtn = (btn, isActive) => {
@@ -273,6 +289,7 @@ window.DocenteModule = {
 
     updateBtn(btnMon, tab === 'monitoring');
     updateBtn(btnInd, tab === 'individual');
+    updateBtn(btnFam, tab === 'families');
     updateBtn(btnSet, tab === 'settings');
 
     this.renderCurrentTab();
@@ -287,6 +304,8 @@ window.DocenteModule = {
       this.renderMonitoringTab(container, actions);
     } else if (this.activeTab === 'individual') {
       this.renderIndividualTab(container, actions);
+    } else if (this.activeTab === 'families') {
+      this.renderFamiliesTab(container, actions);
     } else if (this.activeTab === 'settings') {
       this.renderSettingsTab(container, actions);
     }
@@ -301,7 +320,11 @@ window.DocenteModule = {
 
     // Barra de acciones superiores
     if (actions) {
+      const isCloud = window.SupabaseService && window.SupabaseService.isConfigured();
       actions.innerHTML = `
+        <button id="btn-cloud-status-mon" class="btn-chunky ${isCloud ? 'bg-emerald-600 border-emerald-500' : 'bg-purple-600 border-purple-500'} text-white text-xs py-1.5 px-3 shadow flex items-center gap-1.5" title="Configurar conexión con Supabase en la nube">
+          <span>${isCloud ? '☁️ Supabase Conectado' : '⚡ Conectar Supabase'}</span>
+        </button>
         <button id="btn-sync-student-docente" class="btn-chunky bg-purple-600 text-white border-purple-500 text-xs py-1.5 px-3 shadow flex items-center gap-1.5 hover:bg-purple-700" title="Pegar código o enlace de avance enviado por un papá/mamá">
           <span>📲</span>
           <span>Sincronizar Reporte</span>
@@ -316,6 +339,7 @@ window.DocenteModule = {
         </button>
       `;
 
+      document.getElementById('btn-cloud-status-mon')?.addEventListener('click', () => this.openSupabaseModal());
       document.getElementById('btn-sync-student-docente')?.addEventListener('click', () => this.openSyncModal());
       document.getElementById('btn-export-csv')?.addEventListener('click', () => this.exportCSV());
       document.getElementById('btn-add-student-docente')?.addEventListener('click', () => {
@@ -800,7 +824,211 @@ window.DocenteModule = {
   },
 
   // =========================================================================
-  // PESTAÑA 3: CONFIGURACIÓN EXCLUSIVA DEL COLEGIO Y MASCOTA (SOLO DOCENTE)
+  // PESTAÑA 3: GESTIÓN DE FAMILIAS, PADRES Y ACCESOS A CASA
+  // =========================================================================
+  renderFamiliesTab(container, actions) {
+    const students = window.AppState.state.students;
+    const config = window.AppState.getSchoolConfig();
+    const isCloud = window.SupabaseService && window.SupabaseService.isConfigured();
+
+    if (actions) {
+      actions.innerHTML = `
+        <button id="btn-cloud-status" class="btn-chunky ${isCloud ? 'bg-emerald-600 border-emerald-500' : 'bg-purple-600 border-purple-500'} text-white text-xs py-1.5 px-3 shadow flex items-center gap-1.5">
+          <span>${isCloud ? '☁️ Supabase Conectado' : '⚡ Conectar Supabase'}</span>
+        </button>
+      `;
+      document.getElementById('btn-cloud-status')?.addEventListener('click', () => this.openSupabaseModal());
+    }
+
+    container.innerHTML = `
+      <div class="space-y-5">
+        <!-- Banner Informativo -->
+        <div class="bg-gradient-to-r from-purple-100 via-indigo-50 to-emerald-100 border-2 border-purple-300 rounded-3xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div class="flex items-center gap-3">
+            <span class="text-4xl">👥</span>
+            <div>
+              <h3 class="text-xl font-black text-purple-950 font-fun">Cuentas de Familias y Accesos a Casa</h3>
+              <p class="text-xs text-slate-600 font-semibold">
+                Crea los accesos de los niños y sus padres para que jueguen en casa. Cada familia tiene su propio PIN o tarjeta para entrar.
+              </p>
+            </div>
+          </div>
+          <button id="btn-show-add-family-form" class="btn-chunky btn-green text-xs md:text-sm py-2 px-4 shadow flex items-center gap-1.5 flex-shrink-0">
+            <span>➕</span>
+            <span>Registrar Familia y Niño</span>
+          </button>
+        </div>
+
+        <!-- Formulario Desplegable para Registrar Familia y Niño -->
+        <div id="add-family-form-box" class="hidden bg-white border-3 border-emerald-300 rounded-3xl p-5 shadow-lg space-y-4 animate-pop">
+          <div class="flex items-center justify-between pb-2 border-b border-emerald-200">
+            <h4 class="text-lg font-black text-emerald-950 font-fun flex items-center gap-2">
+              <span>🎨</span>
+              <span>Registrar Niño y Contacto de su Familia</span>
+            </h4>
+            <button id="btn-close-family-form" class="text-slate-400 hover:text-slate-700 font-bold text-sm">✕ Cerrar</button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nombre Completo del Niño(a):</label>
+              <input type="text" id="new-child-name" placeholder="Ej. Thiago Mendoza" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Animalito Avatar:</label>
+              <select id="new-child-avatar" class="w-full text-base font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
+                ${window.StudentProfileModule ? window.StudentProfileModule.avatars.map(av => `<option value="${av}">${av} Animalito</option>`).join('') : '<option value="🦙">🦙 Llamita</option>'}
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nombre del Papá o Mamá:</label>
+              <input type="text" id="new-parent-name" placeholder="Ej. Carmen Mendoza" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Teléfono / WhatsApp de la Familia:</label>
+              <input type="tel" id="new-parent-phone" placeholder="Ej. 987654321" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">PIN / Clave de Acceso:</label>
+              <input type="text" id="new-child-pin" value="1234" maxlength="6" class="w-full text-center text-sm font-black p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50 tracking-widest">
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2 border-t border-slate-200">
+            <button id="btn-submit-new-family" class="btn-chunky btn-green text-sm py-2.5 px-6 shadow flex items-center gap-2">
+              <span>💾</span>
+              <span>Guardar y Crear Tarjeta de Acceso</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de Familias y Niños Registrados -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Familias Registradas (${students.length})</span>
+            <span class="text-[11px] text-slate-500">Toca el botón WhatsApp para enviar la invitación de ingreso a casa</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                  <th class="p-2.5">Estudiante</th>
+                  <th class="p-2.5">Familia / Contacto</th>
+                  <th class="p-2.5 text-center">PIN Acceso</th>
+                  <th class="p-2.5 text-center">Estrellas</th>
+                  <th class="p-2.5 text-center">Última Conexión</th>
+                  <th class="p-2.5 text-right">Enviar Acceso</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                ${students.map(st => `
+                  <tr class="hover:bg-slate-50/80">
+                    <td class="p-2.5">
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">${st.avatar || '🦙'}</span>
+                        <div>
+                          <strong class="text-slate-900 block font-fun text-sm">${st.name}</strong>
+                          <span class="text-[10px] text-slate-400">ID: ${st.id}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="p-2.5">
+                      <div class="text-slate-800 font-bold">${st.parentName || 'Familia de ' + st.name.split(' ')[0]}</div>
+                      <div class="text-[11px] text-emerald-700 font-medium">${st.parentPhone || 'Sin teléfono'}</div>
+                    </td>
+                    <td class="p-2.5 text-center">
+                      <span class="bg-purple-100 text-purple-900 font-mono font-bold px-2 py-0.5 rounded-lg border border-purple-200">
+                        ${st.pin || '1234'}
+                      </span>
+                    </td>
+                    <td class="p-2.5 text-center font-bold text-amber-600 text-sm">
+                      ⭐ ${st.stars || 0}
+                    </td>
+                    <td class="p-2.5 text-center text-slate-500 text-[11px]">
+                      ${st.lastActive || 'Aún no ingresa'}
+                    </td>
+                    <td class="p-2.5 text-right">
+                      <button class="btn-chunky bg-emerald-600 text-white border-emerald-500 text-xs py-1 px-2.5 shadow hover:bg-emerald-700 btn-send-access-card" data-student-id="${st.id}">
+                        <span>📲 WhatsApp</span>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Eventos del formulario
+    const formBox = document.getElementById('add-family-form-box');
+    document.getElementById('btn-show-add-family-form')?.addEventListener('click', () => {
+      window.SoundEngine.playPop();
+      if (formBox) {
+        formBox.classList.remove('hidden');
+        document.getElementById('new-child-name')?.focus();
+      }
+    });
+
+    document.getElementById('btn-close-family-form')?.addEventListener('click', () => {
+      window.SoundEngine.playPop();
+      if (formBox) formBox.classList.add('hidden');
+    });
+
+    document.getElementById('btn-submit-new-family')?.addEventListener('click', () => {
+      const childName = document.getElementById('new-child-name')?.value.trim();
+      const avatar = document.getElementById('new-child-avatar')?.value || '🦙';
+      const parentName = document.getElementById('new-parent-name')?.value.trim();
+      const parentPhone = document.getElementById('new-parent-phone')?.value.trim();
+      const pin = document.getElementById('new-child-pin')?.value.trim() || '1234';
+
+      if (!childName) {
+        alert("Por favor escribe el nombre del estudiante.");
+        return;
+      }
+
+      const newSt = window.AppState.addStudent(childName, avatar, parentName, parentPhone, pin);
+      if (newSt) {
+        window.SoundEngine.playSuccess();
+        alert(`¡Cuenta creada con éxito para ${newSt.name} y su familia!`);
+        this.renderFamiliesTab(container, actions);
+      }
+    });
+
+    // Envío de tarjeta de acceso por WhatsApp
+    container.querySelectorAll('.btn-send-access-card').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.SoundEngine.playPop();
+        const stId = btn.dataset.studentId;
+        const st = window.AppState.state.students.find(s => s.id === stId);
+        if (!st) return;
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const msg = `¡Hola ${st.parentName || 'Familia'}! 👋 Le saluda la Profesora ${config.teacherName}.\n\n` +
+          `Para que *${st.name}* ${st.avatar} practique los juegos matemáticos desde casa y guarde sus estrellas ⭐ en nuestro sistema escolar, ingrese aquí:\n` +
+          `🔗 ${baseUrl}\n\n` +
+          `👶 Estudiante: *${st.name}*\n` +
+          `🔑 PIN de acceso: *${st.pin || '1234'}*\n\n` +
+          `¡Muchos éxitos y gracias por apoyar su aprendizaje! ✨`;
+
+        let waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+        if (st.parentPhone) {
+          const clean = st.parentPhone.replace(/[^0-9]/g, '');
+          if (clean) waUrl = `https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`;
+        }
+        window.open(waUrl, '_blank');
+      });
+    });
+  },
+
+  // =========================================================================
+  // PESTAÑA 4: CONFIGURACIÓN EXCLUSIVA DEL COLEGIO Y MASCOTA (SOLO DOCENTE)
   // =========================================================================
   renderSettingsTab(container, actions) {
     const config = window.AppState.getSchoolConfig();
@@ -1062,6 +1290,106 @@ window.DocenteModule = {
         if (errEl) {
           errEl.textContent = res.error || 'Código inválido. Asegúrate de copiar el enlace completo.';
           errEl.classList.remove('hidden');
+        }
+      }
+    });
+  },
+
+  // MODAL PARA CONECTAR BASE DE DATOS SUPABASE
+  openSupabaseModal() {
+    window.SoundEngine.playPop();
+    const creds = window.SupabaseService.getCredentials();
+    const isConnected = window.SupabaseService.isConfigured();
+
+    const modal = document.createElement('div');
+    modal.id = 'docente-supabase-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content p-6 max-w-lg mx-auto text-center border-4 border-emerald-400 shadow-2xl">
+        <div class="w-16 h-16 rounded-full ${isConnected ? 'bg-emerald-100 border-emerald-400' : 'bg-purple-100 border-purple-400'} border-2 flex items-center justify-center text-3xl mx-auto mb-2 shadow">
+          ${isConnected ? '☁️' : '⚡'}
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 font-fun mb-1">
+          ${isConnected ? 'Conexión a Supabase Activa' : 'Conectar con tu Base de Datos Supabase'}
+        </h3>
+        <p class="text-slate-600 text-xs sm:text-sm mb-3">
+          Ingresa la <strong>Project URL</strong> y la clave <strong>anon public</strong> de tu proyecto Supabase para sincronizar a todos los niños y sus notas en tiempo real.
+        </p>
+
+        <div class="space-y-3 my-3 text-left">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              Project URL:
+            </label>
+            <input type="text" id="supabase-input-url" value="${creds.url || ''}" class="w-full text-xs font-mono p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50" placeholder="https://xxxxxxxx.supabase.co">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              anon public Key:
+            </label>
+            <input type="password" id="supabase-input-key" value="${creds.key || ''}" class="w-full text-xs font-mono p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+          </div>
+        </div>
+
+        <div id="supabase-status-alert" class="text-xs p-2.5 rounded-xl font-bold mb-3 ${isConnected ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-slate-100 text-slate-700'}">
+          ${isConnected ? '✓ Tu aula está sincronizada con Supabase en la nube.' : 'Aún no has conectado tus claves. La aplicación funciona en modo seguro local.'}
+        </div>
+
+        <div class="flex gap-3 justify-center">
+          <button id="btn-cancel-supabase" class="btn-chunky bg-slate-200 text-slate-700 border-slate-300 text-xs md:text-sm py-2 px-4">
+            Cerrar
+          </button>
+          <button id="btn-save-supabase" class="btn-chunky btn-green text-xs md:text-sm py-2 px-5 shadow-md flex items-center gap-1.5">
+            <span>💾</span>
+            <span>Guardar y Probar Conexión</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('btn-cancel-supabase')?.addEventListener('click', () => {
+      window.SoundEngine.playPop();
+      modal.remove();
+    });
+
+    document.getElementById('btn-save-supabase')?.addEventListener('click', async () => {
+      const url = document.getElementById('supabase-input-url').value.trim();
+      const key = document.getElementById('supabase-input-key').value.trim();
+      const alertEl = document.getElementById('supabase-status-alert');
+
+      if (!url || !key) {
+        if (alertEl) {
+          alertEl.textContent = 'Por favor ingresa tanto la URL como la anon Key.';
+          alertEl.className = 'text-xs p-2.5 rounded-xl font-bold mb-3 bg-rose-100 text-rose-900 border border-rose-300';
+        }
+        return;
+      }
+
+      window.SupabaseService.saveCredentials(url, key);
+
+      if (window.SupabaseService.isConfigured()) {
+        window.SoundEngine.playSuccess();
+        if (alertEl) {
+          alertEl.textContent = '✓ ¡Conexión exitosa! Sincronizando datos con la nube...';
+          alertEl.className = 'text-xs p-2.5 rounded-xl font-bold mb-3 bg-emerald-100 text-emerald-900 border border-emerald-300';
+        }
+        // Subir datos iniciales
+        await window.SupabaseService.saveSchoolConfig(window.AppState.getSchoolConfig());
+        for (const st of window.AppState.state.students) {
+          await window.SupabaseService.saveStudent(st);
+        }
+        setTimeout(() => {
+          modal.remove();
+          this.renderCurrentTab();
+        }, 1200);
+      } else {
+        window.SoundEngine.playGentleTryAgain();
+        if (alertEl) {
+          alertEl.textContent = 'No se pudo conectar. Verifica que la URL y la Key sean correctas.';
+          alertEl.className = 'text-xs p-2.5 rounded-xl font-bold mb-3 bg-rose-100 text-rose-900 border border-rose-300';
         }
       }
     });
