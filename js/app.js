@@ -124,6 +124,7 @@ window.App = {
   renderTopNav() {
     this.applySchoolConfig();
     window.StudentProfileModule?.updateHeaderDisplay();
+    window.AuthModule?.updateHeaderAuthUI();
   },
 
   updateStars() {

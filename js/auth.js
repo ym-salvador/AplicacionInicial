@@ -61,6 +61,7 @@ window.AuthModule = {
   },
 
   // ACTUALIZACIÓN DE LA BARRA SUPERIOR SEGÚN EL ROL AUTENTICADO
+  // ACTUALIZACIÓN DE LA BARRA SUPERIOR SEGÚN EL ROL AUTENTICADO
   updateHeaderAuthUI() {
     const studentBtn = document.getElementById('btn-student-profile');
     const teacherBtn = document.getElementById('btn-docente-gate');
@@ -74,11 +75,12 @@ window.AuthModule = {
     }
 
     if (this.isTeacher()) {
+      // 1. ROL DOCENTE ACTIVA:
       if (userBadge) {
         userBadge.innerHTML = `
           <div class="flex items-center gap-1.5 bg-purple-700 text-white px-3 py-1.5 rounded-full shadow text-xs font-bold border-2 border-purple-400">
             <span>👩‍🏫</span>
-            <span class="hidden md:inline">Docente Activa</span>
+            <span class="hidden md:inline">${this.currentSession.teacherName || 'Docente Activa'}</span>
             <button id="btn-auth-logout" class="ml-1 bg-purple-900 hover:bg-purple-950 px-2 py-0.5 rounded-full text-[11px]" title="Cerrar sesión">Salir 🚪</button>
           </div>
         `;
@@ -87,15 +89,28 @@ window.AuthModule = {
           this.logout();
         });
       }
-      if (teacherBtn) teacherBtn.classList.remove('hidden');
+
+      if (teacherBtn) {
+        teacherBtn.classList.remove('hidden');
+        teacherBtn.innerHTML = `
+          <span class="text-base">📊</span>
+          <span class="hidden sm:inline">Panel Docente</span>
+        `;
+      }
+      if (studentBtn) studentBtn.classList.remove('hidden');
+      if (familyBtn) familyBtn.classList.remove('hidden');
+
     } else if (this.isFamily()) {
+      // 2. ROL FAMILIA / ESTUDIANTE:
+      // SEGURIDAD ESTRICTA: El padre/niño NO debe ver el botón de la docente ni el selector de otros niños
       const student = window.AppState ? window.AppState.getCurrentStudent() : null;
+
       if (userBadge) {
         userBadge.innerHTML = `
-          <div class="flex items-center gap-1.5 bg-emerald-700 text-white px-3 py-1.5 rounded-full shadow text-xs font-bold border-2 border-emerald-400">
-            <span>👨‍👩‍👧</span>
-            <span class="max-w-[120px] truncate">${student ? student.name.split(' ')[0] : 'Familia'}</span>
-            <button id="btn-auth-logout" class="ml-1 bg-emerald-900 hover:bg-emerald-950 px-2 py-0.5 rounded-full text-[11px]" title="Cambiar de perfil">Salir 🚪</button>
+          <div class="flex items-center gap-2 bg-emerald-600 text-white px-3 py-1.5 rounded-full shadow text-xs font-bold border-2 border-emerald-300">
+            <span class="text-lg">${student ? student.avatar : '👧'}</span>
+            <span class="max-w-[130px] truncate font-fun text-sm">${student ? student.name.split(' ')[0] : 'Familia'}</span>
+            <button id="btn-auth-logout" class="ml-1.5 bg-emerald-800 hover:bg-emerald-900 px-2 py-0.5 rounded-full text-[10px] font-bold" title="Cambiar de perfil o salir">Salir 🚪</button>
           </div>
         `;
         document.getElementById('btn-auth-logout')?.addEventListener('click', (e) => {
@@ -103,18 +118,47 @@ window.AuthModule = {
           this.logout();
         });
       }
+
+      // Ocultar TOTALMENTE la zona docente para las familias
+      if (teacherBtn) teacherBtn.classList.add('hidden');
+
+      // Ocultar el selector de todos los alumnos del aula (para no ver otros niños)
+      if (studentBtn) studentBtn.classList.add('hidden');
+
+      // Mostrar el portal de avances familiares exclusivo de este niño
+      if (familyBtn) {
+        familyBtn.classList.remove('hidden');
+        familyBtn.innerHTML = `
+          <span class="text-base">👨‍👩‍👧</span>
+          <span class="hidden sm:inline">Mi Progreso</span>
+        `;
+      }
+
     } else {
+      // 3. INVITADO / SIN INICIAR SESIÓN:
       if (userBadge) {
         userBadge.innerHTML = `
           <button id="btn-open-login" class="btn-chunky bg-amber-400 text-amber-950 border-white px-3 py-1.5 text-xs font-bold flex items-center gap-1 shadow">
             <span>🔑</span>
-            <span>Ingresar</span>
+            <span>Ingresar al Aula</span>
           </button>
         `;
         document.getElementById('btn-open-login')?.addEventListener('click', () => {
           this.openLoginModal();
         });
       }
+
+      // El botón de docente pide PIN estricto (sin truco de suma)
+      if (teacherBtn) {
+        teacherBtn.classList.remove('hidden');
+        teacherBtn.innerHTML = `
+          <span class="text-base">👩‍🏫</span>
+          <span class="hidden sm:inline">Zona Docente</span>
+          <span class="text-xs bg-purple-300 text-purple-950 px-1 py-0.5 rounded">🔒</span>
+        `;
+      }
+      if (studentBtn) studentBtn.classList.add('hidden');
+      if (familyBtn) familyBtn.classList.add('hidden');
     }
   },
 
@@ -236,8 +280,11 @@ window.AuthModule = {
         container.querySelectorAll('.auth-student-card').forEach(card => {
           card.addEventListener('click', () => {
             const studentId = card.dataset.studentId;
-            const student = window.AppState.switchStudent(studentId);
-            if (student) {
+            const student = window.AppState.state.students.find(s => s.id === studentId);
+            if (!student) return;
+
+            const confirmStudentLogin = () => {
+              window.AppState.switchStudent(student.id);
               window.SoundEngine.playSuccess();
               this.saveSession({
                 role: 'familia',
@@ -247,8 +294,20 @@ window.AuthModule = {
                 loginTime: new Date().toISOString()
               });
               modal.remove();
-              window.Kusi.celebrate(`¡Hola ${student.name.split(' ')[0]}! ¡Bienvenido a tus aventuras de matemática!`);
+              if (window.App && window.App.renderTopNav) window.App.renderTopNav();
+              window.Kusi.celebrate(`¡Hola ${student.name.split(' ')[0]}! ¡Bienvenido a tus retos matemáticos!`);
               if (window.App && window.App.showHome) window.App.showHome();
+            };
+
+            if (student.pin && student.pin !== '1234') {
+              const enteredPin = prompt(`Ingresa el PIN de 4 dígitos para ${student.name}:`);
+              if (enteredPin === student.pin) {
+                confirmStudentLogin();
+              } else if (enteredPin !== null) {
+                alert('PIN incorrecto. Consulta con la docente.');
+              }
+            } else {
+              confirmStudentLogin();
             }
           });
         });
@@ -305,6 +364,7 @@ window.AuthModule = {
               loginTime: new Date().toISOString()
             });
             modal.remove();
+            if (window.App && window.App.renderTopNav) window.App.renderTopNav();
             window.DocenteModule.openDashboard('monitoring');
           } else {
             window.SoundEngine.playGentleTryAgain();
@@ -345,6 +405,8 @@ window.AuthModule = {
     document.getElementById('btn-close-auth-modal')?.addEventListener('click', () => {
       window.SoundEngine.playPop();
       modal.remove();
+      this.currentSession = null;
+      this.updateHeaderAuthUI();
     });
   }
 };

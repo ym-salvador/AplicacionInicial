@@ -20,29 +20,20 @@ window.StudentProfileModule = {
   init() {
     this.updateHeaderDisplay();
     
-    // Si no hay estudiante activo o es la primera vez, se puede abrir el selector
+    // Si no hay estudiante activo o es docente, se puede abrir el selector
     document.getElementById('btn-student-profile')?.addEventListener('click', () => {
+      // Si la sesión es de familia, abre directamente su portal familiar privado
+      if (window.AuthModule && window.AuthModule.isFamily()) {
+        window.FamiliaModule.openPortal();
+        return;
+      }
       window.SoundEngine.playPop();
       this.openSelectorModal();
     });
-
-    // Revisar si es la primera visita familiar desde casa para invitar a colocar el nombre
-    this.checkFirstHomeVisit();
   },
 
   checkFirstHomeVisit() {
-    const hasConfigured = localStorage.getItem('cneb_family_welcomed');
-    if (!hasConfigured) {
-      // Si el estudiante activo es el de prueba por defecto
-      const current = window.AppState.getCurrentStudent();
-      if (current && (current.id === 'est_1' || current.id === 'est_4')) {
-        // Marcamos para no ser invasivos pero mostrar la invitación
-        localStorage.setItem('cneb_family_welcomed', 'true');
-        setTimeout(() => {
-          this.openRegisterModal(true); // Modo bienvenida familiar
-        }, 900);
-      }
-    }
+    // Manejado por AuthModule
   },
 
   updateHeaderDisplay() {

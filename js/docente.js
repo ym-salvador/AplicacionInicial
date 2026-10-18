@@ -78,41 +78,46 @@ window.DocenteModule = {
       .replace(/\n/g, '<br>');
   },
 
-  // COMPUERTA DE SEGURIDAD EXCLUSIVA PARA EL DOCENTE
+  // COMPUERTA DE SEGURIDAD EXCLUSIVA PARA LA DOCENTE
   openGate() {
     window.SoundEngine.playPop();
+
+    // Si ya tiene sesión activa de Docente, ingresa directo sin pedir PIN
+    if (window.AuthModule && window.AuthModule.isTeacher()) {
+      this.openDashboard('monitoring');
+      return;
+    }
+
     const config = window.AppState.getSchoolConfig();
-    const num1 = Math.floor(Math.random() * 6) + 4; // 4 a 9
-    const num2 = Math.floor(Math.random() * 6) + 3; // 3 a 8
-    const answer = num1 + num2;
 
     const modal = document.createElement('div');
     modal.id = 'docente-gate-modal';
     modal.className = 'modal-overlay';
     modal.innerHTML = `
-      <div class="modal-content p-6 max-w-md mx-auto text-center border-4 border-purple-400 shadow-2xl">
+      <div class="modal-content p-6 max-w-sm mx-auto text-center border-4 border-purple-400 shadow-2xl animate-pop">
         <div class="w-16 h-16 rounded-full bg-purple-100 border-2 border-purple-400 flex items-center justify-center text-3xl mx-auto mb-3 shadow">
-          🔒
+          👩‍🏫
         </div>
-        <h3 class="text-2xl font-black text-slate-900 font-fun mb-2">Panel Docente Protegido</h3>
-        <p class="text-slate-600 text-sm mb-4">
-          Acceso exclusivo para la profesora. Para visualizar el seguimiento, notas o cambiar la mascota y colegio, resuelve:
+        <h3 class="text-2xl font-black text-purple-950 font-fun mb-1">Acceso Exclusivo Docente</h3>
+        <p class="text-slate-600 text-xs mb-4">
+          Panel de administración y seguimiento del aula. Ingresa tu PIN de Docente:
         </p>
 
-        <div class="bg-purple-50 border-2 border-purple-300 rounded-2xl p-4 my-3">
-          <span class="text-3xl font-black text-purple-950 font-fun">${num1} + ${num2} = ?</span>
+        <div class="bg-purple-50 border-2 border-purple-300 rounded-2xl p-4 my-2 text-left">
+          <label class="block text-xs font-bold uppercase tracking-wider text-purple-900 mb-1 text-center">
+            PIN Secreto (Por defecto 1234):
+          </label>
+          <input type="password" id="gate-pin-input" maxlength="8" class="w-full text-center text-3xl font-black p-2.5 border-3 border-purple-300 rounded-xl focus:border-purple-600 focus:outline-none bg-white text-purple-950 tracking-widest" placeholder="••••">
+          <span id="gate-pin-error" class="text-xs text-rose-600 font-bold hidden mt-1 text-center block">PIN incorrecto. Intenta nuevamente.</span>
         </div>
 
-        <div class="flex gap-2 justify-center my-4">
-          <input type="number" id="gate-input" class="w-32 text-center text-3xl font-black p-2 border-3 border-slate-300 rounded-2xl focus:border-purple-500 focus:outline-none" placeholder="¿?">
-        </div>
-
-        <div class="flex gap-3 justify-center mt-5">
-          <button id="gate-cancel" class="btn-chunky bg-slate-200 text-slate-700 border-slate-300 text-sm py-2 px-5">
+        <div class="flex gap-2 justify-center mt-4">
+          <button id="gate-cancel" class="btn-chunky bg-slate-200 text-slate-700 border-slate-300 text-xs py-2 px-4">
             Cancelar
           </button>
-          <button id="gate-submit" class="btn-chunky btn-purple text-base py-2 px-6">
-            Ingresar al Panel
+          <button id="gate-submit" class="btn-chunky btn-purple text-xs sm:text-sm py-2 px-5 shadow flex items-center gap-1.5">
+            <span>🔓</span>
+            <span>Ingresar al Panel</span>
           </button>
         </div>
       </div>
@@ -120,7 +125,7 @@ window.DocenteModule = {
 
     document.body.appendChild(modal);
 
-    const input = document.getElementById('gate-input');
+    const input = document.getElementById('gate-pin-input');
     input.focus();
 
     document.getElementById('gate-cancel')?.addEventListener('click', () => {
@@ -129,14 +134,26 @@ window.DocenteModule = {
     });
 
     const verify = () => {
-      const val = parseInt(input.value);
-      const isPinCorrect = input.value === config.teacherPin || input.value === '1234';
-      if (val === answer || isPinCorrect) {
+      const val = input.value.trim();
+      const currentPin = config.teacherPin || '1234';
+      const isPinCorrect = val === currentPin || val === '1234';
+
+      if (isPinCorrect) {
         window.SoundEngine.playSuccess();
+        if (window.AuthModule) {
+          window.AuthModule.saveSession({
+            role: 'docente',
+            teacherName: config.teacherName,
+            schoolName: config.schoolName,
+            loginTime: new Date().toISOString()
+          });
+        }
         modal.remove();
         this.openDashboard('monitoring');
       } else {
         window.SoundEngine.playGentleTryAgain();
+        const err = document.getElementById('gate-pin-error');
+        if (err) err.classList.remove('hidden');
         input.classList.add('border-red-500', 'animate-wiggle');
         setTimeout(() => input.classList.remove('animate-wiggle'), 500);
       }

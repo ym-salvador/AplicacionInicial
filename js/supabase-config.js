@@ -10,6 +10,10 @@ window.SupabaseService = {
   client: null,
   isReady: false,
 
+  // CREDENCIALES GLOBALES DEL AULA (Permiten que GitHub Pages funcione automáticamente en los celulares de los padres)
+  defaultUrl: '',
+  defaultKey: '',
+
   init() {
     const creds = this.getCredentials();
     if (creds.url && creds.key && window.supabase) {
@@ -30,12 +34,15 @@ window.SupabaseService = {
     try {
       const saved = localStorage.getItem(this.configKey);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed.url && parsed.key) {
+          return parsed;
+        }
       }
     } catch (e) {}
     return {
-      url: '',
-      key: ''
+      url: this.defaultUrl || '',
+      key: this.defaultKey || ''
     };
   },
 
