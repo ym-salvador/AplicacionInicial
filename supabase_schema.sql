@@ -34,11 +34,13 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
 );
 
 -- 3. ESTUDIANTES (NIÑOS DEL AULA DE 5 AÑOS VINCULADOS A SU FAMILIA)
+-- ID: Formato [Letra del Apellido] + 4 números aleatorios (Ej: V4821)
 CREATE TABLE IF NOT EXISTS public.estudiantes (
     id TEXT PRIMARY KEY,
     parent_id UUID REFERENCES public.usuarios(id) ON DELETE SET NULL,
     parent_nombre TEXT DEFAULT '',
     parent_telefono TEXT DEFAULT '',
+    parent_email TEXT DEFAULT '',
     nombre TEXT NOT NULL,
     avatar TEXT NOT NULL DEFAULT '🦙',
     edad INTEGER DEFAULT 5,
@@ -47,6 +49,9 @@ CREATE TABLE IF NOT EXISTS public.estudiantes (
     ultimo_acceso TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+
+-- Migración segura si la tabla ya existía
+ALTER TABLE public.estudiantes ADD COLUMN IF NOT EXISTS parent_email TEXT DEFAULT '';
 
 -- 4. EVALUACIONES FORMATIVAS CNEB (NOTAS AD, A, B, C POR CADA RETO)
 CREATE TABLE IF NOT EXISTS public.evaluaciones (

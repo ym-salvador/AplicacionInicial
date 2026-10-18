@@ -1,7 +1,8 @@
 /**
  * MÓDULO DE AUTENTICACIÓN Y CONTROL DE ACCESO
- * Gestiona los roles de Docente y Familias/Niños,
- * garantizando perfiles separados, inicio de sesión seguro y seguimiento personalizado.
+ * Gestiona los roles de Docente y Familias/Niños.
+ * Sin modo invitado: Solo usuarios registrados por la docente pueden ingresar a jugar.
+ * Incluye suplantación de administrador (impersonation) y solicitud de cuenta por correo/WhatsApp.
  */
 
 window.AuthModule = {
@@ -20,7 +21,7 @@ window.AuthModule = {
   checkUrlAutoLogin() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const studentQuery = urlParams.get('alumno') || urlParams.get('student') || urlParams.get('id');
+      const studentQuery = urlParams.get('id') || urlParams.get('alumno') || urlParams.get('student');
       const pinQuery = urlParams.get('pin');
 
       if (studentQuery && window.AppState && window.AppState.state.students) {
@@ -32,8 +33,10 @@ window.AuthModule = {
         });
 
         if (student) {
-          const expectedPin = student.pin || '1234';
-          if (!pinQuery || pinQuery === expectedPin || pinQuery === '1234') {
+          const expectedPin = (student.pin || student.id || '1234').toUpperCase();
+          const cleanPin = pinQuery ? pinQuery.trim().toUpperCase() : '';
+
+          if (!pinQuery || cleanPin === expectedPin || cleanPin === (student.id || '').toUpperCase() || cleanPin === '1234') {
             window.AppState.switchStudent(student.id);
             this.saveSession({
               role: 'familia',
@@ -85,7 +88,10 @@ window.AuthModule = {
     this.currentSession = null;
     localStorage.removeItem(this.storageKey);
     this.updateHeaderAuthUI();
-    this.openLoginModal();
+    if (window.App && window.App.showHome) {
+      window.App.showHome();
+    }
+    this.openLoginModal('familia');
   },
 
   isTeacher() {
@@ -96,14 +102,59 @@ window.AuthModule = {
     return this.currentSession && this.currentSession.role === 'familia';
   },
 
+  isImpersonating() {
+    return this.currentSession && this.currentSession.role === 'familia' && !!this.currentSession.impersonatedByTeacher;
+  },
+
   getCurrentStudentId() {
     if (this.currentSession && this.currentSession.studentId) {
       return this.currentSession.studentId;
     }
-    return window.AppState ? window.AppState.state.currentStudentId : null;
+    return null;
   },
 
-  // ACTUALIZACIÓN DE LA BARRA SUPERIOR SEGÚN EL ROL AUTENTICADO
+  // INGRESO DE LA DOCENTE COMO ESTUDIANTE (MODO ADMINISTRADORA SIN NECESIDAD DE PIN)
+  impersonateStudent(studentId) {
+    const student = window.AppState.state.students.find(s => s.id === studentId);
+    if (!student) return;
+
+    window.AppState.switchStudent(student.id);
+    this.saveSession({
+      role: 'familia',
+      studentId: student.id,
+      studentName: student.name,
+      avatar: student.avatar,
+      loginTime: new Date().toISOString(),
+      impersonatedByTeacher: true
+    });
+
+    const dModal = document.getElementById('docente-dashboard-modal');
+    if (dModal) dModal.remove();
+    const lModal = document.getElementById('auth-login-modal');
+    if (lModal) lModal.remove();
+
+    this.updateHeaderAuthUI();
+    if (window.App && window.App.showHome) window.App.showHome();
+
+    window.SoundEngine.playSuccess();
+    window.Kusi.say(`👑 Modo Administradora: Viendo la app como ${student.name.split(' ')[0]}.`);
+  },
+
+  // SALIR DEL MODO ADMINISTRADORA Y RETORNAR AL PANEL DOCENTE
+  exitImpersonation() {
+    window.SoundEngine.playPop();
+    const config = window.AppState.getSchoolConfig();
+    this.saveSession({
+      role: 'docente',
+      teacherName: config.teacherName,
+      schoolName: config.schoolName,
+      loginTime: new Date().toISOString()
+    });
+    this.updateHeaderAuthUI();
+    if (window.App && window.App.showHome) window.App.showHome();
+    window.DocenteModule.openDashboard('families');
+  },
+
   // ACTUALIZACIÓN DE LA BARRA SUPERIOR SEGÚN EL ROL AUTENTICADO
   updateHeaderAuthUI() {
     const studentBtn = document.getElementById('btn-student-profile');
@@ -117,8 +168,36 @@ window.AuthModule = {
       studentBtn.parentElement.insertBefore(userBadge, studentBtn);
     }
 
-    if (this.isTeacher()) {
-      // 1. ROL DOCENTE ACTIVA:
+    if (this.isImpersonating()) {
+      // 1. MODO ADMINISTRADORA SUPLANTANDO A UN ALUMNO:
+      const student = window.AppState ? window.AppState.getCurrentStudent() : null;
+      if (userBadge) {
+        userBadge.innerHTML = `
+          <div class="flex items-center gap-2 bg-gradient-to-r from-purple-800 to-indigo-900 text-white px-3 py-1.5 rounded-full shadow-lg text-xs font-bold border-2 border-yellow-400 animate-pulse">
+            <span>👑 Admin: <strong>${student ? student.name.split(' ')[0] : 'Alumno'}</strong></span>
+            <button id="btn-exit-impersonate" class="bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-black px-2.5 py-0.5 rounded-full text-[11px] shadow">
+              Volver a Docente 👩‍🏫
+            </button>
+          </div>
+        `;
+        document.getElementById('btn-exit-impersonate')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.exitImpersonation();
+        });
+      }
+
+      if (teacherBtn) teacherBtn.classList.remove('hidden');
+      if (studentBtn) studentBtn.classList.add('hidden');
+      if (familyBtn) {
+        familyBtn.classList.remove('hidden');
+        familyBtn.innerHTML = `
+          <span class="text-base">👨‍👩‍👧</span>
+          <span class="hidden sm:inline">Progreso Alumno</span>
+        `;
+      }
+
+    } else if (this.isTeacher()) {
+      // 2. ROL DOCENTE ACTIVA:
       if (userBadge) {
         userBadge.innerHTML = `
           <div class="flex items-center gap-1.5 bg-purple-700 text-white px-3 py-1.5 rounded-full shadow text-xs font-bold border-2 border-purple-400">
@@ -144,8 +223,8 @@ window.AuthModule = {
       if (familyBtn) familyBtn.classList.remove('hidden');
 
     } else if (this.isFamily()) {
-      // 2. ROL FAMILIA / ESTUDIANTE:
-      // SEGURIDAD ESTRICTA: El padre/niño NO debe ver el botón de la docente ni el selector de otros niños
+      // 3. ROL FAMILIA / ESTUDIANTE:
+      // SEGURIDAD ESTRICTA: El padre/niño NO puede ver la zona docente ni a otros estudiantes
       const student = window.AppState ? window.AppState.getCurrentStudent() : null;
 
       if (userBadge) {
@@ -153,7 +232,7 @@ window.AuthModule = {
           <div class="flex items-center gap-2 bg-emerald-600 text-white px-3 py-1.5 rounded-full shadow text-xs font-bold border-2 border-emerald-300">
             <span class="text-lg">${student ? student.avatar : '👧'}</span>
             <span class="max-w-[130px] truncate font-fun text-sm">${student ? student.name.split(' ')[0] : 'Familia'}</span>
-            <button id="btn-auth-logout" class="ml-1.5 bg-emerald-800 hover:bg-emerald-900 px-2 py-0.5 rounded-full text-[10px] font-bold" title="Cambiar de perfil o salir">Salir 🚪</button>
+            <button id="btn-auth-logout" class="ml-1.5 bg-emerald-800 hover:bg-emerald-900 px-2 py-0.5 rounded-full text-[10px] font-bold" title="Cerrar sesión">Salir 🚪</button>
           </div>
         `;
         document.getElementById('btn-auth-logout')?.addEventListener('click', (e) => {
@@ -162,13 +241,8 @@ window.AuthModule = {
         });
       }
 
-      // Ocultar TOTALMENTE la zona docente para las familias
       if (teacherBtn) teacherBtn.classList.add('hidden');
-
-      // Ocultar el selector de todos los alumnos del aula (para no ver otros niños)
-      if (studentBtn) studentBtn.classList.add('hidden');
-
-      // Mostrar el portal de avances familiares exclusivo de este niño
+      if (studentBtn) studentBtn.classList.add('hidden'); // No ve lista pública
       if (familyBtn) {
         familyBtn.classList.remove('hidden');
         familyBtn.innerHTML = `
@@ -178,20 +252,19 @@ window.AuthModule = {
       }
 
     } else {
-      // 3. INVITADO / SIN INICIAR SESIÓN:
+      // 4. SIN INICIAR SESIÓN (NO HAY MODO INVITADO):
       if (userBadge) {
         userBadge.innerHTML = `
           <button id="btn-open-login" class="btn-chunky bg-amber-400 text-amber-950 border-white px-3 py-1.5 text-xs font-bold flex items-center gap-1 shadow">
             <span>🔑</span>
-            <span>Ingresar al Aula</span>
+            <span>Iniciar Sesión</span>
           </button>
         `;
         document.getElementById('btn-open-login')?.addEventListener('click', () => {
-          this.openLoginModal();
+          this.openLoginModal('familia');
         });
       }
 
-      // El botón de docente pide PIN estricto (sin truco de suma)
       if (teacherBtn) {
         teacherBtn.classList.remove('hidden');
         teacherBtn.innerHTML = `
@@ -206,22 +279,29 @@ window.AuthModule = {
   },
 
   // =========================================================================
-  // PORTAL DE INGRESO PRINCIPAL (DOCENTE VS. FAMILIAS)
+  // PORTAL DE INGRESO PRINCIPAL (DOCENTE VS. FAMILIAS - SIN MODO INVITADO)
   // =========================================================================
   openLoginModal(defaultTab = 'familia') {
     window.SoundEngine.playPop();
-    const config = window.AppState ? window.AppState.getSchoolConfig() : { mascotIcon: '🦙', mascotName: 'Kusi', schoolName: 'I.E. Inicial', activeClass: '5 Años' };
-    const students = window.AppState ? window.AppState.state.students : [];
+    const config = window.AppState ? window.AppState.getSchoolConfig() : { mascotIcon: '🦙', mascotName: 'Kusi', schoolName: 'I.E. Inicial', activeClass: '5 Años', teacherEmail: 'yanet.salvador@colegio.edu.pe', teacherPhone: '' };
 
     const existingModal = document.getElementById('auth-login-modal');
     if (existingModal) existingModal.remove();
+
+    const canClose = !!this.currentSession;
 
     const modal = document.createElement('div');
     modal.id = 'auth-login-modal';
     modal.className = 'modal-overlay';
     modal.innerHTML = `
-      <div class="modal-content p-6 max-w-xl mx-auto flex flex-col text-center border-4 border-amber-400 shadow-2xl animate-pop max-h-[92vh]">
+      <div class="modal-content p-6 max-w-xl mx-auto flex flex-col text-center border-4 border-amber-400 shadow-2xl animate-pop max-h-[92vh] relative">
         
+        ${canClose ? `
+          <button id="btn-close-auth-x" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-lg" title="Cerrar ventana">
+            ✕
+          </button>
+        ` : ''}
+
         <!-- Logotipo Institucional -->
         <div class="flex items-center justify-center gap-3 mb-3">
           <span class="text-5xl animate-bounce-soft">${config.mascotIcon}</span>
@@ -232,7 +312,7 @@ window.AuthModule = {
         </div>
 
         <p class="text-xs text-slate-600 mb-4 font-semibold">
-          Plataforma de Educación Inicial de Matemática CNEB (5 Años). Elige tu perfil para ingresar:
+          Plataforma de Educación Inicial de Matemática CNEB (5 Años). Ingreso exclusivo para usuarios registrados:
         </p>
 
         <!-- Selector de Pestañas: Familia vs Docente -->
@@ -263,9 +343,7 @@ window.AuthModule = {
             <span class="w-2.5 h-2.5 rounded-full ${window.SupabaseService && window.SupabaseService.isConfigured() ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}"></span>
             <span>${window.SupabaseService && window.SupabaseService.isConfigured() ? 'Conectado a la Nube (Supabase)' : 'Modo Seguro Local'}</span>
           </div>
-          <button id="btn-close-auth-modal" class="text-slate-500 hover:text-slate-800 font-bold">
-            Entrar como invitado ✕
-          </button>
+          <span class="text-[10px] text-slate-400">Acceso Seguro • CNEB Inicial</span>
         </div>
 
       </div>
@@ -279,34 +357,35 @@ window.AuthModule = {
 
       if (tab === 'familia') {
         container.innerHTML = `
-          <div class="space-y-4 max-w-sm mx-auto py-2">
+          <div class="space-y-3.5 max-w-sm mx-auto py-1">
             <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-4xl mx-auto mb-1 shadow">
               👨‍👩‍👧
             </div>
             <div>
-              <h3 class="text-xl font-black text-emerald-950 font-fun">Ingreso Privado de Familias</h3>
+              <h3 class="text-xl font-black text-emerald-950 font-fun">Ingreso de Estudiantes y Familias</h3>
               <p class="text-xs text-slate-600 font-semibold">
-                Cada cuenta es privada y protegida. Ingresa los datos de tu hijo/a proporcionados por la profesora:
+                Ingresa con tu Código de Estudiante (ej. V4821) o tu Nombre, y tu PIN secreto:
               </p>
             </div>
 
             <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 text-left space-y-3 shadow-inner">
               <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-emerald-950 mb-1">
-                  Nombre del Niño(a) o Código:
+                  Código de Estudiante o Nombre:
                 </label>
-                <input type="text" id="family-input-name" placeholder="Ej. Pepito Valverde" class="w-full text-sm font-bold p-2.5 border-2 border-emerald-300 rounded-xl focus:border-emerald-600 focus:outline-none bg-white text-slate-900">
+                <input type="text" id="family-input-name" placeholder="Ej. V4821 o Pepito Valverde" class="w-full text-sm font-bold p-2.5 border-2 border-emerald-300 rounded-xl focus:border-emerald-600 focus:outline-none bg-white text-slate-900">
               </div>
 
               <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-emerald-950 mb-1">
-                  PIN Secreto de la Familia (4 dígitos):
+                  PIN Secreto de la Familia:
                 </label>
-                <input type="password" id="family-input-pin" maxlength="6" placeholder="••••" class="w-full text-center text-2xl font-black p-2 border-2 border-emerald-300 rounded-xl focus:border-emerald-600 focus:outline-none bg-white text-slate-900 tracking-widest">
+                <input type="password" id="family-input-pin" maxlength="10" placeholder="••••" class="w-full text-center text-2xl font-black p-2 border-2 border-emerald-300 rounded-xl focus:border-emerald-600 focus:outline-none bg-white text-slate-900 tracking-widest">
+                <span class="text-[10px] text-emerald-800 font-medium block mt-1">Por defecto, el PIN es tu mismo código de estudiante (ej. V4821).</span>
               </div>
 
-              <div id="family-login-error" class="text-xs text-rose-700 bg-rose-100 border border-rose-300 p-2 rounded-xl font-bold hidden text-center">
-                Estudiante o PIN no encontrado. Verifica con la profesora.
+              <div id="family-login-error" class="text-xs text-rose-700 bg-rose-100 border border-rose-300 p-2.5 rounded-xl font-bold hidden text-center">
+                Estudiante o PIN no encontrado. Consulta con la profesora.
               </div>
 
               <button id="btn-submit-family-login" class="btn-chunky btn-green w-full text-base py-3 shadow-lg flex items-center justify-center gap-2">
@@ -315,10 +394,22 @@ window.AuthModule = {
               </button>
             </div>
 
-            <!-- Ayuda de contacto -->
-            <div class="pt-1 text-center text-[11px] text-slate-500">
-              <p>🔒 La profesora es la única que crea y administra las cuentas del aula.</p>
-              <p class="text-emerald-800 font-bold mt-0.5">¿No tienes tu clave? Pídesela a la Profesora Yanet por WhatsApp.</p>
+            <!-- Ayuda de Contacto y Solicitud de Cuenta -->
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 text-xs text-amber-950 font-medium text-center space-y-2">
+              <div>
+                <p class="font-black text-amber-950 font-fun text-sm">¿Aún no tienes cuenta para tu hijo/a?</p>
+                <p class="text-[11px] text-slate-600">Solo la docente puede crear las cuentas. Escríbele para que te envíe los accesos:</p>
+              </div>
+              <div class="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <a href="mailto:yanet.salvador@colegio.edu.pe?subject=Solicitud de Cuenta Matematica Kusi - 5 Anos&body=Estimada Profesora Yanet,%0D%0A%0D%0APor favor solicito los accesos a Matematica Kusi para mi hijo(a):%0D%0A- Nombre completo del nino(a): %0D%0A- Nombre del padre o madre: %0D%0A- Telefono / WhatsApp: %0D%0A%0D%0AMuchas gracias." class="btn-chunky bg-white text-emerald-800 border-emerald-300 text-xs py-1.5 px-3 shadow hover:bg-emerald-50 inline-flex items-center gap-1.5">
+                  <span>📧</span>
+                  <span>Enviar Correo</span>
+                </a>
+                <button id="btn-request-account-whatsapp" class="btn-chunky bg-emerald-600 text-white border-emerald-500 text-xs py-1.5 px-3 shadow hover:bg-emerald-700 inline-flex items-center gap-1.5">
+                  <span>📲</span>
+                  <span>WhatsApp</span>
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -328,13 +419,23 @@ window.AuthModule = {
         const errEl = document.getElementById('family-login-error');
         nameInput?.focus();
 
+        document.getElementById('btn-request-account-whatsapp')?.addEventListener('click', () => {
+          window.SoundEngine.playPop();
+          const teacherPhone = config.teacherPhone ? config.teacherPhone.replace(/[^0-9]/g, '') : '';
+          const msg = `¡Hola Profesora ${config.teacherName}! 👋 Le escribo para solicitar la cuenta de acceso a Matemática Kusi para mi hijo(a).`;
+          const url = teacherPhone 
+            ? `https://api.whatsapp.com/send?phone=${teacherPhone}&text=${encodeURIComponent(msg)}`
+            : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+          window.open(url, '_blank');
+        });
+
         const handleFamilyLogin = () => {
           const valName = this.cleanString(nameInput.value);
-          const valPin = pinInput.value.trim();
+          const rawPin = pinInput.value.trim();
 
-          if (!valName || !valPin) {
+          if (!valName || !rawPin) {
             if (errEl) {
-              errEl.textContent = 'Por favor ingresa el nombre de tu hijo/a y su PIN.';
+              errEl.textContent = 'Por favor escribe tu código o nombre, y tu PIN.';
               errEl.classList.remove('hidden');
             }
             return;
@@ -347,8 +448,10 @@ window.AuthModule = {
           });
 
           if (student) {
-            const expectedPin = student.pin || '1234';
-            if (valPin === expectedPin || valPin === '1234') {
+            const expectedPin = (student.pin || student.id || '1234').toUpperCase();
+            const inputPinUpper = rawPin.toUpperCase();
+
+            if (inputPinUpper === expectedPin || inputPinUpper === (student.id || '').toUpperCase() || inputPinUpper === '1234') {
               window.SoundEngine.playSuccess();
               window.AppState.switchStudent(student.id);
               this.saveSession({
@@ -369,7 +472,7 @@ window.AuthModule = {
           // Si no coincidió
           window.SoundEngine.playGentleTryAgain();
           if (errEl) {
-            errEl.textContent = 'Estudiante o PIN no coincide con el aula. Consulta con tu profesora.';
+            errEl.textContent = 'Código o PIN no coincide. Recuerda que la clave por defecto es tu código (ej. V4821).';
             errEl.classList.remove('hidden');
           }
           pinInput.classList.add('border-red-500', 'animate-wiggle');
@@ -390,7 +493,7 @@ window.AuthModule = {
             <div>
               <h3 class="text-xl font-black text-purple-950 font-fun">Acceso Exclusivo de la Docente</h3>
               <p class="text-xs text-slate-600 font-semibold">
-                Ingresa con tu PIN de docente para ver el monitoreo en vivo de todas las familias, gestionar estudiantes y reportes CNEB.
+                Ingresa con tu PIN de docente para monitorear a los alumnos, crear cuentas y gestionar reportes CNEB.
               </p>
             </div>
 
@@ -410,7 +513,7 @@ window.AuthModule = {
         `;
 
         const pinInput = document.getElementById('auth-teacher-pin');
-        pinInput.focus();
+        pinInput?.focus();
 
         const handleTeacherLogin = () => {
           const val = pinInput.value.trim();
@@ -438,7 +541,7 @@ window.AuthModule = {
         };
 
         document.getElementById('btn-submit-teacher-login')?.addEventListener('click', handleTeacherLogin);
-        pinInput.addEventListener('keydown', (e) => {
+        pinInput?.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') handleTeacherLogin();
         });
       }
@@ -464,11 +567,9 @@ window.AuthModule = {
       renderTab('docente');
     });
 
-    document.getElementById('btn-close-auth-modal')?.addEventListener('click', () => {
+    document.getElementById('btn-close-auth-x')?.addEventListener('click', () => {
       window.SoundEngine.playPop();
       modal.remove();
-      this.currentSession = null;
-      this.updateHeaderAuthUI();
     });
   }
 };

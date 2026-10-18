@@ -83,7 +83,47 @@ window.FamiliaModule = {
           </div>
 
           <!-- ===================================================================
-               NUEVA SECCIÓN: ENVIAR REPORTE A LA PROFESORA DESDE CASA
+               NUEVA SECCIÓN: PERFIL Y CAMBIO DE CLAVE / PIN DE LA FAMILIA
+               =================================================================== -->
+          <div class="bg-white border-3 border-emerald-300 rounded-3xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-emerald-100 pb-2">
+              <h4 class="text-lg font-black text-emerald-950 font-fun flex items-center gap-2">
+                <span>🔐</span>
+                <span>Mi Perfil y Clave Secreta de Acceso</span>
+              </h4>
+              <span class="text-xs bg-emerald-100 text-emerald-900 font-bold px-2.5 py-1 rounded-full">
+                ID: ${student.id}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Cambiar Animalito Avatar:</label>
+                <select id="family-edit-avatar" class="w-full text-base font-bold p-2.5 border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-emerald-50/50">
+                  ${window.StudentProfileModule ? window.StudentProfileModule.avatars.map(av => `<option value="${av}" ${av === student.avatar ? 'selected' : ''}>${av} Animalito</option>`).join('') : `<option value="${student.avatar || '🦙'}">${student.avatar || '🦙'}</option>`}
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nuevo PIN de Acceso:</label>
+                <input type="text" id="family-edit-pin" placeholder="Escribe tu nuevo PIN" maxlength="8" value="${student.pin || student.id || ''}" class="w-full text-center text-sm font-black p-2.5 border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-emerald-50/50 tracking-widest uppercase">
+                <span class="text-[10px] text-slate-500 block mt-1">Por defecto es tu código (${student.id}). Puedes cambiarlo y guardarlo aquí.</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <div id="family-profile-saved-toast" class="hidden text-xs bg-emerald-100 text-emerald-900 font-bold px-3 py-1.5 rounded-xl border border-emerald-300">
+                ✓ ¡Perfil y PIN actualizados con éxito!
+              </div>
+              <button id="btn-save-family-profile" class="btn-chunky btn-green text-xs md:text-sm py-2 px-5 shadow ml-auto flex items-center gap-2">
+                <span>💾</span>
+                <span>Guardar Cambios</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ===================================================================
+               SECCIÓN: ENVIAR REPORTE A LA PROFESORA DESDE CASA
                =================================================================== -->
           <div class="bg-gradient-to-r from-emerald-500 to-teal-600 border-4 border-emerald-400 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
             <div class="relative z-10">
@@ -332,5 +372,31 @@ window.FamiliaModule = {
     document.getElementById('btn-share-whatsapp')?.addEventListener('click', handleShareWhatsApp);
     document.getElementById('btn-share-whatsapp-top')?.addEventListener('click', handleShareWhatsApp);
     document.getElementById('btn-copy-sync-code')?.addEventListener('click', handleCopySyncCode);
+
+    document.getElementById('btn-save-family-profile')?.addEventListener('click', () => {
+      const newAvatar = document.getElementById('family-edit-avatar')?.value || student.avatar;
+      const newPin = document.getElementById('family-edit-pin')?.value.trim();
+
+      if (!newPin) {
+        alert("Por favor ingresa un PIN de acceso (ej. tu código de estudiante o 4 números).");
+        return;
+      }
+
+      const updated = window.AppState.updateStudent(student.id, {
+        avatar: newAvatar,
+        pin: newPin
+      });
+
+      if (updated) {
+        window.SoundEngine.playSuccess();
+        const toast = document.getElementById('family-profile-saved-toast');
+        if (toast) {
+          toast.classList.remove('hidden');
+          setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
+        if (window.App && window.App.renderTopNav) window.App.renderTopNav();
+        window.Kusi.celebrate("¡Tu perfil y PIN se actualizaron con éxito!");
+      }
+    });
   }
 };

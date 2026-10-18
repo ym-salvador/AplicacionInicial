@@ -24,6 +24,13 @@ window.App = {
     this.checkSyncUrl();
     this.showHome();
 
+    // Si no hay sesión activa, abrir el modal de ingreso (solo usuarios generados pueden jugar)
+    if (!window.AuthModule || !window.AuthModule.currentSession) {
+      setTimeout(() => {
+        window.AuthModule?.openLoginModal('familia');
+      }, 350);
+    }
+
     // Actualización reactiva al cambiar configuración escolar y de mascota
     window.addEventListener('cneb:config-updated', () => {
       this.applySchoolConfig();
@@ -186,7 +193,8 @@ window.App = {
     const mainContainer = document.getElementById('app-main-content');
 
     const config = window.AppState.getSchoolConfig();
-    const currentStudent = window.AppState.getCurrentStudent();
+    const isAuth = window.AuthModule && window.AuthModule.currentSession;
+    const currentStudent = isAuth ? window.AppState.getCurrentStudent() : null;
     const evalCant = window.AppState.getWorldOverallAssessment('cantidad');
     const evalEsp = window.AppState.getWorldOverallAssessment('espacio');
 
@@ -204,23 +212,39 @@ window.App = {
             Elige un mundo para explorar sus 3 sesiones de aprendizaje:
           </p>
 
-          <!-- Banner Amigable de Identificación para Familias -->
-          <div class="flex flex-wrap items-center justify-center gap-2.5 bg-gradient-to-r from-amber-50 to-emerald-50 border-2 border-amber-300 rounded-2xl px-4 py-2 mt-4 shadow-sm inline-flex">
-            <div class="flex items-center gap-2">
-              <span class="text-2xl">${currentStudent?.avatar || '🦙'}</span>
-              <span class="text-xs md:text-sm font-bold text-slate-800">
-                Jugando en casa como: <strong class="text-amber-950 font-black font-fun text-base">${currentStudent?.name || 'Estudiante'}</strong>
-              </span>
+          ${isAuth ? `
+            <!-- Banner Privado para Alumno Autenticado -->
+            <div class="flex flex-wrap items-center justify-center gap-2.5 bg-gradient-to-r from-amber-50 to-emerald-50 border-2 border-amber-300 rounded-2xl px-4 py-2 mt-4 shadow-sm inline-flex">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">${currentStudent?.avatar || '🦙'}</span>
+                <span class="text-xs md:text-sm font-bold text-slate-800">
+                  Jugando en casa como: <strong class="text-amber-950 font-black font-fun text-base">${currentStudent?.name || 'Estudiante'}</strong>
+                  <span class="font-mono text-xs font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300 ml-1">ID: ${currentStudent?.id || ''}</span>
+                </span>
+              </div>
+              <button id="btn-quick-family-portal" class="btn-chunky bg-emerald-100 text-emerald-900 border-emerald-300 text-xs py-1 px-3 shadow-sm flex items-center gap-1 hover:bg-emerald-200">
+                <span>👨‍👩‍👧</span>
+                <span>Mi Progreso y Clave</span>
+              </button>
+              <button id="btn-quick-logout" class="btn-chunky bg-white text-slate-600 border-slate-300 text-xs py-1 px-2.5 shadow-sm flex items-center gap-1 hover:bg-slate-100">
+                <span>🚪 Salir</span>
+              </button>
             </div>
-            <button id="btn-quick-change-name" class="btn-chunky bg-white text-emerald-800 border-emerald-300 text-xs py-1 px-3 shadow-sm flex items-center gap-1 hover:bg-emerald-50">
-              <span>✏️</span>
-              <span>Cambiar Nombre / Animalito</span>
-            </button>
-            <button id="btn-quick-family-portal" class="btn-chunky bg-emerald-100 text-emerald-900 border-emerald-300 text-xs py-1 px-3 shadow-sm flex items-center gap-1 hover:bg-emerald-200">
-              <span>👨‍👩‍👧</span>
-              <span>Ver Avances Familia</span>
-            </button>
-          </div>
+          ` : `
+            <!-- Banner Seguro para Visitantes (Sin exponer datos de alumnos) -->
+            <div class="flex flex-wrap items-center justify-center gap-2.5 bg-gradient-to-r from-purple-100 via-indigo-50 to-amber-100 border-2 border-purple-300 rounded-2xl px-5 py-3 mt-4 shadow-md inline-flex">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🔒</span>
+                <span class="text-xs md:text-sm font-bold text-slate-800">
+                  Aula Virtual Protegida • <strong>Solo pueden jugar estudiantes registrados</strong>
+                </span>
+              </div>
+              <button id="btn-home-login-now" class="btn-chunky bg-emerald-600 text-white border-emerald-400 text-xs py-1.5 px-4 shadow hover:bg-emerald-700 flex items-center gap-1">
+                <span>🔑</span>
+                <span>Ingresar</span>
+              </button>
+            </div>
+          `}
         </div>
 
         <!-- Tarjetas de los Dos Grandes Mundos del CNEB -->
@@ -240,7 +264,7 @@ window.App = {
             <p class="text-amber-900 font-semibold text-sm mb-5">
               1. Agrupar y Comparar • 2. Seriación y Ordinales • 3. Conteo al 10, Balanza y Operaciones.
             </p>
-            <button class="btn-chunky btn-yellow w-full text-lg py-3">
+            <button id="btn-world-cantidad-go" type="button" class="btn-chunky btn-yellow w-full text-lg py-3">
               <span>Entrar a Cantidad</span>
               <span class="text-2xl">➔</span>
             </button>
@@ -261,7 +285,7 @@ window.App = {
             <p class="text-sky-900 font-semibold text-sm mb-5">
               1. Formas 2D y 3D • 2. Ubicación Espacial (cerca/lejos/al lado) • 3. Laberinto de Flechas y Longitud.
             </p>
-            <button class="btn-chunky btn-blue w-full text-lg py-3">
+            <button id="btn-world-espacio-go" type="button" class="btn-chunky btn-blue w-full text-lg py-3">
               <span>Entrar a Espacio</span>
               <span class="text-2xl">➔</span>
             </button>
@@ -273,28 +297,50 @@ window.App = {
     window.Kusi.render('#mascot-host');
     window.Kusi.say("¡Hola amiguito! Toca la tarjeta amarilla para Aventuras de Cantidad o la tarjeta azul para Exploradores del Espacio.");
 
-    document.getElementById('card-world-cantidad').addEventListener('click', () => {
+    // Control de ingreso seguro y sin fallas a los dos mundos
+    const handleEnterWorld = (worldId, e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       window.SoundEngine.playPop();
-      this.showWorld('cantidad');
-    });
 
-    document.getElementById('card-world-espacio').addEventListener('click', () => {
-      window.SoundEngine.playPop();
-      this.showWorld('espacio');
-    });
+      if (!window.AuthModule || !window.AuthModule.currentSession) {
+        window.SoundEngine.playGentleTryAgain();
+        window.AuthModule.openLoginModal('familia');
+        return;
+      }
+      this.showWorld(worldId);
+    };
 
-    document.getElementById('btn-quick-change-name')?.addEventListener('click', () => {
+    document.getElementById('card-world-cantidad')?.addEventListener('click', (e) => handleEnterWorld('cantidad', e));
+    document.getElementById('btn-world-cantidad-go')?.addEventListener('click', (e) => handleEnterWorld('cantidad', e));
+
+    document.getElementById('card-world-espacio')?.addEventListener('click', (e) => handleEnterWorld('espacio', e));
+    document.getElementById('btn-world-espacio-go')?.addEventListener('click', (e) => handleEnterWorld('espacio', e));
+
+    document.getElementById('btn-home-login-now')?.addEventListener('click', () => {
       window.SoundEngine.playPop();
-      window.StudentProfileModule.openRegisterModal(true);
+      window.AuthModule.openLoginModal('familia');
     });
 
     document.getElementById('btn-quick-family-portal')?.addEventListener('click', () => {
       window.FamiliaModule.openPortal();
     });
+
+    document.getElementById('btn-quick-logout')?.addEventListener('click', () => {
+      window.AuthModule.logout();
+    });
   },
 
   // 2. VISTA DE LAS 3 SESIONES DE CUALQUIER MUNDO
   showWorld(worldId) {
+    if (!window.AuthModule || !window.AuthModule.currentSession) {
+      window.SoundEngine.playGentleTryAgain();
+      window.AuthModule.openLoginModal('familia');
+      return;
+    }
+
     this.currentView = 'world';
     this.currentWorldId = worldId;
     document.getElementById('btn-nav-home')?.classList.remove('hidden');
@@ -303,6 +349,7 @@ window.App = {
     const mundo = window.CNEB_DATA.mundos[worldId];
     if (!mundo) return;
 
+    const currentStudent = window.AppState.getCurrentStudent();
     const isCantidad = worldId === 'cantidad';
     const themeBorder = isCantidad ? 'border-amber-300' : 'border-sky-300';
     const themeBtn = isCantidad ? 'btn-yellow' : 'btn-blue';
@@ -355,7 +402,7 @@ window.App = {
                 <div class="space-y-1.5 my-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
                   <span class="text-[11px] font-bold text-slate-800 block mb-1">Retos de la sesión:</span>
                   ${ses.juegos.map(j => {
-                    const isDone = window.AppState.state.evaluaciones[j.id]?.completed;
+                    const isDone = currentStudent?.evaluaciones?.[j.id]?.completed;
                     return `
                       <div class="flex items-center justify-between text-xs text-slate-700">
                         <span>${j.icono} ${j.titulo}</span>
@@ -397,6 +444,12 @@ window.App = {
 
   // 3. VISTA DE LOS JUEGOS DE UNA SESIÓN
   showSessionGames(worldId, sessionId) {
+    if (!window.AuthModule || !window.AuthModule.currentSession) {
+      window.SoundEngine.playGentleTryAgain();
+      window.AuthModule.openLoginModal('familia');
+      return;
+    }
+
     this.currentView = 'session';
     this.currentWorldId = worldId;
     this.currentSessionId = sessionId;
@@ -405,6 +458,7 @@ window.App = {
     const session = mundo.sesiones.find(s => s.id === sessionId);
     if (!session) return;
 
+    const currentStudent = window.AppState.getCurrentStudent();
     const isCantidad = worldId === 'cantidad';
     const themeBorder = isCantidad ? 'border-amber-300' : 'border-sky-300';
     const themeBtn = isCantidad ? 'btn-yellow' : 'btn-blue';
@@ -429,7 +483,7 @@ window.App = {
         <!-- Tarjetas de Juegos de la Sesión -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-${session.juegos.length > 3 ? '4' : '3'} gap-5">
           ${session.juegos.map(j => {
-            const ev = window.AppState.state.evaluaciones[j.id];
+            const ev = currentStudent?.evaluaciones?.[j.id];
             const isCompleted = ev?.completed;
             const grade = ev?.lastGrade;
 
@@ -485,6 +539,12 @@ window.App = {
 
   // 4. LANZAMIENTO Y DESPACHO DE UN MINIJUEGO
   launchGame(gameId) {
+    if (!window.AuthModule || !window.AuthModule.currentSession) {
+      window.SoundEngine.playGentleTryAgain();
+      window.AuthModule.openLoginModal('familia');
+      return;
+    }
+
     this.currentView = 'game';
     this.currentGameId = gameId;
 

@@ -152,20 +152,31 @@ window.SupabaseService = {
         };
       });
 
+      // Cargar usuarios para enlazar correos de los padres
+      const { data: users } = await this.client
+        .from('usuarios')
+        .select('id, email, telefono, nombre');
+      const usersMap = new Map();
+      if (users && Array.isArray(users)) {
+        users.forEach(u => usersMap.set(u.id, u));
+      }
+
       return students.map(st => {
         const studentEvals = window.AppState ? window.AppState.getDefaultEvaluations() : {};
         if (evalsByStudent[st.id]) {
           Object.assign(studentEvals, evalsByStudent[st.id]);
         }
+        const parentUser = st.parent_id ? usersMap.get(st.parent_id) : null;
         return {
           id: st.id,
           name: st.nombre,
           avatar: st.avatar || '🦙',
           age: st.edad || 5,
           stars: st.estrellas || 0,
-          pin: st.pin_acceso || '1234',
-          parentName: st.parent_nombre || '',
-          parentPhone: st.parent_telefono || '',
+          pin: st.pin_acceso || st.id || '1234',
+          parentName: st.parent_nombre || (parentUser ? parentUser.nombre : ''),
+          parentPhone: st.parent_telefono || (parentUser ? parentUser.telefono : ''),
+          parentEmail: (parentUser && parentUser.email) ? parentUser.email : '',
           parentId: st.parent_id,
           registeredAt: st.created_at ? st.created_at.split('T')[0] : '2026-10-17',
           lastActive: st.ultimo_acceso ? new Date(st.ultimo_acceso).toLocaleString('es-PE') : null,
@@ -184,15 +195,16 @@ window.SupabaseService = {
     try {
       let parentId = studentData.parentId;
 
-      // Si se proporcionó información del padre/madre, asegurar registro en usuarios
-      if (studentData.parentName && !parentId) {
+      // Si se proporcionó información del padre/madre (nombre, email o teléfono), registrar en usuarios
+      if ((studentData.parentName || studentData.parentEmail || studentData.parentPhone) && !parentId) {
         const { data: parentUser, error: errParent } = await this.client
           .from('usuarios')
           .insert({
-            nombre: studentData.parentName,
+            nombre: studentData.parentName || ('Familia de ' + studentData.name),
+            email: studentData.parentEmail || null,
             telefono: studentData.parentPhone || '',
             rol: 'padre',
-            pin_acceso: studentData.pin || '1234'
+            pin_acceso: studentData.pin || studentData.id
           })
           .select()
           .single();
@@ -200,6 +212,16 @@ window.SupabaseService = {
         if (!errParent && parentUser) {
           parentId = parentUser.id;
         }
+      } else if (parentId) {
+        await this.client
+          .from('usuarios')
+          .update({
+            nombre: studentData.parentName || 'Familia',
+            email: studentData.parentEmail || null,
+            telefono: studentData.parentPhone || '',
+            pin_acceso: studentData.pin || studentData.id
+          })
+          .eq('id', parentId);
       }
 
       const { error } = await this.client
@@ -210,7 +232,7 @@ window.SupabaseService = {
           avatar: studentData.avatar || '🦙',
           edad: studentData.age || 5,
           estrellas: studentData.stars || 0,
-          pin_acceso: studentData.pin || '1234',
+          pin_acceso: studentData.pin || studentData.id,
           parent_id: parentId || null,
           parent_nombre: studentData.parentName || '',
           parent_telefono: studentData.parentPhone || '',
@@ -221,6 +243,22 @@ window.SupabaseService = {
       return true;
     } catch (err) {
       console.warn('Error guardando estudiante en Supabase:', err);
+      return false;
+    }
+  },
+
+  // ACTUALIZAR DIRECTAMENTE EL PIN DE UN ESTUDIANTE
+  async updateStudentPin(studentId, newPin) {
+    if (!this.isConfigured()) return false;
+    try {
+      const { error } = await this.client
+        .from('estudiantes')
+        .update({ pin_acceso: newPin })
+        .eq('id', studentId);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.warn('Error actualizando PIN en Supabase:', err);
       return false;
     }
   },

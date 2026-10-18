@@ -360,9 +360,12 @@ window.DocenteModule = {
       document.getElementById('btn-sync-student-docente')?.addEventListener('click', () => this.openSyncModal());
       document.getElementById('btn-export-csv')?.addEventListener('click', () => this.exportCSV());
       document.getElementById('btn-add-student-docente')?.addEventListener('click', () => {
-        window.StudentProfileModule.openRegisterModal();
-        const modal = document.getElementById('docente-dashboard-modal');
-        if (modal) modal.remove();
+        this.switchTab('families');
+        const formBox = document.getElementById('add-family-form-box');
+        if (formBox) {
+          formBox.classList.remove('hidden');
+          document.getElementById('new-child-name')?.focus();
+        }
       });
     }
 
@@ -518,6 +521,10 @@ window.DocenteModule = {
 
                   <td class="p-3 text-center">
                     <div class="flex items-center justify-center gap-1.5">
+                      <button class="btn-impersonate-student bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1" data-student-id="${st.id}" title="Ingresar a la app como este alumno (Modo Administradora)">
+                        <span>👁️</span>
+                        <span class="hidden sm:inline">Ver como Alumno</span>
+                      </button>
                       <button class="btn-view-student-report bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-300 px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1" data-student-id="${st.id}" title="Ver informe CNEB individual">
                         <span>🔍</span>
                         <span>Ficha CNEB</span>
@@ -542,6 +549,14 @@ window.DocenteModule = {
         window.SoundEngine.playPop();
         this.filterStatus = btn.dataset.status;
         this.renderMonitoringTab(container, actions);
+      });
+    });
+
+    // Botón ingresar como alumno (Admin Impersonation)
+    container.querySelectorAll('.btn-impersonate-student').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.studentId;
+        window.AuthModule.impersonateStudent(id);
       });
     });
 
@@ -881,7 +896,7 @@ window.DocenteModule = {
           <div class="flex items-center justify-between pb-2 border-b border-emerald-200">
             <h4 class="text-lg font-black text-emerald-950 font-fun flex items-center gap-2">
               <span>🎨</span>
-              <span>Registrar Niño y Contacto de su Familia</span>
+              <span>Registrar Niño y Contacto de su Familia (Solo Docente)</span>
             </h4>
             <button id="btn-close-family-form" class="text-slate-400 hover:text-slate-700 font-bold text-sm">✕ Cerrar</button>
           </div>
@@ -889,7 +904,10 @@ window.DocenteModule = {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nombre Completo del Niño(a):</label>
-              <input type="text" id="new-child-name" placeholder="Ej. Thiago Mendoza" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
+              <input type="text" id="new-child-name" placeholder="Ej. Pepito Valverde" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
+              <div id="new-child-id-preview" class="text-[11px] text-emerald-800 font-bold mt-1 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
+                🆔 Código que se generará: <span id="preview-id-text" class="font-mono text-emerald-900 bg-white px-1.5 py-0.5 rounded border border-emerald-300">V••••</span> (Letra del apellido + 4 números)
+              </div>
             </div>
 
             <div>
@@ -901,17 +919,23 @@ window.DocenteModule = {
 
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nombre del Papá o Mamá:</label>
-              <input type="text" id="new-parent-name" placeholder="Ej. Carmen Mendoza" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
+              <input type="text" id="new-parent-name" placeholder="Ej. Jaime Valverde" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Teléfono / WhatsApp de la Familia:</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">WhatsApp / Teléfono de la Familia:</label>
               <input type="tel" id="new-parent-phone" placeholder="Ej. 987654321" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">PIN / Clave de Acceso:</label>
-              <input type="text" id="new-child-pin" value="1234" maxlength="6" class="w-full text-center text-sm font-black p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50 tracking-widest">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Correo Electrónico del Padre o Madre:</label>
+              <input type="email" id="new-parent-email" placeholder="Ej. familia.valverde@gmail.com" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">PIN / Clave de Acceso (Inicial = Código):</label>
+              <input type="text" id="new-child-pin" placeholder="Se asignará automáticamente igual al Código" maxlength="8" class="w-full text-center text-sm font-black p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50 tracking-widest uppercase">
+              <span class="text-[10px] text-slate-500 block mt-1">Por defecto será el mismo código (ej. V4821). La familia podrá cambiarlo internamente.</span>
             </div>
           </div>
 
@@ -925,9 +949,14 @@ window.DocenteModule = {
 
         <!-- Tabla de Familias y Niños Registrados -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Familias Registradas (${students.length})</span>
-            <span class="text-[11px] text-slate-500">Toca el botón WhatsApp para enviar la invitación de ingreso a casa</span>
+          <div class="p-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Familias Registradas (${students.length})</span>
+              <p class="text-[11px] text-slate-500">Puedes ingresar como cualquier estudiante sin conocer su clave o restablecerla si la olvidaron.</p>
+            </div>
+            <span class="text-xs font-bold bg-purple-100 text-purple-900 px-2.5 py-1 rounded-full border border-purple-200">
+              🔒 Acceso Privado CNEB
+            </span>
           </div>
 
           <div class="overflow-x-auto">
@@ -939,29 +968,35 @@ window.DocenteModule = {
                   <th class="p-2.5 text-center">PIN Acceso</th>
                   <th class="p-2.5 text-center">Estrellas</th>
                   <th class="p-2.5 text-center">Última Conexión</th>
-                  <th class="p-2.5 text-right">Enviar Acceso</th>
+                  <th class="p-2.5 text-center">Acciones de Administradora</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200">
                 ${students.map(st => `
-                  <tr class="hover:bg-slate-50/80">
+                  <tr class="hover:bg-slate-50/80 transition-colors">
                     <td class="p-2.5">
                       <div class="flex items-center gap-2">
                         <span class="text-2xl">${st.avatar || '🦙'}</span>
                         <div>
                           <strong class="text-slate-900 block font-fun text-sm">${st.name}</strong>
-                          <span class="text-[10px] text-slate-400">ID: ${st.id}</span>
+                          <span class="font-mono font-bold text-[11px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-300">ID: ${st.id}</span>
                         </div>
                       </div>
                     </td>
                     <td class="p-2.5">
                       <div class="text-slate-800 font-bold">${st.parentName || 'Familia de ' + st.name.split(' ')[0]}</div>
-                      <div class="text-[11px] text-emerald-700 font-medium">${st.parentPhone || 'Sin teléfono'}</div>
+                      <div class="text-[11px] text-emerald-700 font-medium">📱 ${st.parentPhone || 'Sin teléfono'}</div>
+                      <div class="text-[11px] text-slate-500">✉️ ${st.parentEmail || 'Sin correo registrado'}</div>
                     </td>
                     <td class="p-2.5 text-center">
-                      <span class="bg-purple-100 text-purple-900 font-mono font-bold px-2 py-0.5 rounded-lg border border-purple-200">
-                        ${st.pin || '1234'}
-                      </span>
+                      <div class="flex items-center justify-center gap-1">
+                        <span class="bg-purple-100 text-purple-900 font-mono font-bold px-2 py-0.5 rounded-lg border border-purple-200 text-xs">
+                          ${st.pin || st.id || '1234'}
+                        </span>
+                        <button class="btn-reset-student-pin text-purple-700 hover:text-purple-900 hover:bg-purple-100 p-1 rounded-md text-xs font-bold" data-student-id="${st.id}" title="Restablecer PIN">
+                          🔄
+                        </button>
+                      </div>
                     </td>
                     <td class="p-2.5 text-center font-bold text-amber-600 text-sm">
                       ⭐ ${st.stars || 0}
@@ -969,10 +1004,24 @@ window.DocenteModule = {
                     <td class="p-2.5 text-center text-slate-500 text-[11px]">
                       ${st.lastActive || 'Aún no ingresa'}
                     </td>
-                    <td class="p-2.5 text-right">
-                      <button class="btn-chunky bg-emerald-600 text-white border-emerald-500 text-xs py-1 px-2.5 shadow hover:bg-emerald-700 btn-send-access-card" data-student-id="${st.id}">
-                        <span>📲 WhatsApp</span>
-                      </button>
+                    <td class="p-2.5 text-center">
+                      <div class="flex flex-wrap items-center justify-center gap-1.5">
+                        <button class="btn-impersonate-student bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 px-2 py-1 rounded-lg font-bold text-[11px] shadow-sm flex items-center gap-1" data-student-id="${st.id}" title="Entrar a la app como este estudiante (Modo Administradora)">
+                          <span>👁️</span>
+                          <span>Ingresar</span>
+                        </button>
+                        <button class="btn-send-access-card bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500 text-[11px] font-bold py-1 px-2 rounded-lg shadow-sm flex items-center gap-1" data-student-id="${st.id}" title="Enviar accesos por WhatsApp">
+                          <span>📲</span>
+                          <span>WhatsApp</span>
+                        </button>
+                        <button class="btn-send-access-email bg-sky-600 hover:bg-sky-700 text-white border-sky-500 text-[11px] font-bold py-1 px-2 rounded-lg shadow-sm flex items-center gap-1" data-student-id="${st.id}" title="Enviar accesos por Correo Electrónico">
+                          <span>📧</span>
+                          <span>Correo</span>
+                        </button>
+                        <button class="btn-delete-student-fam text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1 rounded-lg text-xs" data-student-id="${st.id}" title="Eliminar estudiante">
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 `).join('')}
@@ -985,11 +1034,33 @@ window.DocenteModule = {
 
     // Eventos del formulario
     const formBox = document.getElementById('add-family-form-box');
+    const childNameInput = document.getElementById('new-child-name');
+    const childPinInput = document.getElementById('new-child-pin');
+    const previewIdText = document.getElementById('preview-id-text');
+
+    childNameInput?.addEventListener('input', () => {
+      const name = childNameInput.value.trim();
+      if (name) {
+        const previewId = window.AppState.generateStudentId(name);
+        if (previewIdText) previewIdText.textContent = previewId;
+        if (childPinInput && (!childPinInput.value || childPinInput.dataset.autoFilled === 'true')) {
+          childPinInput.value = previewId;
+          childPinInput.dataset.autoFilled = 'true';
+        }
+      } else {
+        if (previewIdText) previewIdText.textContent = 'V••••';
+      }
+    });
+
+    childPinInput?.addEventListener('input', () => {
+      childPinInput.dataset.autoFilled = 'false';
+    });
+
     document.getElementById('btn-show-add-family-form')?.addEventListener('click', () => {
       window.SoundEngine.playPop();
       if (formBox) {
         formBox.classList.remove('hidden');
-        document.getElementById('new-child-name')?.focus();
+        childNameInput?.focus();
       }
     });
 
@@ -999,23 +1070,51 @@ window.DocenteModule = {
     });
 
     document.getElementById('btn-submit-new-family')?.addEventListener('click', () => {
-      const childName = document.getElementById('new-child-name')?.value.trim();
+      const childName = childNameInput?.value.trim();
       const avatar = document.getElementById('new-child-avatar')?.value || '🦙';
       const parentName = document.getElementById('new-parent-name')?.value.trim();
       const parentPhone = document.getElementById('new-parent-phone')?.value.trim();
-      const pin = document.getElementById('new-child-pin')?.value.trim() || '1234';
+      const parentEmail = document.getElementById('new-parent-email')?.value.trim();
+      const pin = childPinInput?.value.trim();
 
       if (!childName) {
-        alert("Por favor escribe el nombre del estudiante.");
+        alert("Por favor escribe el nombre completo del estudiante.");
         return;
       }
 
-      const newSt = window.AppState.addStudent(childName, avatar, parentName, parentPhone, pin);
+      const newSt = window.AppState.addStudent(childName, avatar, parentName, parentPhone, parentEmail, pin);
       if (newSt) {
         window.SoundEngine.playSuccess();
-        alert(`¡Cuenta creada con éxito para ${newSt.name} y su familia!`);
+        alert(`¡Cuenta creada con éxito!\n\nEstudiante: ${newSt.name}\nCódigo ID: ${newSt.id}\nPIN de Acceso: ${newSt.pin}\n\nYa puedes enviarle sus accesos por WhatsApp o Correo.`);
         this.renderFamiliesTab(container, actions);
       }
+    });
+
+    // Ingresar como estudiante (Modo Administradora sin necesidad de conocer su clave)
+    container.querySelectorAll('.btn-impersonate-student').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const stId = btn.dataset.studentId;
+        window.AuthModule.impersonateStudent(stId);
+      });
+    });
+
+    // Restablecer PIN del estudiante
+    container.querySelectorAll('.btn-reset-student-pin').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const stId = btn.dataset.studentId;
+        const st = window.AppState.state.students.find(s => s.id === stId);
+        if (!st) return;
+
+        const defaultPin = st.id;
+        const nuevoPin = prompt(`¿Deseas restablecer el PIN de ${st.name}?\nEscribe el nuevo PIN (o déjalo en ${defaultPin} para usar su Código ID):`, defaultPin);
+
+        if (nuevoPin !== null) {
+          const finalPin = window.AppState.resetStudentPin(stId, nuevoPin);
+          window.SoundEngine.playSuccess();
+          alert(`PIN restablecido con éxito a: ${finalPin}\nPuedes enviárselo a la familia por WhatsApp o Correo.`);
+          this.renderFamiliesTab(container, actions);
+        }
+      });
     });
 
     // Envío de tarjeta de acceso por WhatsApp
@@ -1027,12 +1126,13 @@ window.DocenteModule = {
         if (!st) return;
 
         const baseUrl = window.location.origin + window.location.pathname;
-        const directUrl = `${baseUrl}?alumno=${encodeURIComponent(st.name)}&pin=${st.pin || '1234'}`;
+        const directUrl = `${baseUrl}?id=${encodeURIComponent(st.id)}&pin=${encodeURIComponent(st.pin || st.id)}`;
         const msg = `¡Hola ${st.parentName || 'Familia'}! 👋 Le saluda la Profesora ${config.teacherName}.\n\n` +
           `Para que *${st.name}* ${st.avatar} practique los juegos matemáticos desde casa y guarde sus estrellas ⭐ en nuestro sistema escolar, ingrese con su enlace privado:\n` +
           `🔗 ${directUrl}\n\n` +
           `👶 Estudiante: *${st.name}*\n` +
-          `🔑 PIN de acceso: *${st.pin || '1234'}*\n\n` +
+          `🆔 Código de Estudiante: *${st.id}*\n` +
+          `🔑 PIN de acceso: *${st.pin || st.id}*\n\n` +
           `¡Muchos éxitos y gracias por apoyar su aprendizaje! ✨`;
 
         let waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
@@ -1041,6 +1141,46 @@ window.DocenteModule = {
           if (clean) waUrl = `https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`;
         }
         window.open(waUrl, '_blank');
+      });
+    });
+
+    // Envío de tarjeta de acceso por Correo Electrónico
+    container.querySelectorAll('.btn-send-access-email').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.SoundEngine.playPop();
+        const stId = btn.dataset.studentId;
+        const st = window.AppState.state.students.find(s => s.id === stId);
+        if (!st) return;
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const directUrl = `${baseUrl}?id=${encodeURIComponent(st.id)}&pin=${encodeURIComponent(st.pin || st.id)}`;
+        const subject = `Accesos a Matemática Kusi para ${st.name} - ${config.schoolName}`;
+        const body = `Estimada ${st.parentName || 'Familia de ' + st.name}:\n\n` +
+          `Le saluda la Profesora ${config.teacherName}.\n` +
+          `Le comparto las credenciales oficiales de acceso a la plataforma de Matemática Divertida (${config.activeClass}):\n\n` +
+          `👶 Estudiante: ${st.name}\n` +
+          `🆔 Código de Estudiante: ${st.id}\n` +
+          `🔑 PIN de acceso: ${st.pin || st.id}\n` +
+          `🔗 Enlace directo de ingreso:\n${directUrl}\n\n` +
+          `Por favor conserve este correo para el seguimiento de sus aprendizajes.\n` +
+          `Atentamente,\nProf. ${config.teacherName}`;
+
+        const emailTo = st.parentEmail || '';
+        const mailtoUrl = `mailto:${encodeURIComponent(emailTo)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoUrl;
+      });
+    });
+
+    // Eliminar estudiante en pestaña de familias
+    container.querySelectorAll('.btn-delete-student-fam').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.studentId;
+        const student = window.AppState.state.students.find(s => s.id === id);
+        if (confirm(`¿Seguro que deseas eliminar a ${student?.name}? Se borrarán sus datos registrados.`)) {
+          window.AppState.deleteStudent(id);
+          window.SoundEngine.playPop();
+          this.renderFamiliesTab(container, actions);
+        }
       });
     });
   },

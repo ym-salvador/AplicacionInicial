@@ -367,6 +367,40 @@ class AppStateManager {
     }
   }
 
+  // GENERADOR DE ID DEL ESTUDIANTE: Letra del Apellido + 4 Dígitos Aleatorios (Ej: V4821 para Pepito Valverde)
+  generateStudentId(fullName) {
+    const clean = (fullName || '').trim();
+    if (!clean) return 'E' + Math.floor(1000 + Math.random() * 9000);
+
+    const parts = clean.split(/\s+/);
+    let surname = '';
+    if (parts.length >= 2) {
+      // En nombres en español (ej. Pepito Valverde o Juan Carlos Gómez)
+      // Si son 2 palabras: parts[1] es el apellido
+      // Si son 3 o más palabras: suele ser el último o penúltimo
+      surname = parts.length === 2 ? parts[1] : parts[parts.length - 1];
+    } else {
+      surname = parts[0];
+    }
+
+    let letter = surname.charAt(0).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    if (!/^[A-Z]$/.test(letter)) {
+      letter = 'E';
+    }
+
+    // 4 dígitos aleatorios (1000 - 9999) garantizando unicidad
+    let id;
+    let attempts = 0;
+    const existingIds = (this.state && this.state.students) ? this.state.students.map(s => s.id) : [];
+    do {
+      const num = Math.floor(1000 + Math.random() * 9000);
+      id = `${letter}${num}`;
+      attempts++;
+    } while (existingIds.includes(id) && attempts < 50);
+
+    return id;
+  }
+
   // CAMBIAR DE ESTUDIANTE ACTIVO
   switchStudent(studentId) {
     const student = this.state.students.find(s => s.id === studentId);
@@ -378,12 +412,16 @@ class AppStateManager {
     return null;
   }
 
-  // REGISTRAR NUEVO ESTUDIANTE CON DATOS FAMILIARES
-  addStudent(name, avatar = '🦙', parentName = '', parentPhone = '', pin = '1234') {
+  // REGISTRAR NUEVO ESTUDIANTE CON DATOS FAMILIARES (SOLO DOCENTE)
+  // ID: Letra del apellido + 4 números aleatorios (Ej: V4821)
+  // PIN inicial: El mismo ID (Ej: V4821), modificable por la familia o docente
+  addStudent(name, avatar = '🦙', parentName = '', parentPhone = '', parentEmail = '', pin = '') {
     const cleanName = name.trim();
     if (!cleanName) return null;
 
-    const newId = 'est_' + Date.now();
+    const newId = this.generateStudentId(cleanName);
+    const initialPin = (pin && pin.trim()) ? pin.trim() : newId;
+
     const newStudent = {
       id: newId,
       name: cleanName,
@@ -391,7 +429,8 @@ class AppStateManager {
       age: 5,
       parentName: parentName ? parentName.trim() : '',
       parentPhone: parentPhone ? parentPhone.trim() : '',
-      pin: pin ? pin.trim() : '1234',
+      parentEmail: parentEmail ? parentEmail.trim() : '',
+      pin: initialPin,
       registeredAt: new Date().toISOString().split('T')[0],
       lastActive: null,
       stars: 0,
@@ -408,6 +447,43 @@ class AppStateManager {
     }
 
     return newStudent;
+  }
+
+  // ACTUALIZAR DATOS / PERFIL / PIN DE UN ESTUDIANTE
+  updateStudent(studentId, updates = {}) {
+    const student = this.state.students.find(s => s.id === studentId);
+    if (!student) return null;
+
+    if (updates.name !== undefined) student.name = updates.name.trim();
+    if (updates.avatar !== undefined) student.avatar = updates.avatar;
+    if (updates.parentName !== undefined) student.parentName = updates.parentName.trim();
+    if (updates.parentPhone !== undefined) student.parentPhone = updates.parentPhone.trim();
+    if (updates.parentEmail !== undefined) student.parentEmail = updates.parentEmail.trim();
+    if (updates.pin !== undefined) student.pin = updates.pin.trim();
+
+    this.saveState();
+
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.saveStudent(student);
+    }
+
+    return student;
+  }
+
+  // RESTABLECER PIN DE UN ESTUDIANTE (Por defecto vuelve a su Código ID o a un PIN específico)
+  resetStudentPin(studentId, customPin = null) {
+    const student = this.state.students.find(s => s.id === studentId);
+    if (!student) return null;
+
+    const targetPin = (customPin && customPin.trim()) ? customPin.trim() : student.id;
+    student.pin = targetPin;
+    this.saveState();
+
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      window.SupabaseService.saveStudent(student);
+    }
+
+    return targetPin;
   }
 
   // ELIMINAR ESTUDIANTE

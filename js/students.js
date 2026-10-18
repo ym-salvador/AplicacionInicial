@@ -20,15 +20,20 @@ window.StudentProfileModule = {
   init() {
     this.updateHeaderDisplay();
     
-    // Si no hay estudiante activo o es docente, se puede abrir el selector
+    // Si la sesión es de familia, abre directamente su portal familiar privado
     document.getElementById('btn-student-profile')?.addEventListener('click', () => {
-      // Si la sesión es de familia, abre directamente su portal familiar privado
       if (window.AuthModule && window.AuthModule.isFamily()) {
         window.FamiliaModule.openPortal();
         return;
       }
+      if (window.AuthModule && window.AuthModule.isTeacher()) {
+        window.SoundEngine.playPop();
+        this.openSelectorModal();
+        return;
+      }
+      // Si no ha iniciado sesión, pide credenciales
       window.SoundEngine.playPop();
-      this.openSelectorModal();
+      window.AuthModule.openLoginModal('familia');
     });
   },
 
@@ -38,7 +43,7 @@ window.StudentProfileModule = {
 
   updateHeaderDisplay() {
     const student = window.AppState.getCurrentStudent();
-    if (!student) return;
+    if (!student || !window.AuthModule || !window.AuthModule.currentSession) return;
 
     const avatarEl = document.getElementById('header-student-avatar');
     const nameEl = document.getElementById('header-student-name');
@@ -49,8 +54,13 @@ window.StudentProfileModule = {
     if (starCount) starCount.textContent = student.stars || 0;
   },
 
-  // MODAL: ¿QUIÉN ESTÁ JUGANDO HOY?
+  // MODAL: SELECCIÓN EXCLUSIVA (SOLO DOCENTE)
   openSelectorModal() {
+    if (!window.AuthModule || !window.AuthModule.isTeacher()) {
+      window.AuthModule.openLoginModal('familia');
+      return;
+    }
+
     const currentStudent = window.AppState.getCurrentStudent();
     const students = window.AppState.state.students;
 
@@ -136,125 +146,19 @@ window.StudentProfileModule = {
         }
       });
     });
-
-    document.getElementById('btn-open-register-student')?.addEventListener('click', () => {
-      window.SoundEngine.playPop();
-      modal.remove();
-      this.openRegisterModal();
-    });
   },
 
-  // MODAL: REGISTRARSE COMO NUEVO ESTUDIANTE / MODO FAMILIA EN CASA
-  openRegisterModal(isFamilyWelcome = false) {
-    this.selectedAvatar = '🦙';
-
-    const modal = document.createElement('div');
-    modal.id = 'student-register-modal';
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal-content p-6 max-w-lg mx-auto text-center border-4 border-emerald-400 shadow-2xl">
-        
-        <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-4xl mx-auto mb-2 shadow">
-          ${isFamilyWelcome ? '👨‍👩‍👧' : '🎨'}
-        </div>
-
-        <h3 class="text-2xl font-black text-slate-900 font-fun mb-1">
-          ${isFamilyWelcome ? '¡Bienvenidos a Matemática Divertida en Casa!' : '¡Escribe tu Nombre para Jugar!'}
-        </h3>
-        <p class="text-slate-600 text-xs sm:text-sm mb-3">
-          ${isFamilyWelcome 
-            ? 'Papito o mamita: escribe el nombre de tu hijo/a y elijan juntos su animalito favorito para guardar sus avances y estrellas ⭐' 
-            : 'Escribe tu nombre y elige tu animalito favorito entre más de 35 opciones:'}
-        </p>
-
-        <!-- Campo de Nombre -->
-        <div class="my-3 text-left">
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nombre del Niño o Niña:</label>
-          <input type="text" id="reg-student-name" placeholder="Ej. Mateo, Valentina, Liam, Sofía..." maxlength="25" class="w-full text-xl font-black font-fun p-3 border-3 border-amber-300 rounded-2xl focus:border-emerald-500 focus:outline-none shadow-inner bg-amber-50/50 text-slate-800">
-        </div>
-
-        <!-- Selector de Avatar Extendido -->
-        <div class="my-3 text-left">
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Elige su animalito favorito:</label>
-            <span class="text-[11px] text-emerald-800 bg-emerald-100 font-bold px-2 py-0.5 rounded-full">¡37 Animalitos!</span>
-          </div>
-          
-          <div id="avatar-grid" class="grid grid-cols-6 sm:grid-cols-9 gap-2 p-2 border-2 border-emerald-200 rounded-2xl bg-slate-50 max-h-[160px] overflow-y-auto shadow-inner">
-            ${this.avatars.map(av => `
-              <button type="button" class="avatar-option-btn w-11 h-11 rounded-xl border-2 border-slate-200 bg-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-sm ${av === '🦙' ? 'border-emerald-500 bg-emerald-100 scale-105' : ''}" data-avatar="${av}">
-                ${av}
-              </button>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- Botones de Acción -->
-        <div class="flex gap-3 justify-center mt-5">
-          ${!isFamilyWelcome ? `
-            <button id="btn-cancel-register" class="btn-chunky bg-slate-200 text-slate-700 border-slate-300 text-sm py-2 px-5">
-              Cancelar
-            </button>
-          ` : `
-            <button id="btn-cancel-register" class="btn-chunky bg-slate-100 text-slate-600 border-slate-300 text-xs py-2 px-4">
-              Jugar como invitado
-            </button>
-          `}
-          <button id="btn-submit-register" class="btn-chunky btn-green text-base py-3 px-6 shadow-md flex items-center gap-2">
-            <span>🚀</span>
-            <span>¡Empezar a Jugar!</span>
-          </button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    const inputName = document.getElementById('reg-student-name');
-    inputName.focus();
-
-    // Selección de avatar
-    modal.querySelectorAll('.avatar-option-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        window.SoundEngine.playPop();
-        modal.querySelectorAll('.avatar-option-btn').forEach(b => {
-          b.classList.remove('border-emerald-500', 'bg-emerald-50', 'scale-105');
-        });
-        btn.classList.add('border-emerald-500', 'bg-emerald-50', 'scale-105');
-        this.selectedAvatar = btn.dataset.avatar;
-      });
-    });
-
-    document.getElementById('btn-cancel-register')?.addEventListener('click', () => {
-      window.SoundEngine.playPop();
-      modal.remove();
-      this.openSelectorModal();
-    });
-
-    const handleRegister = () => {
-      const name = inputName.value.trim();
-      if (!name) {
-        window.SoundEngine.playGentleTryAgain();
-        inputName.classList.add('border-red-500', 'animate-wiggle');
-        setTimeout(() => inputName.classList.remove('animate-wiggle'), 500);
-        return;
-      }
-
-      const newStudent = window.AppState.addStudent(name, this.selectedAvatar);
-      if (newStudent) {
-        window.SoundEngine.playSuccess();
-        this.updateHeaderDisplay();
-        modal.remove();
-        window.Kusi.celebrate(`¡Bienvenido ${newStudent.name}! ¡Tienes un nuevo perfil para jugar matemática!`);
-        if (window.App.currentView === 'home') {
-          window.App.showHome();
-        }
-      }
-    };
-
-    document.getElementById('btn-submit-register')?.addEventListener('click', handleRegister);
-    inputName.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleRegister();
-    });
+  // MODAL: REGISTRAR ALUMNO (SOLO AUTORIZADO PARA DOCENTE)
+  openRegisterModal() {
+    if (!window.AuthModule || !window.AuthModule.isTeacher()) {
+      window.AuthModule.openLoginModal('familia');
+      return;
+    }
+    window.DocenteModule.openDashboard('families');
+    const formBox = document.getElementById('add-family-form-box');
+    if (formBox) {
+      formBox.classList.remove('hidden');
+      document.getElementById('new-child-name')?.focus();
+    }
   }
 };
