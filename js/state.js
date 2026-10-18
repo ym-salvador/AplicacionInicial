@@ -431,12 +431,21 @@ class AppStateManager {
   // REGISTRAR NUEVO ESTUDIANTE CON DATOS FAMILIARES (SOLO DOCENTE)
   // ID: Letra del apellido + 4 números aleatorios (Ej: V4821)
   // PIN inicial: El mismo ID (Ej: V4821), modificable por la familia o docente
-  addStudent(name, avatar = '🦙', parentName = '', parentPhone = '', parentEmail = '', pin = '') {
+  addStudent(name, avatar = '🦙', parentName = '', parentPhone = '', parentEmail = '', pin = '', forcedId = null) {
     const cleanName = name.trim();
     if (!cleanName) return null;
 
-    const newId = this.generateStudentId(cleanName);
-    const initialPin = (pin && pin.trim()) ? pin.trim() : newId;
+    // Si ya se generó o previsualizó un ID en el formulario, respetarlo fielmente
+    const newId = (forcedId && forcedId.trim()) ? forcedId.trim().toUpperCase() : this.generateStudentId(cleanName);
+    
+    // Si el PIN ingresado está vacío o es igual al ID previsualizado, asignar exactamente newId
+    let initialPin = newId;
+    if (pin && pin.trim()) {
+      const cleanPin = pin.trim().toUpperCase();
+      if (!forcedId || cleanPin !== forcedId.trim().toUpperCase()) {
+        initialPin = cleanPin;
+      }
+    }
 
     const newStudent = {
       id: newId,

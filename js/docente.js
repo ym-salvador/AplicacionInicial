@@ -1051,18 +1051,23 @@ window.DocenteModule = {
     const childNameInput = document.getElementById('new-child-name');
     const childPinInput = document.getElementById('new-child-pin');
     const previewIdText = document.getElementById('preview-id-text');
+    let currentPreviewId = '';
 
     childNameInput?.addEventListener('input', () => {
       const name = childNameInput.value.trim();
       if (name) {
-        const previewId = window.AppState.generateStudentId(name);
-        if (previewIdText) previewIdText.textContent = previewId;
+        currentPreviewId = window.AppState.generateStudentId(name);
+        if (previewIdText) previewIdText.textContent = currentPreviewId;
         if (childPinInput && (!childPinInput.value || childPinInput.dataset.autoFilled === 'true')) {
-          childPinInput.value = previewId;
+          childPinInput.value = currentPreviewId;
           childPinInput.dataset.autoFilled = 'true';
         }
       } else {
+        currentPreviewId = '';
         if (previewIdText) previewIdText.textContent = 'V••••';
+        if (childPinInput && childPinInput.dataset.autoFilled === 'true') {
+          childPinInput.value = '';
+        }
       }
     });
 
@@ -1089,14 +1094,21 @@ window.DocenteModule = {
       const parentName = document.getElementById('new-parent-name')?.value.trim();
       const parentPhone = document.getElementById('new-parent-phone')?.value.trim();
       const parentEmail = document.getElementById('new-parent-email')?.value.trim();
-      const pin = childPinInput?.value.trim();
+      const rawPin = childPinInput?.value.trim();
 
       if (!childName) {
         alert("Por favor escribe el nombre completo del estudiante.");
         return;
       }
 
-      const newSt = window.AppState.addStudent(childName, avatar, parentName, parentPhone, parentEmail, pin);
+      // Si no hay previewId generado, generarlo ahora
+      const targetId = currentPreviewId || window.AppState.generateStudentId(childName);
+      
+      // Si el campo PIN está vacío o es igual al auto-completado, el PIN es EXACTAMENTE targetId
+      const isAutoFilled = !rawPin || childPinInput?.dataset.autoFilled === 'true' || rawPin.toUpperCase() === targetId.toUpperCase();
+      const finalPin = isAutoFilled ? targetId : rawPin.toUpperCase();
+
+      const newSt = window.AppState.addStudent(childName, avatar, parentName, parentPhone, parentEmail, finalPin, targetId);
       if (newSt) {
         window.SoundEngine.playSuccess();
         alert(`¡Cuenta creada con éxito!\n\nEstudiante: ${newSt.name}\nCódigo ID: ${newSt.id}\nPIN de Acceso: ${newSt.pin}\n\nYa puedes enviarle sus accesos por WhatsApp o Correo.`);
