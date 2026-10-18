@@ -350,15 +350,25 @@ class AppStateManager {
     item.attempts += 1;
     item.hintsUsed += hintsCount;
 
+    // Medición del tiempo transcurrido en el reto (segundos)
+    if (window.App && window.App.currentGameStartTime) {
+      const elapsed = Math.round((Date.now() - window.App.currentGameStartTime) / 1000);
+      if (elapsed > 0 && elapsed < 3600) {
+        item.timeSeconds = (item.timeSeconds || 0) + elapsed;
+      }
+      window.App.currentGameStartTime = Date.now();
+    }
+
     if (isSuccess) {
       item.successes += 1;
       item.completed = true;
+      item.completedAt = new Date().toISOString();
       student.stars = (student.stars || 0) + 3;
       this.state.stars = student.stars;
 
       // Criterios CNEB Nivel 2 (RVM N° 094-2020-MINEDU)
       if (item.attempts === 1 && hintsCount === 0) {
-        item.lastGrade = 'AD'; // Logro Destacado (autonomía inmediata)
+        item.lastGrade = 'AD'; // Logro Destacado (autonomía inmediata al 1er intento)
       } else if (item.attempts <= 2 && hintsCount <= 1) {
         item.lastGrade = 'A'; // Logro Esperado (autónomo)
       } else {
@@ -645,6 +655,43 @@ class AppStateManager {
       status = 'en_proceso';
     }
 
+    // Métricas detalladas de calidad pedagógica y tiempo CNEB
+    let countAD = 0;
+    let countA = 0;
+    let countB = 0;
+    let countC = 0;
+    let totalAttempts = 0;
+    let totalHints = 0;
+    let totalTimeSeconds = 0;
+    let lastCompletedAt = null;
+
+    if (student.evaluaciones) {
+      Object.values(student.evaluaciones).forEach(ev => {
+        if (ev) {
+          if (ev.lastGrade === 'AD') countAD++;
+          else if (ev.lastGrade === 'A') countA++;
+          else if (ev.lastGrade === 'B') countB++;
+          else if (ev.lastGrade === 'C') countC++;
+
+          totalAttempts += (ev.attempts || 0);
+          totalHints += (ev.hintsUsed || 0);
+          totalTimeSeconds += (ev.timeSeconds || 0);
+
+          if (ev.completedAt) {
+            if (!lastCompletedAt || new Date(ev.completedAt) > new Date(lastCompletedAt)) {
+              lastCompletedAt = ev.completedAt;
+            }
+          }
+        }
+      });
+    }
+
+    const minutes = Math.floor(totalTimeSeconds / 60);
+    const seconds = totalTimeSeconds % 60;
+    const formattedTime = totalTimeSeconds > 0 
+      ? (minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`)
+      : (totalCompleted > 0 ? `${totalCompleted * 35}s est.` : '0s');
+
     return {
       id: student.id,
       name: student.name,
@@ -656,7 +703,16 @@ class AppStateManager {
       totalGames,
       totalProgress,
       status,
-      stars: student.stars,
+      stars: student.stars || 0,
+      countAD,
+      countA,
+      countB,
+      countC,
+      totalAttempts,
+      totalHints,
+      totalTimeSeconds,
+      formattedTime,
+      lastCompletedAt,
       cantidad: {
         grade: cant?.overall || 'Sin evaluar',
         percent: cant?.progressPercent || 0,
@@ -672,9 +728,50 @@ class AppStateManager {
     };
   }
 
+  // CUADRO DE MÉRITO Y RANKING DEL AULA (CRITERIOS FORMATIVOS CNEB)
+  // Criterio 1: Estrellas totales (Máx 69)
+  // Criterio 2 (Desempate CNEB): Mayor cantidad de retos en Logro Destacado (AD al 1er intento sin pistas)
+  // Criterio 3 (Mayor autonomía): Mayor cantidad de retos en Logro Esperado (A)
+  // Criterio 4 (Efectividad): Menos intentos totales requeridos
+  // Criterio 5 (Tiempo / Agilidad): Menor tiempo acumulado en segundos
+  // Criterio 6: Alfabético por nombre
+  getRankedStudents() {
+    const list = this.state.students.map(s => this.getStudentSummary(s.id)).filter(Boolean);
+
+    list.sort((a, b) => {
+      // 1. Mayor cantidad de estrellas
+      if ((b.stars || 0) !== (a.stars || 0)) {
+        return (b.stars || 0) - (a.stars || 0);
+      }
+      // 2. Desempate formativo CNEB: Mayor cantidad de AD (1er intento sin pistas)
+      if ((b.countAD || 0) !== (a.countAD || 0)) {
+        return (b.countAD || 0) - (a.countAD || 0);
+      }
+      // 3. Mayor cantidad de A
+      if ((b.countA || 0) !== (a.countA || 0)) {
+        return (b.countA || 0) - (a.countA || 0);
+      }
+      // 4. Efectividad: Menor número de intentos
+      if ((a.totalAttempts || 0) !== (b.totalAttempts || 0) && (a.totalAttempts || 0) > 0 && (b.totalAttempts || 0) > 0) {
+        return (a.totalAttempts || 0) - (b.totalAttempts || 0);
+      }
+      // 5. Menor tiempo de juego
+      if ((a.totalTimeSeconds || 0) > 0 && (b.totalTimeSeconds || 0) > 0 && (a.totalTimeSeconds || 0) !== (b.totalTimeSeconds || 0)) {
+        return (a.totalTimeSeconds || 0) - (b.totalTimeSeconds || 0);
+      }
+      // 6. Alfabético por nombre
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    return list.map((st, index) => ({
+      ...st,
+      rank: index + 1
+    }));
+  }
+
   // RESUMEN CONSOLIDADO DE TODA LA CLASE PARA LA DOCENTE
   getClassSummary() {
-    const summaries = this.state.students.map(s => this.getStudentSummary(s.id));
+    const summaries = this.getRankedStudents();
     const total = summaries.length;
     const completed = summaries.filter(s => s.status === 'completado').length;
     const inProgress = summaries.filter(s => s.status === 'en_proceso').length;

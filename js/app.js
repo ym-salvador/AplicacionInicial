@@ -550,6 +550,7 @@ window.App = {
 
     this.currentView = 'game';
     this.currentGameId = gameId;
+    this.currentGameStartTime = Date.now();
 
     const mainContainer = document.getElementById('app-main-content');
     mainContainer.innerHTML = `

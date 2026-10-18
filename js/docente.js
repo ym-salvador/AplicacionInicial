@@ -379,6 +379,12 @@ window.DocenteModule = {
       filteredStudents = students.filter(s => s.status === 'pendiente');
     }
 
+    // Top 3 estudiantes activos para el Podio de Honor
+    const activeRanked = students.filter(s => s.hasPlayed || s.stars > 0);
+    const top1 = activeRanked[0] || null;
+    const top2 = activeRanked[1] || null;
+    const top3 = activeRanked[2] || null;
+
     container.innerHTML = `
       <div class="space-y-4">
 
@@ -425,6 +431,86 @@ window.DocenteModule = {
           </div>
         </div>
 
+        <!-- Podio de Honor y Cuadro de Mérito del Aula (Criterio CNEB: Estrellas + Logros Destacados AD + Tiempo) -->
+        <div class="bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border-2 border-amber-300 rounded-3xl p-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 mb-3 border-b border-amber-200 gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl animate-bounce-soft">🏆</span>
+              <div>
+                <h4 class="text-base font-black text-amber-950 font-fun">Cuadro de Mérito y Podio del Aula (5 Años)</h4>
+                <p class="text-[11px] text-amber-900 font-semibold">
+                  Criterio CNEB: Mayor cantidad de Estrellas, Desempate por Logros Destacados (AD al 1er intento sin pistas) y menor tiempo.
+                </p>
+              </div>
+            </div>
+            <span class="text-xs bg-amber-400 text-amber-950 font-black px-3 py-1 rounded-full shadow-xs self-start sm:self-auto">
+              Excelencia Formativa
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <!-- 1° Lugar (Oro) -->
+            <div class="bg-white border-2 border-amber-400 rounded-2xl p-3 shadow-md relative overflow-hidden flex items-center gap-3">
+              <div class="absolute -right-4 -bottom-4 text-6xl opacity-10 pointer-events-none">🥇</div>
+              <div class="w-14 h-14 rounded-2xl bg-amber-100 border-2 border-amber-400 flex flex-col items-center justify-center text-3xl shadow-inner flex-shrink-0">
+                <span>${top1 ? top1.avatar : '🥇'}</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-full">🥇 1° Lugar</span>
+                  <span class="text-xs text-amber-700 font-bold font-fun">Oro</span>
+                </div>
+                <h5 class="font-black text-slate-900 text-sm font-fun truncate mt-0.5">${top1 ? top1.name : 'Por definir'}</h5>
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px]">
+                  <span class="text-amber-600 font-black">⭐ ${top1 ? top1.stars : 0}</span>
+                  <span class="text-purple-700 font-bold">🌟 ${top1 ? top1.countAD : 0} AD</span>
+                  <span class="text-slate-500 font-semibold">⏱️ ${top1 ? top1.formattedTime : '0s'}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2° Lugar (Plata) -->
+            <div class="bg-white border-2 border-slate-300 rounded-2xl p-3 shadow-sm relative overflow-hidden flex items-center gap-3">
+              <div class="absolute -right-4 -bottom-4 text-6xl opacity-10 pointer-events-none">🥈</div>
+              <div class="w-14 h-14 rounded-2xl bg-slate-100 border-2 border-slate-300 flex flex-col items-center justify-center text-3xl shadow-inner flex-shrink-0">
+                <span>${top2 ? top2.avatar : '🥈'}</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="bg-slate-200 text-slate-800 text-[10px] font-black px-2 py-0.5 rounded-full">🥈 2° Lugar</span>
+                  <span class="text-xs text-slate-600 font-bold font-fun">Plata</span>
+                </div>
+                <h5 class="font-black text-slate-900 text-sm font-fun truncate mt-0.5">${top2 ? top2.name : 'Por definir'}</h5>
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px]">
+                  <span class="text-amber-600 font-black">⭐ ${top2 ? top2.stars : 0}</span>
+                  <span class="text-purple-700 font-bold">🌟 ${top2 ? top2.countAD : 0} AD</span>
+                  <span class="text-slate-500 font-semibold">⏱️ ${top2 ? top2.formattedTime : '0s'}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3° Lugar (Bronce) -->
+            <div class="bg-white border-2 border-amber-600/40 rounded-2xl p-3 shadow-sm relative overflow-hidden flex items-center gap-3">
+              <div class="absolute -right-4 -bottom-4 text-6xl opacity-10 pointer-events-none">🥉</div>
+              <div class="w-14 h-14 rounded-2xl bg-amber-50 border-2 border-amber-600/40 flex flex-col items-center justify-center text-3xl shadow-inner flex-shrink-0">
+                <span>${top3 ? top3.avatar : '🥉'}</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="bg-amber-100 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full">🥉 3° Lugar</span>
+                  <span class="text-xs text-amber-800 font-bold font-fun">Bronce</span>
+                </div>
+                <h5 class="font-black text-slate-900 text-sm font-fun truncate mt-0.5">${top3 ? top3.name : 'Por definir'}</h5>
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px]">
+                  <span class="text-amber-600 font-black">⭐ ${top3 ? top3.stars : 0}</span>
+                  <span class="text-purple-700 font-bold">🌟 ${top3 ? top3.countAD : 0} AD</span>
+                  <span class="text-slate-500 font-semibold">⏱️ ${top3 ? top3.formattedTime : '0s'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Filtros Rápidos de Seguimiento -->
         <div class="flex items-center justify-between bg-white border border-slate-200 rounded-2xl p-2.5 shadow-sm">
           <div class="flex items-center gap-2">
@@ -446,12 +532,14 @@ window.DocenteModule = {
           <span class="text-xs text-slate-500 font-medium hidden sm:inline">Mostrando ${filteredStudents.length} de ${summary.total} alumnos</span>
         </div>
 
-        <!-- Sábana / Tabla de Seguimiento del Salón -->
+        <!-- Sábana / Tabla de Seguimiento del Salón con Puestos de Honor -->
         <div class="bg-white border-2 border-slate-200 rounded-2xl overflow-x-auto shadow-sm">
-          <table class="w-full text-left text-xs border-collapse min-w-[920px]">
+          <table class="w-full text-left text-xs border-collapse min-w-[960px]">
             <thead>
               <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
+                <th class="p-3 text-center min-w-[70px]">Puesto</th>
                 <th class="p-3.5 min-w-[190px]">Estudiante</th>
+                <th class="p-3 text-center min-w-[130px]">Calidad y Autonomía</th>
                 <th class="p-3.5 text-center min-w-[145px]">Última Actividad</th>
                 <th class="p-3.5 text-center min-w-[115px]">Mundo 1: Cantidad</th>
                 <th class="p-3.5 text-center min-w-[115px]">Mundo 2: Espacio</th>
@@ -463,6 +551,14 @@ window.DocenteModule = {
             <tbody class="divide-y divide-slate-200">
               ${filteredStudents.map(st => `
                 <tr class="hover:bg-slate-50/80 transition-colors">
+                  <td class="p-3 text-center whitespace-nowrap">
+                    ${st.rank === 1 ? '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-black text-xs border-2 border-amber-400 shadow-xs" title="1° Lugar (Oro)">🥇 1°</span>' :
+                      st.rank === 2 ? '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-800 font-black text-xs border-2 border-slate-300 shadow-xs" title="2° Lugar (Plata)">🥈 2°</span>' :
+                      st.rank === 3 ? '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-amber-900 font-black text-xs border-2 border-amber-600 shadow-xs" title="3° Lugar (Bronce)">🥉 3°</span>' :
+                      `<span class="font-bold text-slate-500 text-xs">#${st.rank}</span>`
+                    }
+                  </td>
+
                   <td class="p-3.5 whitespace-nowrap">
                     <div class="flex items-center gap-2.5">
                       <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-2xl flex-shrink-0 shadow-xs">
@@ -475,6 +571,17 @@ window.DocenteModule = {
                           <span class="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1 rounded">ID: ${st.id}</span>
                         </div>
                       </div>
+                    </div>
+                  </td>
+
+                  <td class="p-3 text-center whitespace-nowrap">
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="inline-flex items-center gap-1 text-[11px] font-black bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md" title="Retos resueltos en 1er intento sin pistas">
+                        🌟 ${st.countAD || 0} en AD
+                      </span>
+                      <span class="text-[10px] text-slate-500 font-bold" title="Tiempo de juego y total de intentos">
+                        ⏱️ ${st.formattedTime || '0s'} • ${st.totalAttempts || 0} int.
+                      </span>
                     </div>
                   </td>
 
@@ -1630,7 +1737,7 @@ window.DocenteModule = {
     });
   },
 
-  // EXPORTACIÓN A FORMATO CSV / EXCEL
+  // EXPORTACIÓN A FORMATO CSV / EXCEL CON CUADRO DE MÉRITO Y CALIDAD CNEB
   exportCSV() {
     window.SoundEngine.playSuccess();
     const config = window.AppState.getSchoolConfig();
@@ -1639,19 +1746,19 @@ window.DocenteModule = {
 
     let csv = '\uFEFF'; // UTF-8 BOM para Excel
     csv += `"${config.schoolName}","${config.activeClass}","Docente: ${config.teacherName}"\n`;
-    csv += 'ID,Nombre,Avatar,Edad,Ultima Actividad,Mundo 1 Cantidad (Nota),Cantidad Resueltos,Mundo 2 Espacio (Nota),Espacio Resueltos,Total Resueltos,Avance %,Estado,Estrellas\n';
+    csv += 'Puesto,ID,Nombre,Avatar,Edad,Estrellas,Retos AD (1er intento),Intentos Totales,Tiempo Juego,Ultima Actividad,Mundo 1 Cantidad (Nota),Mundo 2 Espacio (Nota),Total Resueltos,Avance %,Estado\n';
 
     students.forEach(s => {
-      const cleanName = `"${s.name.replace(/"/g, '""')}"`;
-      const cleanDate = `"${s.lastActive}"`;
-      csv += `${s.id},${cleanName},${s.avatar},${s.age},${cleanDate},${s.cantidad.grade},${s.cantidad.completed}/${s.cantidad.total},${s.espacio.grade},${s.espacio.completed}/${s.espacio.total},${s.totalCompleted}/23,${s.totalProgress}%,${s.status},${s.stars}\n`;
+      const cleanName = `"${(s.name || '').replace(/"/g, '""')}"`;
+      const cleanDate = `"${s.lastActive || ''}"`;
+      csv += `${s.rank || '-'},${s.id},${cleanName},${s.avatar},${s.age},${s.stars || 0},${s.countAD || 0},${s.totalAttempts || 0},"${s.formattedTime || '0s'}",${cleanDate},${s.cantidad.grade},${s.espacio.grade},${s.totalCompleted}/23,${s.totalProgress}%,${s.status}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Reporte_${config.schoolName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `Reporte_Merito_${config.schoolName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
