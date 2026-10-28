@@ -152,3 +152,13 @@ ALTER TABLE public.estudiantes ADD COLUMN IF NOT EXISTS notas_areas JSONB DEFAUL
 -- No requiere columnas nuevas: el usuario se guarda en estudiantes.id y el PIN en estudiantes.pin_acceso.
 -- Los usuarios de docentes y dirección viven dentro de escuela_estructura.data (JSON).
 -- Este archivo es seguro de ejecutar completo las veces que haga falta (IF NOT EXISTS / ADD COLUMN IF NOT EXISTS).
+
+-- =========================================================================
+-- v4.7: HISTORIAL DE INTENTOS POR RETO (EVALUACIÓN DE PROCESO: ANTES Y DESPUÉS)
+-- =========================================================================
+-- Cada vez que un estudiante completa un reto se agrega una ronda al historial (nota, apoyos, tiempo, fecha).
+-- nota_inicial = primera ronda (línea de base), calificacion = última ronda, mejor_nota = mejor ronda.
+ALTER TABLE public.evaluaciones ADD COLUMN IF NOT EXISTS historial JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.evaluaciones ADD COLUMN IF NOT EXISTS nota_inicial TEXT;
+ALTER TABLE public.evaluaciones ADD COLUMN IF NOT EXISTS mejor_nota TEXT;
+ALTER TABLE public.evaluaciones ADD COLUMN IF NOT EXISTS rondas INTEGER DEFAULT 0;

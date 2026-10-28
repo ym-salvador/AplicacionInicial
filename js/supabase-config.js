@@ -221,7 +221,11 @@ window.SupabaseService = {
           successes: ev.aciertos,
           hintsUsed: ev.pistas,
           completed: ev.completado,
-          lastGrade: ev.calificacion
+          lastGrade: ev.calificacion,
+          history: Array.isArray(ev.historial) ? ev.historial : [],
+          firstGrade: ev.nota_inicial || null,
+          bestGrade: ev.mejor_nota || null,
+          rounds: ev.rondas || 0
         };
       });
 
@@ -374,22 +378,26 @@ window.SupabaseService = {
         })
         .eq('id', studentId);
 
-      // 2. Guardar evaluación
-      const { error } = await this.client
-        .from('evaluaciones')
-        .upsert({
-          estudiante_id: studentId,
-          juego_id: gameId,
-          intentos: evalItem.attempts || 1,
-          aciertos: evalItem.successes || 1,
-          pistas: evalItem.hintsUsed || 0,
-          completado: evalItem.completed || true,
-          calificacion: evalItem.lastGrade || 'A',
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'estudiante_id,juego_id'
-        });
-
+      // 2. Guardar evaluación con su historial de intentos (si la nube aún no tiene esas columnas, se guarda lo básico)
+      const basePayload = {
+        estudiante_id: studentId,
+        juego_id: gameId,
+        intentos: evalItem.attempts || 1,
+        aciertos: evalItem.successes || 1,
+        pistas: evalItem.hintsUsed || 0,
+        completado: evalItem.completed || true,
+        calificacion: evalItem.lastGrade || 'A',
+        updated_at: new Date().toISOString()
+      };
+      const fullPayload = {
+        ...basePayload,
+        historial: Array.isArray(evalItem.history) ? evalItem.history : [],
+        nota_inicial: evalItem.firstGrade || evalItem.lastGrade || 'A',
+        mejor_nota: evalItem.bestGrade || evalItem.lastGrade || 'A',
+        rondas: evalItem.rounds || (Array.isArray(evalItem.history) ? evalItem.history.length : 1)
+      };
+      let { error } = await this.client.from('evaluaciones').upsert(fullPayload, { onConflict: 'estudiante_id,juego_id' });
+      if (error) ({ error } = await this.client.from('evaluaciones').upsert(basePayload, { onConflict: 'estudiante_id,juego_id' }));
       if (error) throw error;
       return true;
     } catch (err) {

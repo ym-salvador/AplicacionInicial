@@ -482,3 +482,10 @@ Ejecuta de nuevo `supabase_schema.sql`: agrega las columnas `aula_id`, `anio`, `
 - Los usuarios antiguos (`est_1`, `V4821`, `yanet.huaman`, `admin`) se migran solos al abrir la app; el usuario anterior sigue aceptado para no cortar sesiones guardadas.
 - **Nadie entra con un clic**: Dirección, docentes y familias escriben su usuario y su PIN. Los PIN de estudiantes son 4 números aleatorios, nunca iguales al usuario; se ven en Matrícula (👤 usuario / 🔑 PIN) y se pueden regenerar con "Nuevo PIN".
 - Accesos iniciales: dirección `perez.m` / 1234; docentes `huaman.y`, `delgadillo.c`, `ramos.s` / 1234; estudiantes: ver su PIN en Matrícula.
+
+### Progreso "antes y después": evaluación de proceso por intentos (v4.7)
+- Los estudiantes pueden **repetir cualquier reto ya logrado** (botón "Jugar otra vez y mejorar"). Cada repetición vale 1 estrella (la primera vez, 3).
+- Cada intento completado se guarda como una **ronda** con su nota (0 apoyos = AD, 1 apoyo = A, 2 o más = B), fecha, apoyos y tiempo. La nota anterior nunca se borra.
+- Por reto se conserva **primera nota** (línea de base), **última nota** y **mejor nota**. La pantalla de éxito muestra "antes ➜ ahora" al repetir.
+- Nueva vista **Progreso: Antes y Después** (Dirección y docentes): ranking de mejora del aula con promedio inicial, promedio actual, cambio y perfil pedagógico (Mejora notable, En mejora, Destacado desde el inicio, Nivel estable, Aún sin segundo intento, Requiere acompañamiento) y detalle por reto con el historial de intentos.
+- La ficha de Evaluación y el portal de la familia muestran el resumen antes/después. Supabase: columnas nuevas `historial`, `nota_inicial`, `mejor_nota`, `rondas` en `evaluaciones` (ejecutar de nuevo `supabase_schema.sql`).

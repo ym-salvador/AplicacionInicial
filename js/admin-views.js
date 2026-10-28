@@ -44,7 +44,7 @@ window.AdminViews = {
     const map = {
       dashboard: this.renderDashboard, classrooms: this.renderClassrooms, teachers: this.renderTeachers,
       students: this.renderStudents, curriculum: this.renderCurriculum, capacities: this.renderCapacitiesPlanner,
-      evaluations: this.renderEvaluations, games: this.renderGames, settings: this.renderSettings, profile: this.renderProfile
+      evaluations: this.renderEvaluations, progress: this.renderProgress, games: this.renderGames, settings: this.renderSettings, profile: this.renderProfile
     };
     (map[viewName] || this.renderDashboard).call(this, container);
   },
@@ -1389,6 +1389,7 @@ window.AdminViews = {
             </div>
             <div class="flex flex-wrap gap-1 mt-1">
               <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">🎮 Evidencia de retos: ${w.totalCompleted}/${w.totalGames}</span>
+              ${(() => { const r = window.AppState.getProgressReport(student.id); const gs = r ? r.games.filter(g => g.worldId === cp.id) : []; if (!gs.length) return ''; const imp = gs.filter(g => g.trend === 'mejora').length; const ad = gs.filter(g => g.first === 'AD').length; return `<span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-teal-100 text-teal-900 cursor-pointer hover:bg-teal-200" title="Ver antes y después" onclick="window.AdminViews.openProgressModal('${student.id}')">📈 Antes y después: ${imp} mejoraron • ${ad} AD a la primera</span>`; })()}
               ${enabled ? '' : '<span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">⏸️ Pausada en el plan del aula</span>'}
               ${enabled && !assigned ? '<span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">⏸️ Pausada para este estudiante</span>' : ''}
             </div>
@@ -1535,6 +1536,156 @@ window.AdminViews = {
   // =========================================================================
   // 8. MUNDOS Y RETOS (MODO COMPROBACIÓN PARA EL PERSONAL)
   // =========================================================================
+  // =========================================================================
+  // 8. PROGRESO: ANTES Y DESPUÉS (evaluación de proceso por intentos)
+  // =========================================================================
+  gradeBadge(grade) { return window.DocenteModule.getBadgeClass(grade); },
+
+  trendChip(p) {
+    if (!p) return '';
+    if (p.trend === 'mejora') return `<span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">▲ Mejoró</span>`;
+    if (p.trend === 'baja') return `<span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-100 text-rose-900 border border-rose-300">▼ Bajó</span>`;
+    if (p.trend === 'estable') return `<span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-300">= Igual</span>`;
+    return `<span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-300">1 intento</span>`;
+  },
+
+  renderProgress(container) {
+    const c = this.ctx();
+    const SM = window.SchoolManagement;
+    const classrooms = c.classrooms;
+    if (this.progressClassroomId && !classrooms.some(x => x.id === this.progressClassroomId)) this.progressClassroomId = null;
+    const students = c.students.filter(s => s.status !== 'retirado' && (!this.progressClassroomId || s.classroomId === this.progressClassroomId));
+    const ranking = window.AppState.getClassProgressRanking(students);
+    const withData = ranking.filter(r => r.played > 0);
+    const count = key => ranking.filter(r => r.profile === key).length;
+    const avgDelta = withData.length ? (withData.reduce((a, r) => a + r.delta, 0) / withData.length) : 0;
+    const totalRounds = ranking.reduce((a, r) => a + r.totalRounds, 0);
+
+    const stat = (icon, label, value, cls) => `
+      <div class="rounded-2xl border-2 ${cls} p-3 text-center shadow-sm">
+        <div class="text-2xl">${icon}</div>
+        <div class="text-2xl font-black font-fun leading-tight">${value}</div>
+        <div class="text-[10px] font-bold uppercase tracking-wide opacity-80">${label}</div>
+      </div>`;
+
+    const row = (r, i) => {
+      const cl = SM.getClassroom(r.student.classroomId);
+      const sign = r.delta > 0 ? '+' : '';
+      const deltaCls = r.delta > 0 ? 'text-emerald-700' : r.delta < 0 ? 'text-rose-700' : 'text-slate-500';
+      return `
+        <tr class="border-b border-slate-100 hover:bg-amber-50/60 ${r.played === 0 ? 'opacity-60' : ''}">
+          <td class="px-2 py-2 text-center font-black text-slate-500 text-xs">${r.played ? i + 1 : '—'}</td>
+          <td class="px-2 py-2">
+            <div class="flex items-center gap-2 min-w-[150px]">
+              <span class="text-2xl">${r.student.avatar || '🦙'}</span>
+              <div class="min-w-0"><span class="font-black text-slate-900 text-xs block truncate">${this.esc(r.student.name)}</span><span class="text-[10px] text-slate-500 font-bold">${cl ? this.esc(cl.name) : 'Sin aula'} • ${r.student.age} años</span></div>
+            </div>
+          </td>
+          <td class="px-2 py-2 text-center text-xs font-bold text-slate-700">${r.played}<span class="text-[10px] text-slate-400 font-medium block">${r.totalRounds} intentos</span></td>
+          <td class="px-2 py-2 text-center text-xs font-bold text-slate-700">${r.replayed}</td>
+          <td class="px-2 py-2 text-center"><span class="text-[11px] font-black px-2 py-0.5 rounded ${this.gradeBadge(r.initialGrade)}">${r.initialGrade}</span></td>
+          <td class="px-2 py-2 text-center text-slate-400 font-black">➜</td>
+          <td class="px-2 py-2 text-center"><span class="text-[11px] font-black px-2 py-0.5 rounded ${this.gradeBadge(r.currentGrade)}">${r.currentGrade}</span></td>
+          <td class="px-2 py-2 text-center font-black text-sm ${deltaCls}">${r.played ? `${sign}${r.delta.toFixed(2)}` : '—'}<span class="text-[9px] text-slate-400 font-medium block">${r.improved}▲ ${r.declined}▼</span></td>
+          <td class="px-2 py-2"><span class="text-[10px] font-black px-2 py-1 rounded-full border whitespace-nowrap ${r.color}">${r.icon} ${r.label}</span></td>
+          <td class="px-2 py-2 text-right"><button class="btn-chunky bg-white text-purple-900 border-purple-300 text-[11px] py-1 px-2.5" onclick="window.AdminViews.openProgressModal('${r.student.id}')">🔍 Detalle</button></td>
+        </tr>`;
+    };
+
+    container.innerHTML = `
+      <div class="max-w-6xl mx-auto px-4 py-4 space-y-5">
+        ${this.pageHeader('📈', 'Progreso: Antes y Después', 'Evaluación de proceso: compara la primera vez que cada estudiante resolvió un reto con su último intento, para ver quién mejora con el programa y quién destaca desde el inicio.')}
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-bold text-slate-600">Aula:</span>
+          <button class="px-3 py-1 rounded-full text-xs font-black border-2 ${!this.progressClassroomId ? 'bg-purple-700 text-white border-purple-700' : 'bg-white text-slate-700 border-slate-200'}" onclick="window.AdminViews.progressClassroomId=null; window.AdminViews.renderProgress(document.getElementById('app-main-content'))">Todas</button>
+          ${classrooms.map(cl => `<button class="px-3 py-1 rounded-full text-xs font-black border-2 ${this.progressClassroomId === cl.id ? 'bg-purple-700 text-white border-purple-700' : 'bg-white text-slate-700 border-slate-200'}" onclick="window.AdminViews.progressClassroomId='${cl.id}'; window.AdminViews.renderProgress(document.getElementById('app-main-content'))">${cl.icon || ''} ${this.esc(cl.name)}</button>`).join('')}
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+          ${stat('🚀', 'Mejora notable', count('mejora_notable'), 'bg-emerald-50 border-emerald-300 text-emerald-900')}
+          ${stat('📈', 'En mejora', count('mejora'), 'bg-teal-50 border-teal-300 text-teal-900')}
+          ${stat('🌟', 'Destacados desde el inicio', count('destacado_inicio'), 'bg-amber-50 border-amber-300 text-amber-900')}
+          ${stat('🤝', 'Requieren acompañamiento', count('retroceso') + count('estable'), 'bg-rose-50 border-rose-300 text-rose-900')}
+          ${stat('🔁', 'Intentos registrados', totalRounds, 'bg-sky-50 border-sky-300 text-sky-900')}
+        </div>
+
+        <div class="bg-white border-2 border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+          <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-sm font-black text-slate-900 font-fun">🏅 Ranking de mejora del aula</h3>
+            <span class="text-[11px] text-slate-600 font-bold">Cambio promedio del grupo: <strong class="${avgDelta > 0 ? 'text-emerald-700' : avgDelta < 0 ? 'text-rose-700' : 'text-slate-700'}">${avgDelta > 0 ? '+' : ''}${avgDelta.toFixed(2)}</strong> (escala C=1, B=2, A=3, AD=4)</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-slate-100 text-[10px] uppercase tracking-wide text-slate-600">
+                <tr><th class="px-2 py-2 text-center">#</th><th class="px-2 py-2">Estudiante</th><th class="px-2 py-2 text-center">Retos</th><th class="px-2 py-2 text-center">Repetidos</th><th class="px-2 py-2 text-center">Antes</th><th></th><th class="px-2 py-2 text-center">Después</th><th class="px-2 py-2 text-center">Cambio</th><th class="px-2 py-2">Perfil</th><th></th></tr>
+              </thead>
+              <tbody>${ranking.length ? ranking.map(row).join('') : '<tr><td colspan="10" class="p-6 text-center text-xs text-slate-400 italic">No hay estudiantes en esta selección.</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-xs text-amber-950 space-y-1">
+          <p class="font-black">¿Cómo se lee este informe?</p>
+          <p><strong>Antes</strong> es el promedio de la primera nota de cada reto (línea de base). <strong>Después</strong> es el promedio de la última nota. El <strong>cambio</strong> es la diferencia: positivo = mejora con la práctica.</p>
+          <p>Cada vez que un niño repite un reto se guarda un nuevo intento con su nota; la nota anterior no se borra. Con 0 apoyos la ronda es <strong>AD</strong>, con 1 apoyo <strong>A</strong>, con 2 o más <strong>B</strong>.</p>
+          <p>🌟 <strong>Destacado desde el inicio</strong>: resolvió todo sin apoyo la primera vez. 🔁 <strong>Aún sin segundo intento</strong>: ya tiene línea de base, falta que repita para medir su mejora.</p>
+        </div>
+      </div>`;
+  },
+
+  openProgressModal(studentId) {
+    const r = window.AppState.getProgressReport(studentId);
+    if (!r) return;
+    const s = r.student;
+    const fmtDate = d => { try { return new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' }); } catch (e) { return ''; } };
+    const gameRow = g => `
+      <tr class="border-b border-slate-100">
+        <td class="px-2 py-1.5"><span class="text-base">${g.juego.icono}</span> <span class="text-xs font-bold text-slate-800">${g.juego.titulo}</span><span class="text-[10px] text-slate-500 block">${g.mundo.nombre || g.mundo.titulo || g.mundo.id} • Sesión ${g.sesion.numero}</span></td>
+        <td class="px-2 py-1.5 text-center text-xs font-bold text-slate-700">${g.rounds}</td>
+        <td class="px-2 py-1.5 text-center"><span class="text-[11px] font-black px-1.5 py-0.5 rounded ${this.gradeBadge(g.first)}">${g.first}</span></td>
+        <td class="px-2 py-1.5 text-center"><span class="text-[11px] font-black px-1.5 py-0.5 rounded ${this.gradeBadge(g.last)}">${g.last}</span></td>
+        <td class="px-2 py-1.5 text-center"><span class="text-[11px] font-black px-1.5 py-0.5 rounded ${this.gradeBadge(g.best)}">${g.best}</span></td>
+        <td class="px-2 py-1.5 text-center">${this.trendChip(g)}</td>
+        <td class="px-2 py-1.5"><div class="flex flex-wrap gap-1">${g.history.map(h => `<span class="text-[10px] font-black px-1.5 py-0.5 rounded ${this.gradeBadge(h.grade)}" title="Intento ${h.n} • ${fmtDate(h.date)} • ${h.hints} apoyos${h.timeSec ? ' • ' + h.timeSec + 's' : ''}">${h.n}:${h.grade}</span>`).join('')}</div></td>
+      </tr>`;
+    const html = `
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">${s.avatar || '🦙'}</span>
+          <div>
+            <h3 class="text-xl font-black text-slate-900 font-fun leading-tight">${this.esc(s.name)}</h3>
+            <p class="text-[11px] text-slate-500 font-bold">Usuario ${s.id} • ${s.age} años</p>
+          </div>
+        </div>
+        <button class="close-modal w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-lg">✕</button>
+      </div>
+      <div class="rounded-2xl border-2 p-3 mb-3 ${r.color}">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-sm font-black">${r.icon} ${r.label}</span>
+          <span class="text-xs font-bold">Antes <span class="px-1.5 py-0.5 rounded ${this.gradeBadge(r.initialGrade)}">${r.initialGrade}</span> ➜ Después <span class="px-1.5 py-0.5 rounded ${this.gradeBadge(r.currentGrade)}">${r.currentGrade}</span> (${r.delta > 0 ? '+' : ''}${r.delta.toFixed(2)})</span>
+        </div>
+        <p class="text-xs mt-1.5 leading-relaxed">${r.text}</p>
+      </div>
+      <div class="grid grid-cols-4 gap-2 mb-3 text-center">
+        <div class="rounded-xl bg-slate-50 border border-slate-200 p-2"><div class="text-lg font-black text-slate-900">${r.played}</div><div class="text-[9px] font-bold text-slate-500 uppercase">Retos logrados</div></div>
+        <div class="rounded-xl bg-slate-50 border border-slate-200 p-2"><div class="text-lg font-black text-slate-900">${r.totalRounds}</div><div class="text-[9px] font-bold text-slate-500 uppercase">Intentos</div></div>
+        <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-2"><div class="text-lg font-black text-emerald-800">${r.improved}</div><div class="text-[9px] font-bold text-emerald-700 uppercase">Mejoraron</div></div>
+        <div class="rounded-xl bg-amber-50 border border-amber-200 p-2"><div class="text-lg font-black text-amber-800">${r.strongStart}</div><div class="text-[9px] font-bold text-amber-700 uppercase">AD a la primera</div></div>
+      </div>
+      <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table class="w-full text-left">
+          <thead class="bg-slate-100 text-[10px] uppercase tracking-wide text-slate-600"><tr><th class="px-2 py-1.5">Reto</th><th class="px-2 py-1.5 text-center">Intentos</th><th class="px-2 py-1.5 text-center">Antes</th><th class="px-2 py-1.5 text-center">Después</th><th class="px-2 py-1.5 text-center">Mejor</th><th class="px-2 py-1.5 text-center">Tendencia</th><th class="px-2 py-1.5">Historial</th></tr></thead>
+          <tbody>${r.games.length ? r.games.map(gameRow).join('') : '<tr><td colspan="7" class="p-4 text-center text-xs text-slate-400 italic">Todavía no completó ningún reto.</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div class="flex justify-end gap-2 mt-3">
+        <button class="btn-chunky bg-white text-slate-700 border-slate-300 text-xs py-1.5 px-3" onclick="window.AdminViews.selectedStudentId='${s.id}'; document.querySelectorAll('.modal-overlay').forEach(m=>m.remove()); window.SidebarModule.navigateTo('evaluations')">📊 Ver ficha de evaluación</button>
+        <button class="btn-chunky btn-green text-xs py-1.5 px-3" onclick="window.AuthModule.impersonateStudent('${s.id}')">👑 Jugar como ${this.esc(s.name.split(' ')[0])}</button>
+      </div>`;
+    this.openModal(html, 'max-w-3xl');
+  },
+
   renderGames(container) {
     if (window.AuthModule.isFamily()) { window.App.showHome(); return; }
     const SM = window.SchoolManagement;

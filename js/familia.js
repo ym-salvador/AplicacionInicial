@@ -235,6 +235,18 @@ window.FamiliaModule = {
 
           </div>
 
+          <!-- Mi progreso: antes y después (evaluación de proceso) -->
+          ${(() => { const r = window.AppState.getProgressReport(student.id); if (!r || !r.played) return ''; const b = g => window.DocenteModule.getBadgeClass(g); const imp = r.games.filter(g => g.trend === 'mejora'); return `
+          <div class="bg-white border-2 border-teal-200 rounded-3xl p-4 shadow-sm">
+            <h4 class="text-base font-black text-teal-950 font-fun mb-2 flex items-center gap-2"><span class="text-xl">📈</span><span>Mi progreso: antes y después</span></h4>
+            <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-700 mb-2">
+              <span>Antes</span><span class="px-2 py-0.5 rounded font-black ${b(r.initialGrade)}">${r.initialGrade}</span><span>➜</span><span>Ahora</span><span class="px-2 py-0.5 rounded font-black ${b(r.currentGrade)}">${r.currentGrade}</span>
+              <span class="px-2 py-0.5 rounded-full border text-[10px] font-black ${r.color}">${r.icon} ${r.label}</span>
+            </div>
+            <p class="text-xs text-slate-600 font-medium mb-2">${r.text}</p>
+            ${imp.length ? `<ul class="text-xs text-slate-700 space-y-1 font-medium">${imp.map(g => `<li>${g.juego.icono} <strong>${g.juego.titulo}</strong>: <span class="px-1.5 rounded font-black ${b(g.first)}">${g.first}</span> ➜ <span class="px-1.5 rounded font-black ${b(g.last)}">${g.last}</span> en ${g.rounds} intentos</li>`).join('')}</ul>` : `<p class="text-xs text-teal-800 font-bold">🔁 Repite los retos que ya lograste para ver cómo mejoras. ¡Cada intento suma una estrella!</p>`}
+          </div>`; })()}
+
           <!-- Orientaciones pedagógicas de apoyo familiar -->
           <div class="bg-white border-2 border-slate-200 rounded-3xl p-4 shadow-sm">
             <h4 class="text-base font-black text-slate-900 font-fun mb-2 flex items-center gap-2">

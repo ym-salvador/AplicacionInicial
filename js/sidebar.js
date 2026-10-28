@@ -22,6 +22,7 @@ window.SidebarModule = {
       { id: 'curriculum', icon: '📚', label: 'Malla Curricular CNEB' },
       { id: 'capacities', icon: '🎯', label: 'Planificar Sesiones' },
       { id: 'evaluations', icon: '📊', label: 'Evaluación & SIAGIE' },
+      { id: 'progress', icon: '📈', label: 'Progreso: Antes y Después' },
       { id: 'monitoring', icon: '📋', label: 'Monitoreo y Fichas' },
       { section: 'Aventuras' },
       { id: 'games', icon: '🎮', label: 'Mundos y Retos', tag: 'Comprobar' },
@@ -38,6 +39,7 @@ window.SidebarModule = {
       { id: 'curriculum', icon: '📚', label: 'Malla Curricular CNEB' },
       { id: 'capacities', icon: '🎯', label: 'Planificar Sesiones' },
       { id: 'evaluations', icon: '📊', label: 'Evaluación & SIAGIE' },
+      { id: 'progress', icon: '📈', label: 'Progreso: Antes y Después' },
       { id: 'monitoring', icon: '📋', label: 'Monitoreo y Fichas' },
       { section: 'Aventuras' },
       { id: 'games', icon: '🎮', label: 'Mundos y Retos', tag: 'Comprobar' },
@@ -221,7 +223,7 @@ window.SidebarModule = {
     this.closeMobile();
 
     // Vistas que abren un modal sin cambiar de pantalla
-    if (viewName === 'progress') { window.FamiliaModule?.openPortal(); return; }
+    if (viewName === 'progress' && window.AuthModule.isFamily()) { window.FamiliaModule?.openPortal(); return; }
     if (viewName === 'monitoring') { window.DocenteModule?.openDashboard('monitoring'); return; }
 
     this.activeView = viewName;

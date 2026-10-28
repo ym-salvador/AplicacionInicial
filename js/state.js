@@ -56,8 +56,9 @@ class AppStateManager {
 
     const student2Evals = this.getDefaultEvaluations();
     // Mateo en proceso
-    student2Evals.j1_1_color = { attempts: 2, successes: 1, hintsUsed: 1, completed: true, lastGrade: 'A' };
-    student2Evals.j1_2_tamano = { attempts: 3, successes: 1, hintsUsed: 2, completed: true, lastGrade: 'B' };
+    // Mateo repitió dos retos y mejoró (evidencia de proceso: antes y después)
+    student2Evals.j1_1_color = { attempts: 2, successes: 2, hintsUsed: 1, completed: true, lastGrade: 'AD', firstGrade: 'A', bestGrade: 'AD', rounds: 2, history: [{ n: 1, date: '2026-10-20T15:00:00.000Z', hints: 1, timeSec: 80, grade: 'A' }, { n: 2, date: '2026-10-26T15:00:00.000Z', hints: 0, timeSec: 55, grade: 'AD' }] };
+    student2Evals.j1_2_tamano = { attempts: 2, successes: 2, hintsUsed: 3, completed: true, lastGrade: 'A', firstGrade: 'B', bestGrade: 'A', rounds: 2, history: [{ n: 1, date: '2026-10-21T15:00:00.000Z', hints: 2, timeSec: 95, grade: 'B' }, { n: 2, date: '2026-10-27T15:00:00.000Z', hints: 1, timeSec: 70, grade: 'A' }] };
     student2Evals.esp_j1_formas2d = { attempts: 2, successes: 1, hintsUsed: 1, completed: true, lastGrade: 'A' };
 
     const student3Evals = this.getDefaultEvaluations();
@@ -379,7 +380,30 @@ class AppStateManager {
     return s ? s.evaluaciones : this.getDefaultEvaluations();
   }
 
-  // REGISTRA RESULTADO DE UN JUEGO PARA EL ESTUDIANTE ACTIVO
+  // =========================================================================
+  // REGISTRO DE INTENTOS (RONDAS) Y PROGRESO "ANTES Y DESPUÉS"
+  // Cada vez que el estudiante completa un reto se guarda una ronda con su nota.
+  // Repetir un reto nunca baja la evidencia anterior: queda el historial para ver la mejora.
+  // =========================================================================
+  gradeScore(grade) { return { AD: 4, A: 3, B: 2, C: 1 }[grade] || 0; }
+  scoreToGrade(score) { return score >= 3.5 ? 'AD' : score >= 2.5 ? 'A' : score >= 1.5 ? 'B' : score > 0 ? 'C' : 'Sin evaluar'; }
+
+  // Nota de UNA ronda según los apoyos (respuestas incorrectas / pistas) que necesitó
+  gradeForRound(hints) {
+    if (hints <= 0) return 'AD'; // Logro destacado: lo resolvió solo, sin apoyo
+    if (hints <= 1) return 'A';  // Logro esperado: un apoyo puntual
+    return 'B';                  // En proceso: necesitó andamiaje
+  }
+
+  // Marca el inicio de una ronda (se llama al abrir el reto)
+  startRound(gameId) {
+    const student = this.getCurrentStudent();
+    if (!student || !gameId) return;
+    if (!student.evaluaciones[gameId]) student.evaluaciones[gameId] = { attempts: 0, successes: 0, hintsUsed: 0, completed: false, lastGrade: null };
+    student.evaluaciones[gameId].roundStartedAt = Date.now();
+  }
+
+  // REGISTRA RESULTADO DE UN JUEGO PARA EL ESTUDIANTE ACTIVO (una ronda completada)
   recordResult(gameId, isSuccess, hintsCount = 0) {
     // Si la Directora o Docente está comprobando el reto de manera libre, no alterar notas de alumnos
     if (window.AuthModule && (window.AuthModule.isAdmin() || window.AuthModule.isPureTeacher())) {
@@ -395,42 +419,46 @@ class AppStateManager {
     }
 
     const item = student.evaluaciones[gameId];
+    if (!Array.isArray(item.history)) item.history = [];
     item.attempts += 1;
     item.hintsUsed += hintsCount;
 
-    // Medición del tiempo transcurrido en el reto (segundos)
-    if (window.App && window.App.currentGameStartTime) {
-      const elapsed = Math.round((Date.now() - window.App.currentGameStartTime) / 1000);
-      if (elapsed > 0 && elapsed < 3600) {
-        item.timeSeconds = (item.timeSeconds || 0) + elapsed;
-      }
-      window.App.currentGameStartTime = Date.now();
+    // Tiempo de la ronda (segundos)
+    const startedAt = item.roundStartedAt || (window.App && window.App.currentGameStartTime) || null;
+    let elapsed = 0;
+    if (startedAt) {
+      elapsed = Math.round((Date.now() - startedAt) / 1000);
+      if (elapsed < 0 || elapsed >= 3600) elapsed = 0;
+      item.timeSeconds = (item.timeSeconds || 0) + elapsed;
+      if (window.App) window.App.currentGameStartTime = Date.now();
     }
+    item.roundStartedAt = null;
 
     if (isSuccess) {
+      const wasCompleted = item.completed;
+      const roundGrade = this.gradeForRound(hintsCount);
       item.successes += 1;
       item.completed = true;
       item.completedAt = new Date().toISOString();
-      student.stars = (student.stars || 0) + 3;
-      this.state.stars = student.stars;
 
-      // Criterios CNEB Nivel 2 (RVM N° 094-2020-MINEDU)
-      if (item.attempts === 1 && hintsCount === 0) {
-        item.lastGrade = 'AD'; // Logro Destacado (autonomía inmediata al 1er intento)
-      } else if (item.attempts <= 2 && hintsCount <= 1) {
-        item.lastGrade = 'A'; // Logro Esperado (autónomo)
-      } else {
-        item.lastGrade = 'B'; // En Proceso (con andamiaje)
-      }
-    } else {
-      if (!item.completed) {
-        item.lastGrade = 'C'; // En Inicio
-      }
+      item.history.push({ n: item.history.length + 1, date: item.completedAt, hints: hintsCount, timeSec: elapsed, grade: roundGrade });
+      item.rounds = item.history.length;
+      if (!item.firstGrade) item.firstGrade = roundGrade;
+      item.lastGrade = roundGrade;
+      item.bestGrade = (!item.bestGrade || this.gradeScore(roundGrade) > this.gradeScore(item.bestGrade)) ? roundGrade : item.bestGrade;
+
+      // 3 estrellas la primera vez; 1 estrella por cada repetición (practicar también vale)
+      const earned = wasCompleted ? 1 : 3;
+      item.lastStars = earned;
+      student.stars = (student.stars || 0) + earned;
+      this.state.stars = student.stars;
+    } else if (!item.completed) {
+      item.lastGrade = 'C'; // En Inicio
     }
 
     // Actualiza timestamp de última actividad
     const now = new Date();
-    student.lastActive = now.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' }) + ' ' + 
+    student.lastActive = now.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' }) + ' ' +
                          now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
 
     this.saveState();
@@ -439,6 +467,103 @@ class AppStateManager {
     if (window.SupabaseService && window.SupabaseService.isConfigured()) {
       window.SupabaseService.saveEvaluation(student.id, gameId, item, student.stars);
     }
+  }
+
+  // Convierte evaluaciones antiguas (solo última nota) en una primera ronda de historial
+  migrateProgressHistory() {
+    let changed = false;
+    (this.state.students || []).forEach(s => {
+      Object.keys(s.evaluaciones || {}).forEach(gameId => {
+        const ev = s.evaluaciones[gameId];
+        if (!ev || !ev.completed) return;
+        if (!Array.isArray(ev.history) || ev.history.length === 0) {
+          const grade = ev.lastGrade || 'A';
+          ev.history = [{ n: 1, date: ev.completedAt || s.registeredAt || new Date().toISOString(), hints: ev.hintsUsed || 0, timeSec: ev.timeSeconds || 0, grade }];
+          ev.firstGrade = ev.firstGrade || grade;
+          ev.bestGrade = ev.bestGrade || grade;
+          ev.rounds = 1;
+          changed = true;
+        } else if (!ev.firstGrade || !ev.bestGrade || !ev.rounds) {
+          ev.firstGrade = ev.firstGrade || ev.history[0].grade;
+          ev.bestGrade = ev.bestGrade || ev.history.reduce((b, h) => this.gradeScore(h.grade) > this.gradeScore(b) ? h.grade : b, ev.history[0].grade);
+          ev.rounds = ev.history.length;
+          changed = true;
+        }
+      });
+    });
+    if (changed) this.saveState();
+    return changed;
+  }
+
+  // Progreso de UN reto: primera nota, última, mejor y tendencia
+  getGameProgress(studentId, gameId) {
+    const student = this.state.students.find(s => s.id === studentId);
+    const ev = student?.evaluaciones?.[gameId];
+    if (!ev || !ev.completed) return null;
+    const history = Array.isArray(ev.history) && ev.history.length ? ev.history : [{ n: 1, date: ev.completedAt, hints: ev.hintsUsed || 0, timeSec: ev.timeSeconds || 0, grade: ev.lastGrade || 'A' }];
+    const first = ev.firstGrade || history[0].grade;
+    const last = ev.lastGrade || history[history.length - 1].grade;
+    const best = ev.bestGrade || last;
+    const delta = this.gradeScore(last) - this.gradeScore(first);
+    const trend = history.length < 2 ? 'unico' : delta > 0 ? 'mejora' : delta < 0 ? 'baja' : 'estable';
+    return { gameId, first, last, best, rounds: history.length, delta, trend, history, totalHints: ev.hintsUsed || 0 };
+  }
+
+  // Informe "antes y después" de un estudiante en todos sus retos completados
+  getProgressReport(studentId) {
+    const student = this.state.students.find(s => s.id === studentId);
+    if (!student) return null;
+    const games = [];
+    Object.entries(window.CNEB_DATA?.mundos || {}).forEach(([worldId, mundo]) => {
+      (mundo.sesiones || []).forEach(ses => {
+        this.getJuegosForStudent(worldId, ses.id, student).forEach(j => {
+          const p = this.getGameProgress(student.id, j.id);
+          if (p) games.push({ ...p, juego: j, worldId, mundo, sesion: ses });
+        });
+      });
+    });
+
+    const played = games.length;
+    const replayed = games.filter(g => g.rounds >= 2);
+    const improved = games.filter(g => g.trend === 'mejora');
+    const declined = games.filter(g => g.trend === 'baja');
+    const strongStart = games.filter(g => g.first === 'AD');
+    const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    const initialAvg = avg(games.map(g => this.gradeScore(g.first)));
+    const currentAvg = avg(games.map(g => this.gradeScore(g.last)));
+    const delta = Math.round((currentAvg - initialAvg) * 100) / 100;
+    const totalRounds = games.reduce((a, g) => a + g.rounds, 0);
+
+    let profile = 'sin_datos';
+    if (played > 0) {
+      if (delta >= 0.5 && improved.length >= 2) profile = 'mejora_notable';
+      else if (delta > 0) profile = 'mejora';
+      else if (delta < 0) profile = 'retroceso';
+      else if (initialAvg >= 3.5) profile = 'destacado_inicio';
+      else if (replayed.length === 0) profile = 'sin_repeticion';
+      else profile = 'estable';
+    }
+    const labels = {
+      sin_datos: { icon: '⏳', label: 'Sin retos completados', color: 'bg-slate-100 text-slate-600 border-slate-300', text: 'Aún no hay evidencia de retos para comparar.' },
+      mejora_notable: { icon: '🚀', label: 'Mejora notable', color: 'bg-emerald-100 text-emerald-900 border-emerald-300', text: 'Al repetir los retos subió claramente de nivel: el programa le está ayudando a consolidar la competencia.' },
+      mejora: { icon: '📈', label: 'En mejora', color: 'bg-teal-100 text-teal-900 border-teal-300', text: 'Muestra avance entre su primer intento y el último; conviene seguir practicando los retos donde aún necesita apoyo.' },
+      destacado_inicio: { icon: '🌟', label: 'Destacado desde el inicio', color: 'bg-amber-100 text-amber-900 border-amber-300', text: 'Resolvió los retos sin apoyo desde la primera vez: puede avanzar a desafíos de mayor complejidad.' },
+      estable: { icon: '➡️', label: 'Nivel estable', color: 'bg-indigo-100 text-indigo-900 border-indigo-300', text: 'Mantiene el mismo nivel al repetir; necesita una nueva estrategia o acompañamiento para dar el siguiente paso.' },
+      sin_repeticion: { icon: '🔁', label: 'Aún sin segundo intento', color: 'bg-sky-100 text-sky-900 border-sky-300', text: 'Ya tiene su línea de base; anímale a repetir los retos para medir su mejora.' },
+      retroceso: { icon: '🤝', label: 'Requiere acompañamiento', color: 'bg-rose-100 text-rose-900 border-rose-300', text: 'Su último intento fue más bajo que el primero: revisar si hubo cansancio, distracción o si el reto necesita mediación.' }
+    };
+
+    return {
+      student, games, played, replayed: replayed.length, improved: improved.length, declined: declined.length, strongStart: strongStart.length,
+      totalRounds, initialAvg, currentAvg, initialGrade: this.scoreToGrade(initialAvg), currentGrade: this.scoreToGrade(currentAvg), delta,
+      profile, ...labels[profile]
+    };
+  }
+
+  // Ranking del aula: quién mejora más, quién destaca desde el inicio, quién necesita acompañamiento
+  getClassProgressRanking(students) {
+    const list = (students || this.state.students).map(s => this.getProgressReport(s.id)).filter(Boolean);
+    return list.sort((a, b) => (b.delta - a.delta) || (b.currentAvg - a.currentAvg) || (b.played - a.played));
   }
 
   // =========================================================================

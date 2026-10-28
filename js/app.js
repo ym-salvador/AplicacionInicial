@@ -480,7 +480,7 @@ window.App = {
                   <h3 class="text-base font-black text-slate-800 font-fun group-hover:text-amber-600 transition-colors">${j.titulo}</h3>
                   <p class="text-[11px] text-slate-500 mt-1">${j.subtitulo}</p>
                 </div>
-                <button class="btn-chunky ${themeBtn} w-full text-xs py-2 font-fun">¡Empezar Reto! ➔</button>
+                <button class="btn-chunky ${themeBtn} w-full text-xs py-2 font-fun">${ev?.completed ? '🔁 ¡Jugar otra vez y mejorar!' : '¡Empezar Reto! ➔'}</button>
               </div>`;
           }).join('')}
         </div>
@@ -497,6 +497,7 @@ window.App = {
     this.currentView = 'game';
     this.currentGameId = gameId;
     this.currentGameStartTime = Date.now();
+    if (!this.isStaffMode()) window.AppState.startRound(gameId);
 
     const mainContainer = document.getElementById('app-main-content');
     mainContainer.innerHTML = `
@@ -578,6 +579,22 @@ window.App = {
     const student = window.AppState.getCurrentStudent();
     const totalStars = student ? (student.stars || 0) : 0;
 
+    // Evidencia de proceso: compara este intento con el anterior (antes y después)
+    const progress = student ? window.AppState.getGameProgress(student.id, gameId) : null;
+    const earned = student?.evaluaciones?.[gameId]?.lastStars || 3;
+    const badgeOf = g => window.DocenteModule.getBadgeClass(g);
+    let progressBanner = '';
+    let kusiMsg = `¡Excelente trabajo! Ganaste ${earned} ${earned === 1 ? 'estrella dorada' : 'estrellas doradas'}. ¡Sigue adelante!`;
+    if (progress && progress.rounds > 1) {
+      const prev = progress.history[progress.history.length - 2].grade;
+      const sc = g => window.AppState.gradeScore(g);
+      const msg = sc(progress.last) > sc(prev) ? '🚀 ¡Mejoraste tu nota! Practicar te hace más fuerte.' : sc(progress.last) === sc(prev) ? '💪 ¡Mantienes tu nivel! Sigue practicando.' : '🤗 Esta vez necesitaste más ayuda. ¡Vuelve a intentarlo cuando quieras!';
+      kusiMsg = msg;
+      progressBanner = `<div class="mt-3 p-3 rounded-2xl bg-teal-50 border-2 border-teal-200 text-xs font-bold text-teal-900"><div class="mb-1">Intento N.º ${progress.rounds}: antes <span class="px-1.5 py-0.5 rounded ${badgeOf(prev)}">${prev}</span> ➜ ahora <span class="px-1.5 py-0.5 rounded ${badgeOf(progress.last)}">${progress.last}</span></div><div>${msg}</div></div>`;
+    } else if (progress) {
+      progressBanner = `<div class="mt-3 p-3 rounded-2xl bg-teal-50 border-2 border-teal-200 text-xs font-bold text-teal-900">Tu primera nota en este reto: <span class="px-1.5 py-0.5 rounded ${badgeOf(progress.last)}">${progress.last}</span>. ¡Si lo repites, puedes mejorarla!</div>`;
+    }
+
     let sessionApprovalBanner = '';
     let isSessionComplete = false;
     if (this.currentWorldId && this.currentSessionId) {
@@ -604,17 +621,20 @@ window.App = {
         </div>
         <div class="bg-white/95 border-4 border-amber-400 rounded-3xl p-6 shadow-2xl max-w-lg w-full mb-6">
           <h2 class="text-4xl font-black text-amber-950 font-fun mb-2">¡Reto Logrado!</h2>
-          <p class="text-lg text-slate-700 font-bold mb-4 font-fun">¡Ganaste 3 estrellas doradas para tu colección!</p>
+          <p class="text-lg text-slate-700 font-bold mb-4 font-fun">¡Ganaste ${earned} ${earned === 1 ? 'estrella dorada' : 'estrellas doradas'} para tu colección!</p>
           <div class="flex items-center justify-center gap-4 text-slate-600 bg-amber-50 p-3 rounded-2xl border border-amber-200"><span class="text-3xl">🎒</span><span class="font-fun text-xl text-amber-900 font-black">Total: ${totalStars} Estrellas</span></div>
+          ${progressBanner}
           ${sessionApprovalBanner}
         </div>
         <div class="flex flex-wrap justify-center gap-4 w-full">
           <button id="btn-success-continue" class="btn-chunky btn-green text-xl py-3 px-8 shadow-xl"><span>${isSessionComplete ? 'Continuar Aventura' : 'Siguiente Reto'}</span><span>➔</span></button>
+          <button id="btn-success-replay" class="btn-chunky bg-teal-500 text-white border-teal-300 hover:bg-teal-600 text-lg py-3 px-6 shadow-xl"><span>🔁 Jugar otra vez</span></button>
           <button id="btn-success-home" class="btn-chunky btn-yellow text-lg py-3 px-6 shadow-xl"><span>🏠 Menú Principal</span></button>
         </div>
       </div>`;
 
-    window.Kusi.say(isSessionComplete ? '¡Fantástico! ¡Has aprobado toda la sesión!' : '¡Excelente trabajo! Ganaste 3 estrellas doradas. ¡Sigue adelante!');
+    window.Kusi.say(isSessionComplete ? '¡Fantástico! ¡Has aprobado toda la sesión!' : kusiMsg);
+    document.getElementById('btn-success-replay')?.addEventListener('click', () => { window.SoundEngine.playPop(); this.launchGame(gameId); });
     document.getElementById('btn-success-continue')?.addEventListener('click', () => {
       if (isSessionComplete) { window.SoundEngine.playPop(); this.showWorld(this.currentWorldId || 'cantidad'); } else goNext();
     });

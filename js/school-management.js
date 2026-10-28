@@ -127,6 +127,8 @@ window.SchoolManagement = {
       const r = window.AppState.migrateUsernames();
       if (r.changed) this.persist();
     }
+    // Historial de intentos (antes y después) para evaluaciones registradas con versiones anteriores
+    if (typeof window.AppState.migrateProgressHistory === 'function') window.AppState.migrateProgressHistory();
   },
 
   // Guardar y sincronizar la estructura institucional (aulas, docentes, años, admin)
