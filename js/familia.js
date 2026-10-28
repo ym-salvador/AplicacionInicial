@@ -13,7 +13,7 @@ window.FamiliaModule = {
     const config = window.AppState.getSchoolConfig();
     const summary = window.AppState.getStudentSummary(student.id);
     const todayDate = new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
-    const isDiplomaUnlocked = (summary.totalCompleted >= 23);
+    const isDiplomaUnlocked = (summary.totalCompleted >= (summary.totalGames || 23));
 
     const modal = document.createElement('div');
     modal.id = 'familia-portal-modal';
@@ -37,9 +37,9 @@ window.FamiliaModule = {
               <span>📲</span>
               <span class="hidden sm:inline">Enviar a la Profe</span>
             </button>
-            <button id="btn-portal-diploma" class="btn-chunky ${isDiplomaUnlocked ? 'btn-yellow animate-bounce-soft shadow-lg' : 'bg-slate-100 text-slate-600 border-slate-300 shadow-sm'} text-xs md:text-sm py-2 px-3.5 flex items-center gap-1.5" title="${isDiplomaUnlocked ? '¡Diploma oficial desbloqueado! Clic para ver e imprimir' : 'El diploma se desbloquea al completar las 23 misiones (' + summary.totalCompleted + '/23)'}">
+            <button id="btn-portal-diploma" class="btn-chunky ${isDiplomaUnlocked ? 'btn-yellow animate-bounce-soft shadow-lg' : 'bg-slate-100 text-slate-600 border-slate-300 shadow-sm'} text-xs md:text-sm py-2 px-3.5 flex items-center gap-1.5" title="${isDiplomaUnlocked ? '¡Diploma oficial desbloqueado! Clic para ver e imprimir' : 'El diploma se desbloquea al completar las ${summary.totalGames} misiones (' + summary.totalCompleted + '/${summary.totalGames})'}">
               <span>${isDiplomaUnlocked ? '🎓' : '🔒'}</span>
-              <span>${isDiplomaUnlocked ? '¡Mi Diploma!' : `Diploma (${summary.totalCompleted}/23)`}</span>
+              <span>${isDiplomaUnlocked ? '¡Mi Diploma!' : `Diploma (${summary.totalCompleted}/${summary.totalGames})`}</span>
             </button>
             <button id="btn-close-familia" class="btn-chunky bg-slate-100 text-slate-700 border-slate-300 text-xs md:text-sm py-2 px-3.5 hover:bg-slate-200">
               ✕ Cerrar
@@ -72,7 +72,7 @@ window.FamiliaModule = {
               </div>
               <div class="bg-white/90 border-2 border-emerald-300 rounded-2xl p-2.5 text-center min-w-[85px] shadow-sm">
                 <span class="text-xl">🎯</span>
-                <span class="font-black text-emerald-950 font-fun text-xl block leading-tight">${summary.totalCompleted}/23</span>
+                <span class="font-black text-emerald-950 font-fun text-xl block leading-tight">${summary.totalCompleted}/${summary.totalGames}</span>
                 <span class="text-[10px] text-slate-500 font-bold">Misiones</span>
               </div>
               <div class="bg-white/90 border-2 border-sky-300 rounded-2xl p-2.5 text-center min-w-[85px] shadow-sm">
@@ -97,13 +97,13 @@ window.FamiliaModule = {
                     Diploma Oficial de Logro Matemático
                   </h4>
                   <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${isDiplomaUnlocked ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'}">
-                    ${isDiplomaUnlocked ? '✅ ¡Completado y Desbloqueado!' : `En camino: ${summary.totalCompleted}/23 retos`}
+                    ${isDiplomaUnlocked ? '✅ ¡Completado y Desbloqueado!' : `En camino: ${summary.totalCompleted}/${summary.totalGames} retos`}
                   </span>
                 </div>
                 <p class="text-xs ${isDiplomaUnlocked ? 'text-amber-900 font-semibold' : 'text-slate-600'} mt-1">
                   ${isDiplomaUnlocked 
                     ? `¡Felicitaciones! ${student.name} ha culminado exitosamente todas las misiones. Su diploma oficial firmado ya está disponible para descargar o imprimir.` 
-                    : `El diploma se activa automáticamente cuando ${student.name.split(' ')[0]} completa las 23 misiones formativas. Le faltan ${23 - summary.totalCompleted} retos.`}
+                    : `El diploma se activa automáticamente cuando ${student.name.split(' ')[0]} completa las ${summary.totalGames} misiones formativas. Le faltan ${summary.totalGames - summary.totalCompleted} retos.`}
                 </p>
               </div>
             </div>
@@ -123,7 +123,7 @@ window.FamiliaModule = {
                 <span>Mi Perfil y Clave Secreta de Acceso</span>
               </h4>
               <span class="text-xs bg-emerald-100 text-emerald-900 font-bold px-2.5 py-1 rounded-full">
-                ID: ${student.id}
+                Usuario: ${student.id}
               </span>
             </div>
 
@@ -310,7 +310,7 @@ window.FamiliaModule = {
         `👶 Estudiante: *${student.name}*\n` +
         `🏫 ${config.schoolName} - ${config.activeClass}\n` +
         `⭐ Estrellas ganadas: *${student.stars}*\n` +
-        `🎯 Misiones completadas: *${summary.totalCompleted}/23* (${summary.totalProgress}% de avance)\n` +
+        `🎯 Misiones completadas: *${summary.totalCompleted}/${summary.totalGames}* (${summary.totalProgress}% de avance)\n` +
         `🧺 Cantidad: *${summary.cantidad.grade}* (${summary.cantidad.completed}/${summary.cantidad.total})\n` +
         `🚀 Espacio y Formas: *${summary.espacio.grade}* (${summary.espacio.completed}/${summary.espacio.total})\n\n` +
         `📲 *Para sincronizar automáticamente estos datos en su Panel Docente, pulse aquí:*\n` +
@@ -382,7 +382,7 @@ window.FamiliaModule = {
   // MODAL EXPLICATIVO CUANDO EL DIPLOMA AÚN ESTÁ BLOQUEADO
   showLockedDiplomaModal(student, summary) {
     window.SoundEngine.playPop();
-    const remaining = 23 - (summary.totalCompleted || 0);
+    const remaining = (summary.totalGames || 23) - (summary.totalCompleted || 0);
 
     const modal = document.createElement('div');
     modal.id = 'locked-diploma-modal';
@@ -405,7 +405,7 @@ window.FamiliaModule = {
         <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-left space-y-2 mb-4">
           <div class="flex justify-between items-center text-xs font-bold text-slate-800">
             <span>Tu avance actual:</span>
-            <span class="text-amber-800 font-fun text-sm">${summary.totalCompleted}/23 misiones (${summary.totalProgress}%)</span>
+            <span class="text-amber-800 font-fun text-sm">${summary.totalCompleted}/${summary.totalGames} misiones (${summary.totalProgress}%)</span>
           </div>
           <div class="w-full bg-amber-200 h-3 rounded-full overflow-hidden shadow-inner">
             <div class="bg-gradient-to-r from-amber-400 to-purple-500 h-full rounded-full transition-all duration-300" style="width: ${summary.totalProgress}%"></div>
@@ -539,7 +539,7 @@ window.FamiliaModule = {
                 ⭐ ${student.stars || 69} Estrellas Ganadas
               </span>
               <span class="bg-emerald-100 text-emerald-950 border-2 border-emerald-300 font-black text-xs px-3 py-1 rounded-full shadow-xs">
-                🎯 23/23 Misiones Completadas (100%)
+                🎯 ${summary.totalCompleted}/${summary.totalGames} Misiones Completadas (100%)
               </span>
             </div>
 

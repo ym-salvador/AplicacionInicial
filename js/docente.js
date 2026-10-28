@@ -202,7 +202,7 @@ window.DocenteModule = {
           </div>
         </div>
 
-        <!-- Selector de Pestañas: Monitoreo, Ficha Individual, Configuración Colegio -->
+        <!-- Selector de Pestañas: Monitoreo, Asignar Competencias, Ficha Individual, Familias, Colegio -->
         <div class="flex flex-wrap items-center justify-between border-b-2 border-slate-200 pb-2 mb-4 gap-2 no-print">
           <div class="flex flex-wrap gap-2">
             <!-- Pestaña 1: Monitoreo -->
@@ -215,7 +215,17 @@ window.DocenteModule = {
               <span>Monitoreo del Aula</span>
             </button>
 
-            <!-- Pestaña 2: Ficha Individual -->
+            <!-- Pestaña 2: Asignación de Competencias (NUEVO PANEL) -->
+            <button id="tab-btn-assignments" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
+              this.activeTab === 'assignments' 
+                ? 'bg-purple-600 text-white shadow-md' 
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }">
+              <span>🎯</span>
+              <span>Asignar Competencias</span>
+            </button>
+
+            <!-- Pestaña 3: Ficha Individual -->
             <button id="tab-btn-individual" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
               this.activeTab === 'individual' 
                 ? 'bg-purple-600 text-white shadow-md' 
@@ -225,7 +235,7 @@ window.DocenteModule = {
               <span>Ficha Individual</span>
             </button>
 
-            <!-- Pestaña 3: Familias y Accesos -->
+            <!-- Pestaña 4: Familias y Accesos -->
             <button id="tab-btn-families" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
               this.activeTab === 'families' 
                 ? 'bg-purple-600 text-white shadow-md' 
@@ -235,7 +245,7 @@ window.DocenteModule = {
               <span>Familias y Accesos</span>
             </button>
 
-            <!-- Pestaña 4: Configuración Colegio y Mascota -->
+            <!-- Pestaña 5: Configuración Colegio y Mascota -->
             <button id="tab-btn-settings" class="tab-btn px-3.5 py-2 rounded-xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 ${
               this.activeTab === 'settings' 
                 ? 'bg-purple-600 text-white shadow-md' 
@@ -272,6 +282,11 @@ window.DocenteModule = {
       this.switchTab('monitoring');
     });
 
+    document.getElementById('tab-btn-assignments')?.addEventListener('click', () => {
+      window.SoundEngine.playPop();
+      this.switchTab('assignments');
+    });
+
     document.getElementById('tab-btn-individual')?.addEventListener('click', () => {
       window.SoundEngine.playPop();
       this.switchTab('individual');
@@ -293,6 +308,7 @@ window.DocenteModule = {
   switchTab(tab) {
     this.activeTab = tab;
     const btnMon = document.getElementById('tab-btn-monitoring');
+    const btnAss = document.getElementById('tab-btn-assignments');
     const btnInd = document.getElementById('tab-btn-individual');
     const btnFam = document.getElementById('tab-btn-families');
     const btnSet = document.getElementById('tab-btn-settings');
@@ -305,6 +321,7 @@ window.DocenteModule = {
     };
 
     updateBtn(btnMon, tab === 'monitoring');
+    updateBtn(btnAss, tab === 'assignments');
     updateBtn(btnInd, tab === 'individual');
     updateBtn(btnFam, tab === 'families');
     updateBtn(btnSet, tab === 'settings');
@@ -319,6 +336,8 @@ window.DocenteModule = {
 
     if (this.activeTab === 'monitoring') {
       this.renderMonitoringTab(container, actions);
+    } else if (this.activeTab === 'assignments') {
+      this.renderAssignmentsTab(container, actions);
     } else if (this.activeTab === 'individual') {
       this.renderIndividualTab(container, actions);
     } else if (this.activeTab === 'families') {
@@ -342,6 +361,10 @@ window.DocenteModule = {
         <button id="btn-cloud-status-mon" class="btn-chunky ${isCloud ? 'bg-emerald-600 border-emerald-500' : 'bg-purple-600 border-purple-500'} text-white text-xs py-1.5 px-3 shadow flex items-center gap-1.5" title="Configurar conexión con Supabase en la nube">
           <span>${isCloud ? '☁️ Supabase Conectado' : '⚡ Conectar Supabase'}</span>
         </button>
+        <button id="btn-go-assignments-mon" class="btn-chunky bg-purple-700 hover:bg-purple-800 text-white border-purple-600 text-xs py-1.5 px-3 shadow flex items-center gap-1.5" title="Asignar qué competencias resolverá cada estudiante">
+          <span>🎯</span>
+          <span>Asignar Competencias</span>
+        </button>
         <button id="btn-sync-student-docente" class="btn-chunky bg-purple-600 text-white border-purple-500 text-xs py-1.5 px-3 shadow flex items-center gap-1.5 hover:bg-purple-700" title="Pegar código o enlace de avance enviado por un papá/mamá">
           <span>📲</span>
           <span>Sincronizar Reporte</span>
@@ -357,6 +380,10 @@ window.DocenteModule = {
       `;
 
       document.getElementById('btn-cloud-status-mon')?.addEventListener('click', () => this.openSupabaseModal());
+      document.getElementById('btn-go-assignments-mon')?.addEventListener('click', () => {
+        window.SoundEngine.playPop();
+        this.switchTab('assignments');
+      });
       document.getElementById('btn-sync-student-docente')?.addEventListener('click', () => this.openSyncModal());
       document.getElementById('btn-export-csv')?.addEventListener('click', () => this.exportCSV());
       document.getElementById('btn-add-student-docente')?.addEventListener('click', () => {
@@ -568,7 +595,16 @@ window.DocenteModule = {
                         <span class="font-black text-slate-900 text-sm block font-fun leading-tight">${st.name}</span>
                         <div class="flex items-center gap-1.5 mt-0.5">
                           <span class="text-[11px] text-amber-600 font-bold">⭐ ${st.stars} estrellas</span>
-                          <span class="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1 rounded">ID: ${st.id}</span>
+                          <span class="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1 rounded">Usuario: ${st.id}</span>
+                        </div>
+                        <!-- Badges de Competencias Asignadas -->
+                        <div class="flex items-center gap-1 mt-1">
+                          ${(st.assignedCompetencies || ['cantidad', 'espacio']).includes('cantidad') 
+                            ? `<span class="btn-comp-badge bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded cursor-pointer transition-colors" data-student-id="${st.id}" title="Competencia 1 Asignada (Clic para configurar)">🧺 Cantidad</span>` 
+                            : `<span class="btn-comp-badge bg-slate-100 hover:bg-slate-200 text-slate-400 border border-slate-200 text-[10px] font-medium px-1.5 py-0.5 rounded opacity-60 cursor-pointer transition-colors" data-student-id="${st.id}" title="No asignada (Clic para activar)">🧺 Inactiva</span>`}
+                          ${(st.assignedCompetencies || ['cantidad', 'espacio']).includes('espacio') 
+                            ? `<span class="btn-comp-badge bg-sky-100 hover:bg-sky-200 text-sky-900 border border-sky-300 text-[10px] font-bold px-1.5 py-0.5 rounded cursor-pointer transition-colors" data-student-id="${st.id}" title="Competencia 2 Asignada (Clic para configurar)">🚀 Espacio</span>` 
+                            : `<span class="btn-comp-badge bg-slate-100 hover:bg-slate-200 text-slate-400 border border-slate-200 text-[10px] font-medium px-1.5 py-0.5 rounded opacity-60 cursor-pointer transition-colors" data-student-id="${st.id}" title="No asignada (Clic para activar)">🚀 Inactiva</span>`}
                         </div>
                       </div>
                     </div>
@@ -631,11 +667,15 @@ window.DocenteModule = {
 
                   <td class="p-3.5 text-center whitespace-nowrap">
                     <div class="inline-flex items-center justify-center gap-1.5">
-                      <button class="btn-impersonate-student inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors shadow-xs" data-student-id="${st.id}" title="Ingresar a la app como este alumno (Modo Administradora)">
+                      <button class="btn-assign-student-row inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-2 py-1.5 rounded-xl font-bold text-xs transition-colors shadow-xs" data-student-id="${st.id}" title="Configurar asignación de competencias para este alumno">
+                        <span>🎯</span>
+                        <span>Asignar</span>
+                      </button>
+                      <button class="btn-impersonate-student inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1.5 rounded-xl font-bold text-xs transition-colors shadow-xs" data-student-id="${st.id}" title="Ingresar a la app como este alumno (Modo Administradora)">
                         <span>👁️</span>
                         <span>Ingresar</span>
                       </button>
-                      <button class="btn-view-student-report inline-flex items-center gap-1 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-300 px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors shadow-xs" data-student-id="${st.id}" title="Ver informe CNEB individual">
+                      <button class="btn-view-student-report inline-flex items-center gap-1 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-300 px-2 py-1.5 rounded-xl font-bold text-xs transition-colors shadow-xs" data-student-id="${st.id}" title="Ver informe CNEB individual">
                         <span>📋</span>
                         <span>Ficha</span>
                       </button>
@@ -659,6 +699,24 @@ window.DocenteModule = {
         window.SoundEngine.playPop();
         this.filterStatus = btn.dataset.status;
         this.renderMonitoringTab(container, actions);
+      });
+    });
+
+    // Botón ir a Asignar Competencias de un alumno
+    container.querySelectorAll('.btn-assign-student-row, .btn-comp-badge').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.SoundEngine.playPop();
+        const id = btn.dataset.studentId;
+        this.selectedStudentId = id;
+        this.switchTab('assignments');
+        setTimeout(() => {
+          const row = document.querySelector(`.student-assignment-row[data-student-id="${id}"]`);
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            row.classList.add('border-purple-500', 'ring-4', 'ring-purple-200');
+            setTimeout(() => row.classList.remove('ring-4', 'ring-purple-200'), 2200);
+          }
+        }, 200);
       });
     });
 
@@ -694,11 +752,362 @@ window.DocenteModule = {
   },
 
   // =========================================================================
+  // PESTAÑA 2: ASIGNACIÓN DE COMPETENCIAS CNEB POR CADA ESTUDIANTE (NUEVO PANEL)
+  // =========================================================================
+  renderAssignmentsTab(container, actions) {
+    const summary = window.AppState.getClassSummary();
+    const students = window.AppState.getVisibleStudents();
+
+    // Métricas de asignación
+    const totalStudents = students.length;
+    const bothCount = students.filter(s => {
+      const a = s.assignedCompetencies || ['cantidad', 'espacio'];
+      return a.includes('cantidad') && a.includes('espacio');
+    }).length;
+    const onlyCantCount = students.filter(s => {
+      const a = s.assignedCompetencies || ['cantidad', 'espacio'];
+      return a.includes('cantidad') && !a.includes('espacio');
+    }).length;
+    const onlyEspCount = students.filter(s => {
+      const a = s.assignedCompetencies || ['cantidad', 'espacio'];
+      return !a.includes('cantidad') && a.includes('espacio');
+    }).length;
+    const noneCount = students.filter(s => {
+      const a = s.assignedCompetencies || ['cantidad', 'espacio'];
+      return !a.includes('cantidad') && !a.includes('espacio');
+    }).length;
+
+    // Acciones Rápidas en la Barra Superior
+    if (actions) {
+      actions.innerHTML = `
+        <button id="btn-bulk-assign-both" class="btn-chunky bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500 text-xs py-1.5 px-3 shadow flex items-center gap-1.5" title="Habilitar ambas competencias a todos los alumnos">
+          <span>🧺➕🚀</span>
+          <span>Ambas a Todos</span>
+        </button>
+        <button id="btn-bulk-assign-cant" class="btn-chunky bg-amber-600 hover:bg-amber-700 text-white border-amber-500 text-xs py-1.5 px-3 shadow flex items-center gap-1.5" title="Habilitar solo Cantidad a todos los alumnos">
+          <span>🧺</span>
+          <span>Solo Cantidad</span>
+        </button>
+        <button id="btn-bulk-assign-esp" class="btn-chunky bg-sky-600 hover:bg-sky-700 text-white border-sky-500 text-xs py-1.5 px-3 shadow flex items-center gap-1.5" title="Habilitar solo Espacio a todos los alumnos">
+          <span>🚀</span>
+          <span>Solo Espacio</span>
+        </button>
+        <button id="btn-bulk-assign-none" class="btn-chunky bg-slate-600 hover:bg-slate-700 text-white border-slate-500 text-xs py-1.5 px-3 shadow flex items-center gap-1.5" title="Pausar todas las asignaciones temporalmente">
+          <span>🚫</span>
+          <span>Pausar Todas</span>
+        </button>
+      `;
+
+      document.getElementById('btn-bulk-assign-both')?.addEventListener('click', () => {
+        if (confirm("¿Deseas asignar ambas competencias (Cantidad y Espacio) a todos los estudiantes del aula?")) {
+          window.AppState.setBulkCompetencyAssignment(['cantidad', 'espacio']);
+          window.SoundEngine.playSuccess();
+          this.showAssignmentToast("✓ Ambas competencias asignadas a todos los estudiantes");
+          this.renderAssignmentsTab(container, actions);
+        }
+      });
+
+      document.getElementById('btn-bulk-assign-cant')?.addEventListener('click', () => {
+        if (confirm("¿Deseas asignar ÚNICAMENTE la competencia de Cantidad a todos los estudiantes?")) {
+          window.AppState.setBulkCompetencyAssignment(['cantidad']);
+          window.SoundEngine.playSuccess();
+          this.showAssignmentToast("✓ Solo competencia de Cantidad asignada a todos");
+          this.renderAssignmentsTab(container, actions);
+        }
+      });
+
+      document.getElementById('btn-bulk-assign-esp')?.addEventListener('click', () => {
+        if (confirm("¿Deseas asignar ÚNICAMENTE la competencia de Espacio a todos los estudiantes?")) {
+          window.AppState.setBulkCompetencyAssignment(['espacio']);
+          window.SoundEngine.playSuccess();
+          this.showAssignmentToast("✓ Solo competencia de Espacio asignada a todos");
+          this.renderAssignmentsTab(container, actions);
+        }
+      });
+
+      document.getElementById('btn-bulk-assign-none')?.addEventListener('click', () => {
+        if (confirm("¿Deseas desasignar temporalmente todas las competencias a todos los estudiantes?")) {
+          window.AppState.setBulkCompetencyAssignment([]);
+          window.SoundEngine.playPop();
+          this.showAssignmentToast("⚠️ Todas las competencias desasignadas");
+          this.renderAssignmentsTab(container, actions);
+        }
+      });
+    }
+
+    container.innerHTML = `
+      <div class="space-y-4">
+        
+        <!-- Banner Explicativo Pedagógico -->
+        <div class="bg-gradient-to-r from-purple-100 via-indigo-50 to-amber-50 border-2 border-purple-300 rounded-3xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-14 h-14 rounded-2xl bg-white border-2 border-purple-400 flex items-center justify-center text-3xl shadow flex-shrink-0">
+              🎯
+            </div>
+            <div>
+              <h3 class="text-xl font-black text-purple-950 font-fun leading-tight">Panel de Asignación de Competencias</h3>
+              <p class="text-xs text-slate-700 font-medium mt-0.5">
+                Selecciona individualmente qué competencias resolverá cada niño. En sus dispositivos solo podrán entrar a los mundos que mantengas asignados.
+              </p>
+            </div>
+          </div>
+          <div class="bg-amber-100/90 border border-amber-300 rounded-2xl p-2.5 text-xs text-amber-950 font-bold max-w-xs flex items-center gap-2 flex-shrink-0">
+            <span class="text-2xl">🔒</span>
+            <span><strong>Regla de desbloqueo:</strong> Cada competencia se resuelve sesión por sesión; no pueden pasar a la siguiente sin aprobar la previa.</span>
+          </div>
+        </div>
+
+        <!-- Tarjetas Resumen de Asignaciones -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-2.5 shadow-sm">
+            <span class="text-[11px] font-bold uppercase text-emerald-800 block">Ambas Asignadas</span>
+            <span class="text-2xl font-black text-emerald-950 font-fun">${bothCount} <span class="text-xs text-emerald-700 font-bold">alumnos</span></span>
+          </div>
+          <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-2.5 shadow-sm">
+            <span class="text-[11px] font-bold uppercase text-amber-800 block">Solo Cantidad</span>
+            <span class="text-2xl font-black text-amber-950 font-fun">${onlyCantCount} <span class="text-xs text-amber-700 font-bold">alumnos</span></span>
+          </div>
+          <div class="bg-sky-50 border-2 border-sky-300 rounded-2xl p-2.5 shadow-sm">
+            <span class="text-[11px] font-bold uppercase text-sky-800 block">Solo Espacio</span>
+            <span class="text-2xl font-black text-sky-950 font-fun">${onlyEspCount} <span class="text-xs text-sky-700 font-bold">alumnos</span></span>
+          </div>
+          <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-2.5 shadow-sm">
+            <span class="text-[11px] font-bold uppercase text-rose-800 block">Sin Asignación</span>
+            <span class="text-2xl font-black text-rose-950 font-fun">${noneCount} <span class="text-xs text-rose-700 font-bold">alumnos</span></span>
+          </div>
+        </div>
+
+        <!-- Buscador de Estudiantes -->
+        <div class="relative">
+          <span class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-slate-400 text-sm">🔍</span>
+          <input type="text" id="assignment-search-input" placeholder="Buscar estudiante por nombre o código ID..." class="w-full pl-10 pr-4 py-2.5 text-xs md:text-sm font-bold bg-white border-2 border-purple-200 rounded-2xl focus:border-purple-500 focus:outline-none shadow-sm">
+        </div>
+
+        <!-- Lista de Estudiantes con sus Toggles de Competencias y Progreso de Sesiones -->
+        <div id="assignment-students-list" class="space-y-3">
+          ${students.map(st => {
+            const assigned = st.assignedCompetencies || ['cantidad', 'espacio'];
+            const hasCant = assigned.includes('cantidad');
+            const hasEsp = assigned.includes('espacio');
+
+            // Progreso de sesiones de Cantidad
+            const cantS1App = window.AppState.isSessionApproved('cantidad', 'sesion_1', st.id);
+            const cantS2App = window.AppState.isSessionApproved('cantidad', 'sesion_2', st.id);
+            const cantS3App = window.AppState.isSessionApproved('cantidad', 'sesion_3', st.id);
+
+            // Progreso de sesiones de Espacio
+            const espS1App = window.AppState.isSessionApproved('espacio', 'sesion_esp_1', st.id);
+            const espS2App = window.AppState.isSessionApproved('espacio', 'sesion_esp_2', st.id);
+            const espS3App = window.AppState.isSessionApproved('espacio', 'sesion_esp_3', st.id);
+
+            return `
+              <div class="student-assignment-row bg-white border-2 border-slate-200 hover:border-purple-300 rounded-2xl p-3 sm:p-4 shadow-sm transition-all" data-student-id="${st.id}" data-student-name="${st.name.toLowerCase()}">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  
+                  <!-- Info del Alumno -->
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-3xl flex-shrink-0 shadow-sm">
+                      ${st.avatar || '🦙'}
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h4 class="font-black text-slate-900 font-fun text-base leading-tight">${st.name}</h4>
+                        <span class="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 rounded">Usuario: ${st.id}</span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs mt-0.5">
+                        <span class="font-bold text-amber-600">⭐ ${st.stars || 0} estrellas</span>
+                        <span class="text-slate-400">•</span>
+                        <span class="text-slate-600 font-semibold">${st.parentName || 'Familia'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Botones Rápidos de Asignación por Alumno -->
+                  <div class="flex flex-wrap items-center gap-1.5 self-start lg:self-auto">
+                    <button class="btn-quick-set-assign px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${hasCant && hasEsp ? 'bg-purple-600 text-white shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" data-student-id="${st.id}" data-target="both">
+                      Ambas
+                    </button>
+                    <button class="btn-quick-set-assign px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${hasCant && !hasEsp ? 'bg-amber-600 text-white shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" data-student-id="${st.id}" data-target="cantidad">
+                      Solo Cantidad
+                    </button>
+                    <button class="btn-quick-set-assign px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${!hasCant && hasEsp ? 'bg-sky-600 text-white shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" data-student-id="${st.id}" data-target="espacio">
+                      Solo Espacio
+                    </button>
+                    <button class="btn-quick-set-assign px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${!hasCant && !hasEsp ? 'bg-rose-600 text-white shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" data-student-id="${st.id}" data-target="none">
+                      Ninguna
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Las Dos Competencias con Toggles y Progreso de Sesiones -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
+                  
+                  <!-- Competencia 1: Cantidad -->
+                  <div class="p-3 rounded-xl border-2 transition-all flex flex-col justify-between ${
+                    hasCant 
+                      ? 'bg-amber-50/70 border-amber-300' 
+                      : 'bg-slate-50 border-slate-200 opacity-60'
+                  }">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">🧺</span>
+                        <div>
+                          <span class="text-xs font-black uppercase text-amber-900 block font-fun">Competencia 1: Cantidad</span>
+                          <span class="text-[11px] text-slate-600 font-medium">Agrupación, seriación, conteo</span>
+                        </div>
+                      </div>
+                      
+                      <button class="btn-toggle-comp px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shadow-sm ${
+                        hasCant
+                          ? 'bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-400'
+                          : 'bg-slate-200 hover:bg-slate-300 text-slate-700 border-2 border-slate-300'
+                      }" data-student-id="${st.id}" data-world="cantidad">
+                        <span>${hasCant ? '✅ ASIGNADA' : '⚪ INACTIVA'}</span>
+                      </button>
+                    </div>
+
+                    <!-- Progreso Sesión por Sesión (Secuencial) -->
+                    <div class="bg-white/90 rounded-lg p-2 border border-amber-200 text-[11px] flex items-center justify-between">
+                      <span class="font-bold text-slate-600">Sesiones CNEB:</span>
+                      <div class="flex items-center gap-1.5 font-bold">
+                        <span class="px-2 py-0.5 rounded text-[10px] ${cantS1App ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
+                          S1: ${cantS1App ? '✓ Aprobada' : '🔓 En juego'}
+                        </span>
+                        <span class="text-slate-300">➔</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] ${cantS2App ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : cantS1App ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
+                          S2: ${cantS2App ? '✓ Aprobada' : cantS1App ? '🔓 Desbloqueada' : '🔒 Bloqueada'}
+                        </span>
+                        <span class="text-slate-300">➔</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] ${cantS3App ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : cantS2App ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
+                          S3: ${cantS3App ? '✓ Aprobada' : cantS2App ? '🔓 Desbloqueada' : '🔒 Bloqueada'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Competencia 2: Espacio -->
+                  <div class="p-3 rounded-xl border-2 transition-all flex flex-col justify-between ${
+                    hasEsp 
+                      ? 'bg-sky-50/70 border-sky-300' 
+                      : 'bg-slate-50 border-slate-200 opacity-60'
+                  }">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">🚀</span>
+                        <div>
+                          <span class="text-xs font-black uppercase text-sky-900 block font-fun">Competencia 2: Espacio</span>
+                          <span class="text-[11px] text-slate-600 font-medium">Formas, ubicación y caminos</span>
+                        </div>
+                      </div>
+                      
+                      <button class="btn-toggle-comp px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 shadow-sm ${
+                        hasEsp
+                          ? 'bg-sky-600 hover:bg-sky-700 text-white border-2 border-sky-400'
+                          : 'bg-slate-200 hover:bg-slate-300 text-slate-700 border-2 border-slate-300'
+                      }" data-student-id="${st.id}" data-world="espacio">
+                        <span>${hasEsp ? '✅ ASIGNADA' : '⚪ INACTIVA'}</span>
+                      </button>
+                    </div>
+
+                    <!-- Progreso Sesión por Sesión (Secuencial) -->
+                    <div class="bg-white/90 rounded-lg p-2 border border-sky-200 text-[11px] flex items-center justify-between">
+                      <span class="font-bold text-slate-600">Sesiones CNEB:</span>
+                      <div class="flex items-center gap-1.5 font-bold">
+                        <span class="px-2 py-0.5 rounded text-[10px] ${espS1App ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-sky-100 text-sky-800 border border-sky-300'}">
+                          S1: ${espS1App ? '✓ Aprobada' : '🔓 En juego'}
+                        </span>
+                        <span class="text-slate-300">➔</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] ${espS2App ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : espS1App ? 'bg-sky-100 text-sky-800 border border-sky-300' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
+                          S2: ${espS2App ? '✓ Aprobada' : espS1App ? '🔓 Desbloqueada' : '🔒 Bloqueada'}
+                        </span>
+                        <span class="text-slate-300">➔</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] ${espS3App ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : espS2App ? 'bg-sky-100 text-sky-800 border border-sky-300' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
+                          S3: ${espS3App ? '✓ Aprobada' : espS2App ? '🔓 Desbloqueada' : '🔒 Bloqueada'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+      </div>
+    `;
+
+    // Eventos de Búsqueda
+    const searchInput = document.getElementById('assignment-search-input');
+    searchInput?.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      container.querySelectorAll('.student-assignment-row').forEach(row => {
+        const name = row.dataset.studentName || '';
+        const id = (row.dataset.studentId || '').toLowerCase();
+        if (name.includes(q) || id.includes(q)) {
+          row.classList.remove('hidden');
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+    });
+
+    // Eventos de Toggle Individual
+    container.querySelectorAll('.btn-toggle-comp').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const studentId = btn.dataset.studentId;
+        const worldId = btn.dataset.world;
+        window.AppState.toggleStudentCompetency(studentId, worldId);
+        window.SoundEngine.playPop();
+        const student = window.AppState.state.students.find(s => s.id === studentId);
+        const worldName = worldId === 'cantidad' ? 'Cantidad' : 'Espacio';
+        this.showAssignmentToast(`✓ Asignación de ${worldName} actualizada para ${student?.name.split(' ')[0]}`);
+        this.renderAssignmentsTab(container, actions);
+      });
+    });
+
+    // Eventos de Acciones Rápidas por Alumno
+    container.querySelectorAll('.btn-quick-set-assign').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const studentId = btn.dataset.studentId;
+        const target = btn.dataset.target;
+        let newAssigned = [];
+        if (target === 'both') newAssigned = ['cantidad', 'espacio'];
+        else if (target === 'cantidad') newAssigned = ['cantidad'];
+        else if (target === 'espacio') newAssigned = ['espacio'];
+        else if (target === 'none') newAssigned = [];
+
+        window.AppState.setStudentAssignedCompetencies(studentId, newAssigned);
+        window.SoundEngine.playPop();
+        const student = window.AppState.state.students.find(s => s.id === studentId);
+        this.showAssignmentToast(`✓ Competencias actualizadas para ${student?.name.split(' ')[0]}`);
+        this.renderAssignmentsTab(container, actions);
+      });
+    });
+  },
+
+  showAssignmentToast(msg) {
+    const existing = document.getElementById('assignment-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'assignment-toast';
+    toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900 text-white font-fun font-bold text-sm px-4 py-2.5 rounded-2xl shadow-2xl border-2 border-emerald-400 flex items-center gap-2 animate-pop';
+    toast.innerHTML = `<span>✨</span><span>${msg}</span>`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.4s ease';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 400);
+    }, 2500);
+  },
+
+  // =========================================================================
   // PESTAÑA 2: FICHA INDIVIDUAL CNEB (INFORME DETALLADO POR ESTUDIANTE)
   // =========================================================================
   renderIndividualTab(container, actions) {
     const config = window.AppState.getSchoolConfig();
-    const students = window.AppState.state.students;
+    const students = window.AppState.getVisibleStudents();
     const currentStudent = students.find(s => s.id === this.selectedStudentId) || students[0];
     this.selectedStudentId = currentStudent?.id;
 
@@ -710,6 +1119,7 @@ window.DocenteModule = {
 
     const formattedConclusionCantidad = this.formatMarkdown(conclusionCantidad);
     const formattedConclusionEspacio = this.formatMarkdown(conclusionEspacio);
+    const areasReport = this.buildAreasReport(currentStudent);
 
     const todayDate = new Date().toLocaleDateString('es-PE', {
       day: '2-digit',
@@ -951,6 +1361,8 @@ window.DocenteModule = {
             </div>
           </div>
 
+          ${areasReport}
+
           <!-- SECCIÓN DE FIRMAS DOCENTE Y DIRECCIÓN DEL COLEGIO -->
           <div class="report-block pt-8 mt-6 border-t-2 border-slate-300">
             <div class="grid grid-cols-2 gap-12 text-center text-xs">
@@ -976,11 +1388,49 @@ window.DocenteModule = {
     });
   },
 
+  // SECCIÓN DEL INFORME IMPRIMIBLE: OTRAS ÁREAS DEL CNEB (CALIFICACIÓN DIRECTA)
+  buildAreasReport(student) {
+    const SM = window.SchoolManagement;
+    const CU = window.CNEB_CURRICULUM;
+    if (!student || !SM || !CU || typeof CU.getCompetenciasForCycle !== 'function') return '';
+    const cl = SM.getClassroom(student.classroomId);
+    const cycle = cl ? cl.cycle : 'Ciclo II';
+    const comps = CU.getCompetenciasForCycle(cycle).filter(cp => !SM.hasGames(cp.id) && !cp.opcional || (cp.opcional && window.AppState.getAreaGrade(student.id, cp.id)));
+    if (comps.length === 0) return '';
+    const byArea = {};
+    comps.forEach(cp => { (byArea[cp.areaId] = byArea[cp.areaId] || []).push(cp); });
+    const age = SM.getStudentAge(student.id);
+    return `
+      <div class="report-block mt-5">
+        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider border-b-2 border-slate-300 pb-1 mb-3">📚 Informe por áreas del CNEB (${cycle} • ${age} años) — Calificación directa de aula</h3>
+        ${Object.keys(byArea).map(areaId => {
+          const a = CU.areas[areaId];
+          return `
+            <div class="mb-3">
+              <p class="text-xs font-black text-slate-800 mb-1">${a.icon} Área: ${a.nombre}</p>
+              <table class="w-full text-[11px] border-collapse">
+                <thead><tr class="bg-slate-100"><th class="border border-slate-300 p-1.5 text-left w-5/12">Competencia</th><th class="border border-slate-300 p-1.5 w-1/12">Nivel</th><th class="border border-slate-300 p-1.5 text-left">Conclusión descriptiva</th></tr></thead>
+                <tbody>
+                  ${byArea[areaId].map(cp => {
+                    const g = window.AppState.getAreaGrade(student.id, cp.id);
+                    return `<tr>
+                      <td class="border border-slate-300 p-1.5 align-top"><strong>Comp. ${cp.numeroCneb}:</strong> ${CU.getNombre(cp.id, cycle)}</td>
+                      <td class="border border-slate-300 p-1.5 align-top text-center"><span class="font-black px-2 py-0.5 rounded ${this.getBadgeClass(g?.grade || 'Sin evaluar')}">${g?.grade || '—'}</span></td>
+                      <td class="border border-slate-300 p-1.5 align-top text-slate-700">${g ? this.formatMarkdown(window.AppState.generateAreaConclusion(student.id, cp.id)) : '<span class="text-slate-400 italic">Sin calificar en este periodo.</span>'}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>`;
+        }).join('')}
+      </div>`;
+  },
+
   // =========================================================================
   // PESTAÑA 3: GESTIÓN DE FAMILIAS, PADRES Y ACCESOS A CASA
   // =========================================================================
   renderFamiliesTab(container, actions) {
-    const students = window.AppState.state.students;
+    const students = window.AppState.getVisibleStudents();
     const config = window.AppState.getSchoolConfig();
     const isCloud = window.SupabaseService && window.SupabaseService.isConfigured();
 
@@ -1027,7 +1477,7 @@ window.DocenteModule = {
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Nombre Completo del Niño(a):</label>
               <input type="text" id="new-child-name" placeholder="Ej. Pepito Valverde" class="w-full text-sm font-bold p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50">
               <div id="new-child-id-preview" class="text-[11px] text-emerald-800 font-bold mt-1 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
-                🆔 Código que se generará: <span id="preview-id-text" class="font-mono text-emerald-900 bg-white px-1.5 py-0.5 rounded border border-emerald-300">V••••</span> (Letra del apellido + 4 números)
+                👤 Usuario que se generará: <span id="preview-id-text" class="font-mono text-emerald-900 bg-white px-1.5 py-0.5 rounded border border-emerald-300">apellido.inicial</span> (apellido + inicial del nombre, único)
               </div>
             </div>
 
@@ -1054,8 +1504,8 @@ window.DocenteModule = {
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">PIN / Clave de Acceso (Inicial = Código):</label>
-              <input type="text" id="new-child-pin" placeholder="Se asignará automáticamente igual al Código" maxlength="8" class="w-full text-center text-sm font-black p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50 tracking-widest uppercase">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">PIN de Acceso (4 números; se genera solo si lo dejas vacío):</label>
+              <input type="text" id="new-child-pin" placeholder="Ej. 4821" maxlength="8" class="w-full text-center text-sm font-black p-2.5 border-2 border-slate-300 rounded-xl focus:border-emerald-500 focus:outline-none bg-slate-50 tracking-widest uppercase">
               <span class="text-[10px] text-slate-500 block mt-1">Por defecto será el mismo código (ej. V4821). La familia podrá cambiarlo internamente.</span>
             </div>
           </div>
@@ -1100,7 +1550,11 @@ window.DocenteModule = {
                         <span class="text-2xl">${st.avatar || '🦙'}</span>
                         <div>
                           <strong class="text-slate-900 block font-fun text-sm">${st.name}</strong>
-                          <span class="font-mono font-bold text-[11px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-300">ID: ${st.id}</span>
+                          <div class="flex flex-wrap items-center gap-1 mt-0.5">
+                            <span class="font-mono font-bold text-[11px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-300">Usuario: ${st.id}</span>
+                            ${(st.assignedCompetencies || ['cantidad', 'espacio']).includes('cantidad') ? '<span class="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">🧺 Cantidad</span>' : '<span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">🧺 Inactiva</span>'}
+                            ${(st.assignedCompetencies || ['cantidad', 'espacio']).includes('espacio') ? '<span class="text-[10px] font-bold text-sky-900 bg-sky-100 border border-sky-300 px-1.5 py-0.5 rounded">🚀 Espacio</span>' : '<span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">🚀 Inactiva</span>'}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -1127,6 +1581,10 @@ window.DocenteModule = {
                     </td>
                     <td class="p-2.5 text-center">
                       <div class="flex flex-wrap items-center justify-center gap-1.5">
+                        <button class="btn-assign-from-fam bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 px-2 py-1 rounded-lg font-bold text-[11px] shadow-sm flex items-center gap-1" data-student-id="${st.id}" title="Configurar asignación de competencias">
+                          <span>🎯</span>
+                          <span>Asignar</span>
+                        </button>
                         <button class="btn-impersonate-student bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 px-2 py-1 rounded-lg font-bold text-[11px] shadow-sm flex items-center gap-1" data-student-id="${st.id}" title="Entrar a la app como este estudiante (Modo Administradora)">
                           <span>👁️</span>
                           <span>Ingresar</span>
@@ -1166,12 +1624,12 @@ window.DocenteModule = {
         currentPreviewId = window.AppState.generateStudentId(name);
         if (previewIdText) previewIdText.textContent = currentPreviewId;
         if (childPinInput && (!childPinInput.value || childPinInput.dataset.autoFilled === 'true')) {
-          childPinInput.value = currentPreviewId;
+          childPinInput.value = window.AppState.generatePin();
           childPinInput.dataset.autoFilled = 'true';
         }
       } else {
         currentPreviewId = '';
-        if (previewIdText) previewIdText.textContent = 'V••••';
+        if (previewIdText) previewIdText.textContent = 'apellido.inicial';
         if (childPinInput && childPinInput.dataset.autoFilled === 'true') {
           childPinInput.value = '';
         }
@@ -1211,14 +1669,13 @@ window.DocenteModule = {
       // Si no hay previewId generado, generarlo ahora
       const targetId = currentPreviewId || window.AppState.generateStudentId(childName);
       
-      // Si el campo PIN está vacío o es igual al auto-completado, el PIN es EXACTAMENTE targetId
-      const isAutoFilled = !rawPin || childPinInput?.dataset.autoFilled === 'true' || rawPin.toUpperCase() === targetId.toUpperCase();
-      const finalPin = isAutoFilled ? targetId : rawPin.toUpperCase();
+      // El PIN nunca es igual al usuario: si está vacío se genera uno de 4 números
+      const finalPin = (rawPin && rawPin.toLowerCase() !== targetId.toLowerCase()) ? rawPin : window.AppState.generatePin();
 
       const newSt = window.AppState.addStudent(childName, avatar, parentName, parentPhone, parentEmail, finalPin, targetId);
       if (newSt) {
         window.SoundEngine.playSuccess();
-        alert(`¡Cuenta creada con éxito!\n\nEstudiante: ${newSt.name}\nCódigo ID: ${newSt.id}\nPIN de Acceso: ${newSt.pin}\n\nYa puedes enviarle sus accesos por WhatsApp o Correo.`);
+        alert(`¡Cuenta creada con éxito!\n\nEstudiante: ${newSt.name}\nUsuario: ${newSt.id}\nPIN de Acceso: ${newSt.pin}\n\nYa puedes enviarle sus accesos por WhatsApp o Correo.`);
         this.renderFamiliesTab(container, actions);
       }
     });
@@ -1238,8 +1695,8 @@ window.DocenteModule = {
         const st = window.AppState.state.students.find(s => s.id === stId);
         if (!st) return;
 
-        const defaultPin = st.id;
-        const nuevoPin = prompt(`¿Deseas restablecer el PIN de ${st.name}?\nEscribe el nuevo PIN (o déjalo en ${defaultPin} para usar su Código ID):`, defaultPin);
+        const defaultPin = window.AppState.generatePin();
+        const nuevoPin = prompt(`¿Deseas restablecer el PIN de ${st.name}?\nEscribe el nuevo PIN (o acepta el PIN sugerido):`, defaultPin);
 
         if (nuevoPin !== null) {
           const finalPin = window.AppState.resetStudentPin(stId, nuevoPin);
@@ -1264,7 +1721,7 @@ window.DocenteModule = {
           `Para que *${st.name}* ${st.avatar} practique los juegos matemáticos desde casa y guarde sus estrellas ⭐ en nuestro sistema escolar, ingrese con su enlace privado:\n` +
           `🔗 ${directUrl}\n\n` +
           `👶 Estudiante: *${st.name}*\n` +
-          `🆔 Código de Estudiante: *${st.id}*\n` +
+          `👤 Usuario: *${st.id}*\n` +
           `🔑 PIN de acceso: *${st.pin || st.id}*\n\n` +
           `¡Muchos éxitos y gracias por apoyar su aprendizaje! ✨`;
 
@@ -1292,7 +1749,7 @@ window.DocenteModule = {
           `Le saluda la Profesora ${config.teacherName}.\n` +
           `Le comparto las credenciales oficiales de acceso a la plataforma de Matemática Divertida (${config.activeClass}):\n\n` +
           `👶 Estudiante: ${st.name}\n` +
-          `🆔 Código de Estudiante: ${st.id}\n` +
+          `👤 Usuario: ${st.id}\n` +
           `🔑 PIN de acceso: ${st.pin || st.id}\n` +
           `🔗 Enlace directo de ingreso:\n${directUrl}\n\n` +
           `Por favor conserve este correo para el seguimiento de sus aprendizajes.\n` +
@@ -1301,6 +1758,24 @@ window.DocenteModule = {
         const emailTo = st.parentEmail || '';
         const mailtoUrl = `mailto:${encodeURIComponent(emailTo)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         window.location.href = mailtoUrl;
+      });
+    });
+
+    // Asignar competencias desde pestaña de familias
+    container.querySelectorAll('.btn-assign-from-fam').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.SoundEngine.playPop();
+        const id = btn.dataset.studentId;
+        this.selectedStudentId = id;
+        this.switchTab('assignments');
+        setTimeout(() => {
+          const row = document.querySelector(`.student-assignment-row[data-student-id="${id}"]`);
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            row.classList.add('border-purple-500', 'ring-4', 'ring-purple-200');
+            setTimeout(() => row.classList.remove('ring-4', 'ring-purple-200'), 2200);
+          }
+        }, 200);
       });
     });
 

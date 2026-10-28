@@ -160,6 +160,39 @@ window.SupabaseService = {
     }
   },
 
+  // 2b. ESTRUCTURA INSTITUCIONAL (AÑOS, AULAS CON SU PLAN, DOCENTES, PERFIL ADMIN)
+  async fetchSchoolStructure() {
+    if (!this.isConfigured()) return null;
+    try {
+      const { data, error } = await this.client
+        .from('escuela_estructura')
+        .select('data, updated_at')
+        .eq('id', 'default')
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      if (data && data.data && typeof data.data === 'object') {
+        return { ...data.data, updatedAt: data.data.updatedAt || data.updated_at };
+      }
+    } catch (err) {
+      console.warn('Estructura institucional no disponible en Supabase (ejecuta supabase_schema.sql):', err?.message || err);
+    }
+    return null;
+  },
+
+  async saveSchoolStructure(structure) {
+    if (!this.isConfigured() || !structure) return false;
+    try {
+      const { error } = await this.client
+        .from('escuela_estructura')
+        .upsert({ id: 'default', data: structure, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.warn('No se pudo guardar la estructura institucional en Supabase:', err?.message || err);
+      return false;
+    }
+  },
+
   // 3. CARGAR TODOS LOS ESTUDIANTES Y SUS NOTAS DESDE SUPABASE
   async fetchStudentsWithEvals() {
     if (!this.isConfigured()) return null;
@@ -212,8 +245,13 @@ window.SupabaseService = {
           name: st.nombre,
           avatar: st.avatar || '🦙',
           age: st.edad || 5,
+          classroomId: st.aula_id || '',
+          year: st.anio || '',
+          status: st.estado || 'activo',
+          areaGrades: (st.notas_areas && typeof st.notas_areas === 'object') ? st.notas_areas : {},
           stars: st.estrellas || 0,
           pin: st.pin_acceso || st.id || '1234',
+          assignedCompetencies: (st.competencias_asignadas && Array.isArray(st.competencias_asignadas)) ? st.competencias_asignadas : ['cantidad', 'espacio'],
           parentName: st.parent_nombre || (parentUser ? parentUser.nombre : ''),
           parentPhone: st.parent_telefono || (parentUser ? parentUser.telefono : ''),
           parentEmail: (parentUser && parentUser.email) ? parentUser.email : '',
@@ -264,20 +302,40 @@ window.SupabaseService = {
           .eq('id', parentId);
       }
 
+      const baseStudentPayload = {
+        id: studentData.id,
+        nombre: studentData.name,
+        avatar: studentData.avatar || '🦙',
+        edad: studentData.age || 5,
+        estrellas: studentData.stars || 0,
+        pin_acceso: studentData.pin || studentData.id,
+        parent_id: parentId || null,
+        parent_nombre: studentData.parentName || '',
+        parent_telefono: studentData.parentPhone || '',
+        ultimo_acceso: new Date().toISOString()
+      };
+
+      // Intento con las columnas extendidas (competencias, aula, año, estado) si existen en Supabase
+      try {
+        const fullPayload = {
+          ...baseStudentPayload,
+          competencias_asignadas: studentData.assignedCompetencies || ['cantidad', 'espacio'],
+          aula_id: studentData.classroomId || '',
+          anio: String(studentData.year || ''),
+          estado: studentData.status || 'activo',
+          notas_areas: studentData.areaGrades || {}
+        };
+        const { error: fullErr } = await this.client
+          .from('estudiantes')
+          .upsert(fullPayload);
+        if (!fullErr) return true;
+      } catch (e) {
+        // Fallback a columnas estándar
+      }
+
       const { error } = await this.client
         .from('estudiantes')
-        .upsert({
-          id: studentData.id,
-          nombre: studentData.name,
-          avatar: studentData.avatar || '🦙',
-          edad: studentData.age || 5,
-          estrellas: studentData.stars || 0,
-          pin_acceso: studentData.pin || studentData.id,
-          parent_id: parentId || null,
-          parent_nombre: studentData.parentName || '',
-          parent_telefono: studentData.parentPhone || '',
-          ultimo_acceso: new Date().toISOString()
-        });
+        .upsert(baseStudentPayload);
 
       if (error) throw error;
       return true;
@@ -336,6 +394,24 @@ window.SupabaseService = {
       return true;
     } catch (err) {
       console.warn('Error guardando evaluación en Supabase:', err);
+      return false;
+    }
+  },
+
+  // 5b. CAMBIAR EL USUARIO (ID) DE UN ESTUDIANTE: crea el nuevo registro con sus notas y elimina el antiguo
+  async renameStudent(oldId, student) {
+    if (!this.isConfigured() || !student || !oldId || oldId === student.id) return false;
+    try {
+      await this.saveStudent(student);
+      const evals = student.evaluaciones || {};
+      for (const gameId of Object.keys(evals)) {
+        const ev = evals[gameId];
+        if (ev && ev.completed) await this.saveEvaluation(student.id, gameId, ev, student.stars || 0);
+      }
+      await this.client.from('estudiantes').delete().eq('id', oldId);
+      return true;
+    } catch (err) {
+      console.warn('No se pudo renombrar el estudiante en Supabase:', err?.message || err);
       return false;
     }
   },

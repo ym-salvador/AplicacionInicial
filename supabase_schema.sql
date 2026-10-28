@@ -48,8 +48,9 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 3. ESTUDIANTES (NIÑOS DEL AULA DE 5 AÑOS VINCULADOS A SU FAMILIA)
--- ID: Formato [Letra del Apellido] + 4 números aleatorios (Ej: V4821)
+-- 3. ESTUDIANTES (NIÑOS DE 3, 4 Y 5 AÑOS VINCULADOS A SU FAMILIA)
+-- id = usuario de ingreso con formato apellido.inicial (Ej: gomez.v); pin_acceso = PIN de 4 números (v4.6).
+-- Los registros antiguos (est_1, V4821) los renombra la propia app al sincronizar: no hace falta SQL manual.
 CREATE TABLE IF NOT EXISTS public.estudiantes (
     id TEXT PRIMARY KEY,
     parent_id UUID REFERENCES public.usuarios(id) ON DELETE SET NULL,
@@ -67,6 +68,7 @@ CREATE TABLE IF NOT EXISTS public.estudiantes (
 
 -- Migración segura si la tabla ya existía
 ALTER TABLE public.estudiantes ADD COLUMN IF NOT EXISTS parent_email TEXT DEFAULT '';
+ALTER TABLE public.estudiantes ADD COLUMN IF NOT EXISTS competencias_asignadas TEXT[] DEFAULT ARRAY['cantidad', 'espacio'];
 
 -- 4. EVALUACIONES FORMATIVAS CNEB (NOTAS AD, A, B, C POR CADA RETO)
 CREATE TABLE IF NOT EXISTS public.evaluaciones (
@@ -123,3 +125,30 @@ SELECT
 FROM public.estudiantes e
 LEFT JOIN public.evaluaciones ev ON e.id = ev.estudiante_id
 GROUP BY e.id, e.nombre, e.avatar, e.estrellas, e.parent_nombre, e.parent_telefono, e.pin_acceso, e.ultimo_acceso;
+
+-- =========================================================================
+-- v4.0: ESTRUCTURA INSTITUCIONAL (AÑOS, AULAS, DOCENTES, PERFIL ADMIN) Y MATRÍCULA POR AULA
+-- =========================================================================
+-- Estudiantes: aula, año lectivo y estado de matrícula
+ALTER TABLE public.estudiantes ADD COLUMN IF NOT EXISTS aula_id TEXT DEFAULT '';
+ALTER TABLE public.estudiantes ADD COLUMN IF NOT EXISTS anio TEXT DEFAULT '2026';
+ALTER TABLE public.estudiantes ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'activo';
+
+-- Estructura del colegio en un solo documento JSON (aulas con su plan de sesiones, docentes, años, admin)
+CREATE TABLE IF NOT EXISTS public.escuela_estructura (
+    id TEXT PRIMARY KEY DEFAULT 'default',
+    data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+ALTER TABLE public.escuela_estructura ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permitir todo en escuela_estructura" ON public.escuela_estructura;
+CREATE POLICY "Permitir todo en escuela_estructura" ON public.escuela_estructura FOR ALL USING (true) WITH CHECK (true);
+-- Calificaciones por competencia de las áreas sin retos interactivos (Comunicación, Personal Social, etc.)
+ALTER TABLE public.estudiantes ADD COLUMN IF NOT EXISTS notas_areas JSONB DEFAULT '{}'::jsonb;
+
+-- =========================================================================
+-- v4.6: USUARIOS apellido.inicial + ACCESO CON USUARIO Y PIN
+-- =========================================================================
+-- No requiere columnas nuevas: el usuario se guarda en estudiantes.id y el PIN en estudiantes.pin_acceso.
+-- Los usuarios de docentes y dirección viven dentro de escuela_estructura.data (JSON).
+-- Este archivo es seguro de ejecutar completo las veces que haga falta (IF NOT EXISTS / ADD COLUMN IF NOT EXISTS).

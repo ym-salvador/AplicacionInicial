@@ -1,145 +1,139 @@
 /**
  * SESIÓN 3 (MUNDO 1: CANTIDAD) - JUEGOS 3.4 Y 3.5: Peso y Nociones de Tiempo
- * Desempeño: Compara pesos con balanza interactiva ("pesa más", "pesa menos") y
- * secuencias temporales cotidianas ("antes", "después").
+ * Desempeño: compara pesos ("pesa más", "pesa menos") y secuencias temporales ("antes", "después").
+ * Nivel por edad (js/niveles.js): 3 años solo "pesa más" y una secuencia; 5 años pares variados y "antes/después".
  */
 
 window.GamePesoTiempo = {
+  pares: [
+    { heavy: { e: '🍉', n: 'Sandía' }, light: { e: '🍓', n: 'Fresa' } },
+    { heavy: { e: '🐘', n: 'Elefante' }, light: { e: '🐭', n: 'Ratoncito' } },
+    { heavy: { e: '🎒', n: 'Mochila llena' }, light: { e: '🪶', n: 'Plumita' } },
+    { heavy: { e: '🪨', n: 'Piedra' }, light: { e: '🎈', n: 'Globo' } }
+  ],
+  escenarios: [
+    { antes: { e: '🛏️', t: 'Despertamos en la camita' }, despues: { e: '🪥', t: 'Nos lavamos los dientes y desayunamos' }, distractor: { e: '🌙', t: 'Dormir con pijamita de noche' }, momento: 'en la mañana' },
+    { antes: { e: '🧼', t: 'Nos lavamos las manos' }, despues: { e: '🍽️', t: 'Almorzamos en la mesa' }, distractor: { e: '🛁', t: 'Bañarnos antes de dormir' }, momento: 'al mediodía' },
+    { antes: { e: '🍲', t: 'Cenamos en familia' }, despues: { e: '😴', t: 'Nos vamos a dormir' }, distractor: { e: '🎒', t: 'Ir al jardín con la mochila' }, momento: 'en la noche' }
+  ],
+
+  header(icon, title, borderClass) {
+    return `
+      <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div class="bg-white/95 px-4 py-2 rounded-2xl shadow border-2 ${borderClass} flex items-center gap-2">
+          <span class="text-2xl">${icon}</span><span class="font-bold text-slate-900 text-base font-fun">${title}</span>${window.CNEB_NIVELES.badge()}
+        </div>
+      </div>`;
+  },
+
   // 3.4 BALANZA MÁGICA: PESA MÁS Y PESA MENOS
   playBalanza(container) {
+    const N = window.CNEB_NIVELES;
+    const lvl = N.get('j3_4_balanza');
+    const pair = this.pares[N.pick(lvl.pares || [0])] || this.pares[0];
+    const pregunta = N.pick(lvl.preguntas || ['mas']);
+    const heavyLeft = Math.random() < 0.5;
+    const left = heavyLeft ? pair.heavy : pair.light;
+    const right = heavyLeft ? pair.light : pair.heavy;
+    const correctSide = (pregunta === 'mas') === heavyLeft ? 'left' : 'right';
+    const tilt = heavyLeft ? -12 : 12;
     let hints = 0;
+
+    const pan = (side, obj, isHeavy) => `
+      <button id="plate-${side}" class="scale-pan-${side} group cursor-pointer focus:outline-none" style="transform: rotate(${-tilt}deg);" title="${obj.n}">
+        <div class="scale-rope"></div>
+        <div class="scale-plate group-hover:scale-110 group-hover:border-amber-500 transition-all ${isHeavy ? 'bg-emerald-50' : 'bg-red-50'}"><span class="${isHeavy ? 'text-4xl animate-bounce-soft' : 'text-2xl'}">${obj.e}</span></div>
+        <span class="mt-2 text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded-full shadow">${obj.n}</span>
+      </button>`;
 
     container.innerHTML = `
       <div class="flex flex-col items-center justify-between h-full max-w-4xl mx-auto p-3">
-        <div class="w-full flex items-center justify-between mb-2">
-          <div class="bg-white/95 px-4 py-2 rounded-2xl shadow border-2 border-amber-300 flex items-center gap-2">
-            <span class="text-2xl">⚖️</span>
-            <span class="font-bold text-amber-950 text-base font-fun">Juego 3.4: La Balanza Mágica</span>
-          </div>
-        </div>
-
+        ${this.header('⚖️', 'Juego 3.4: La Balanza Mágica', 'border-amber-300')}
         <div class="bg-amber-100 border-2 border-amber-300 rounded-2xl px-6 py-2 text-center my-2 shadow">
-          <p class="font-fun text-2xl text-amber-950 font-bold">
-            Toca el objeto que <span class="text-red-600 underline">PESA MÁS</span> y hace bajar la balanza
-          </p>
+          <p class="font-fun text-2xl text-amber-950 font-bold">Toca el objeto que <span class="text-red-600 underline">PESA ${pregunta === 'mas' ? 'MÁS' : 'MENOS'}</span></p>
         </div>
-
-        <!-- Balanza Animada Basculante -->
         <div class="relative w-full max-w-md my-4 h-[220px] flex justify-center items-center">
-          <div id="scale-beam" class="scale-beam" style="transform: rotate(-12deg);">
-            <!-- Plato Izquierdo: Sandía (Pesa más - desciende) -->
-            <button id="plate-left" class="scale-pan-left group cursor-pointer focus:outline-none" style="transform: rotate(12deg);" title="Sandía grande">
-              <div class="scale-rope"></div>
-              <div class="scale-plate group-hover:scale-110 group-hover:border-amber-500 transition-all bg-emerald-50">
-                <span class="text-4xl animate-bounce-soft">🍉</span>
-              </div>
-              <span class="mt-2 text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded-full shadow">Sandía</span>
-            </button>
-
-            <!-- Plato Derecho: Fresa (Pesa menos - asciende) -->
-            <button id="plate-right" class="scale-pan-right group cursor-pointer focus:outline-none" style="transform: rotate(12deg);" title="Fresa pequeña">
-              <div class="scale-rope"></div>
-              <div class="scale-plate group-hover:scale-110 group-hover:border-amber-500 transition-all bg-red-50">
-                <span class="text-2xl">🍓</span>
-              </div>
-              <span class="mt-2 text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded-full shadow">Fresa</span>
-            </button>
+          <div id="scale-beam" class="scale-beam" style="transform: rotate(${tilt}deg);">
+            ${pan('left', left, heavyLeft)}
+            ${pan('right', right, !heavyLeft)}
           </div>
-
-          <div class="scale-base">
-            <div class="scale-fulcrum"></div>
-          </div>
+          <div class="scale-base"><div class="scale-fulcrum"></div></div>
         </div>
+        <div class="text-center text-slate-600 font-fun text-sm">El objeto que pesa más hace bajar su platillo hacia el suelo; el que pesa menos sube.</div>
+      </div>`;
 
-        <div class="text-center text-slate-600 font-fun text-sm">
-          ¡Mira cómo la sandía pesada hace bajar su platillo hacia el suelo!
-        </div>
-      </div>
-    `;
+    window.Kusi.say(`¡Mira la balanza de Don Lucho! Pusimos ${pair.heavy.n.toLowerCase()} y ${pair.light.n.toLowerCase()}. ¿Cuál de los dos pesa ${pregunta === 'mas' ? 'más' : 'menos'}? ¡Tócalo!`);
 
-    window.Kusi.say("¡Mira la balanza de Don Lucho! Pusimos una sandía y una fresita. ¿Cuál de los dos objetos pesa más? ¡Tócalo!");
-
-    const plateLeft = document.getElementById('plate-left');
-    const plateRight = document.getElementById('plate-right');
-
-    plateLeft.addEventListener('click', () => {
-      window.SoundEngine.playSuccess();
-      plateLeft.querySelector('.scale-plate').classList.add('ring-4', 'ring-green-400');
-      window.AppState.recordResult('j3_4_balanza', true, hints);
-      window.Kusi.celebrate("¡Excelente! La sandía es pesada y hace bajar el platillo.");
-      setTimeout(() => window.App.showGameSuccess('j3_4_balanza'), 2200);
-    });
-
-    plateRight.addEventListener('click', () => {
-      hints++;
-      window.Kusi.giveHint("¡Buen intento! Recuerda: el objeto que pesa más baja el platillo hacia el suelo. ¿Cuál está abajo?");
-      plateLeft.classList.add('pulse-target');
+    ['left', 'right'].forEach(side => {
+      document.getElementById(`plate-${side}`).addEventListener('click', () => {
+        if (side === correctSide) {
+          window.SoundEngine.playSuccess();
+          document.getElementById(`plate-${side}`).querySelector('.scale-plate').classList.add('ring-4', 'ring-green-400');
+          window.AppState.recordResult('j3_4_balanza', true, hints);
+          const obj = pregunta === 'mas' ? pair.heavy : pair.light;
+          window.Kusi.celebrate(pregunta === 'mas' ? `¡Excelente! ${obj.n} pesa más y hace bajar el platillo.` : `¡Excelente! ${obj.n} pesa menos y su platillo sube.`);
+          setTimeout(() => window.App.showGameSuccess('j3_4_balanza'), 2200);
+        } else {
+          hints++;
+          window.Kusi.giveHint(pregunta === 'mas'
+            ? '¡Buen intento! El objeto que pesa más baja el platillo hacia el suelo. ¿Cuál está abajo?'
+            : '¡Buen intento! El objeto que pesa menos hace subir su platillo. ¿Cuál está arriba?');
+          document.getElementById(`plate-${correctSide}`).classList.add('pulse-target');
+        }
+      });
     });
   },
 
   // 3.5 TIEMPO: ANTES Y DESPUÉS
   playTiempo(container) {
+    const N = window.CNEB_NIVELES;
+    const lvl = N.get('j3_5_tiempo');
+    const esc = this.escenarios[N.pick(lvl.escenarios || [0])] || this.escenarios[0];
+    const pregunta = N.pick(lvl.preguntas || ['despues']);
+    const shown = pregunta === 'despues' ? esc.antes : esc.despues;
+    const correct = pregunta === 'despues' ? esc.despues : esc.antes;
+    const options = N.shuffle([{ ...correct, ok: true }, { ...esc.distractor, ok: false }]);
     let hints = 0;
 
     container.innerHTML = `
       <div class="flex flex-col items-center justify-between h-full max-w-4xl mx-auto p-3">
-        <div class="w-full flex items-center justify-between mb-2">
-          <div class="bg-white/95 px-4 py-2 rounded-2xl shadow border-2 border-indigo-300 flex items-center gap-2">
-            <span class="text-2xl">⏳</span>
-            <span class="font-bold text-indigo-950 text-base font-fun">Juego 3.5: Antes y Después</span>
-          </div>
-        </div>
-
+        ${this.header('⏳', 'Juego 3.5: Antes y Después', 'border-indigo-300')}
         <div class="bg-indigo-100 border-2 border-indigo-300 rounded-2xl px-6 py-2 text-center my-2 shadow">
-          <p class="font-fun text-2xl text-indigo-950 font-bold">
-            ¿Qué hacemos en la mañana <span class="text-indigo-700 underline">DESPUÉS</span> de levantarnos?
-          </p>
+          <p class="font-fun text-2xl text-indigo-950 font-bold">¿Qué hacemos ${esc.momento} <span class="text-indigo-700 underline">${pregunta === 'despues' ? 'DESPUÉS' : 'ANTES'}</span> de esto?</p>
         </div>
-
         <div class="flex items-center gap-3 bg-white/90 border-2 border-slate-300 px-4 py-2 rounded-2xl shadow-sm my-2">
-          <span class="text-3xl">🛏️</span>
-          <div>
-            <span class="text-[10px] font-bold text-slate-500 uppercase block">Antes</span>
-            <span class="text-xs font-bold text-slate-800">Despertamos en la camita</span>
-          </div>
-          <span class="text-xl text-indigo-500 font-bold ml-2">➔ ¿Luego?</span>
+          <span class="text-3xl">${shown.e}</span>
+          <div><span class="text-[10px] font-bold text-slate-500 uppercase block">${pregunta === 'despues' ? 'Antes' : 'Después'}</span><span class="text-xs font-bold text-slate-800">${shown.t}</span></div>
+          <span class="text-xl text-indigo-500 font-bold ml-2">${pregunta === 'despues' ? '➔ ¿Luego?' : '⬅ ¿Y antes?'}</span>
         </div>
-
         <div class="grid grid-cols-2 gap-5 w-full max-w-lg my-3">
-          <!-- Opción Correcta: Lavarse los dientes y tomar desayuno -->
-          <button id="opt-morning-s" class="drop-zone border-4 border-indigo-300 bg-white hover:border-indigo-500 p-4 rounded-3xl flex flex-col items-center cursor-pointer shadow-lg hover:scale-105 transition-all">
-            <span class="text-5xl mb-2">🪥</span>
-            <span class="font-fun font-bold text-slate-800 text-base">Lavarnos los dientes y desayunar</span>
-            <span class="mt-2 text-xs bg-indigo-100 text-indigo-800 font-bold px-3 py-1 rounded-full">Toca aquí</span>
-          </button>
-
-          <!-- Opción Distractora: Dormir de noche -->
-          <button id="opt-night-s" class="drop-zone border-4 border-indigo-300 bg-white hover:border-indigo-500 p-4 rounded-3xl flex flex-col items-center cursor-pointer shadow-lg hover:scale-105 transition-all">
-            <span class="text-5xl mb-2">🌙</span>
-            <span class="font-fun font-bold text-slate-800 text-base">Dormir con pijamita de noche</span>
-            <span class="mt-2 text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1 rounded-full">Toca aquí</span>
-          </button>
+          ${options.map((o, i) => `
+            <button class="opt-tiempo drop-zone border-4 border-indigo-300 bg-white hover:border-indigo-500 p-4 rounded-3xl flex flex-col items-center cursor-pointer shadow-lg hover:scale-105 transition-all" data-ok="${o.ok}">
+              <span class="text-5xl mb-2">${o.e}</span>
+              <span class="font-fun font-bold text-slate-800 text-base text-center">${o.t}</span>
+              <span class="mt-2 text-xs bg-indigo-100 text-indigo-800 font-bold px-3 py-1 rounded-full">Toca aquí</span>
+            </button>`).join('')}
         </div>
-      </div>
-    `;
+      </div>`;
 
-    window.Kusi.say("En la mañana, después de despertar en nuestra camita... ¿Qué hacemos después? ¿Asearnos y desayunar o volver a dormir con estrellas?");
+    window.Kusi.say(pregunta === 'despues'
+      ? `${esc.momento.charAt(0).toUpperCase() + esc.momento.slice(1)}, ${shown.t.toLowerCase()}. ¿Qué hacemos después? ¡Toca la imagen!`
+      : `${esc.momento.charAt(0).toUpperCase() + esc.momento.slice(1)}, ${shown.t.toLowerCase()}. ¿Qué hicimos antes? ¡Toca la imagen!`);
 
-    const optMorning = document.getElementById('opt-morning-s');
-    const optNight = document.getElementById('opt-night-s');
-
-    optMorning.addEventListener('click', () => {
-      window.SoundEngine.playSuccess();
-      optMorning.classList.add('border-green-500', 'bg-green-50');
-      window.AppState.recordResult('j3_5_tiempo', true, hints);
-      window.Kusi.celebrate("¡Muy bien! Después de despertar nos cepillamos y tomamos desayuno.");
-      setTimeout(() => window.App.showGameSuccess('j3_5_tiempo'), 2200);
-    });
-
-    optNight.addEventListener('click', () => {
-      hints++;
-      window.Kusi.giveHint("¡Buen intento! En la noche dormimos con la luna, pero en el día después de levantarnos nos cepillamos y aseamos.");
-      optMorning.classList.add('pulse-target');
+    container.querySelectorAll('.opt-tiempo').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.ok === 'true') {
+          window.SoundEngine.playSuccess();
+          btn.classList.add('border-green-500', 'bg-green-50');
+          window.AppState.recordResult('j3_5_tiempo', true, hints);
+          window.Kusi.celebrate(`¡Muy bien! ${pregunta === 'despues' ? 'Después' : 'Antes'} de eso, ${correct.t.toLowerCase()}.`);
+          setTimeout(() => window.App.showGameSuccess('j3_5_tiempo'), 2200);
+        } else {
+          hints++;
+          window.Kusi.giveHint(`¡Buen intento! Eso lo hacemos en otro momento del día. Piensa qué pasa ${pregunta === 'despues' ? 'justo después' : 'justo antes'}.`);
+          container.querySelector('.opt-tiempo[data-ok="true"]')?.classList.add('pulse-target');
+        }
+      });
     });
   }
 };
